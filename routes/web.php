@@ -14,13 +14,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('admin', function(){
-  return "Hola desde el panel de administracion";
+  return view('welcome');
 });
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
-    return view('dashboard');
+  return view('dashboard');
 })->name('dashboard');
+
+//---------------------------------------------------------
+//  RUTAS PARA EL PANEL DE ADMINISTRACION
+//---------------------------------------------------------
+Route::name('admin.')->prefix('admin')->group(function () {
+  Route::redirect('/', 'admin/dashboard', 301)->name('admin');
+  Route::view('dashboard', 'admin.dashboard.index')->name('dashboard');
+});
