@@ -1,6 +1,10 @@
 @extends("theme.$theme.layout")
 @section('title', 'Menu')
 
+@section('scripts')
+  <script src="{{asset("assets/pages/js/admin/menu/create.js")}}"></script>
+@endsection
+
 @section('contentTitle', "Crear un nuevo menú")
 @section('contentBreadcrum')
 <ol class="breadcrumb float-sm-right">

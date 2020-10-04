@@ -24,7 +24,7 @@
 {{-- -------------------------------------------------- --}}
 @yield('scriptPlugins')
 
-{{-- <script src="{{asset("assets/js/generalValidations.js")}}"></script> --}}
+<script src="{{asset("assets/js/functions.js")}}"></script>
 {{-- <script src="{{asset("assets/js/scripts.js")}}"></script> --}}
 
 @yield('scripts')
