@@ -18,6 +18,8 @@ class User extends Authenticatable
     use Notifiable;
     use TwoFactorAuthenticatable;
 
+    protected $table = 'user';
+
     /**
      * The attributes that are mass assignable.
      *
