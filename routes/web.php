@@ -17,14 +17,19 @@ Route::get('/', function () {
   return view('welcome');
 });
 
-Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
-  return view('dashboard');
-})->name('dashboard');
+// Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
+//   return view('dashboard');
+// })->name('dashboard');
 
 //---------------------------------------------------------
 //  RUTAS PARA EL PANEL DE ADMINISTRACION
 //---------------------------------------------------------
-Route::name('admin.')->prefix('admin')->group(function () {
-  Route::redirect('/', 'admin/dashboard', 301)->name('admin');
-  Route::view('dashboard', 'admin.dashboard.index')->name('dashboard');
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+  Route::view('/dashboard','dashboard')->name('dashboard');
+  
+  Route::name('admin.')->prefix('admin')->group(function () {
+    Route::redirect('/', 'admin/dashboard', 301)->name('admin');
+    Route::view('dashboard', 'admin.dashboard.index')->name('dashboard');
+  });
 });
+
