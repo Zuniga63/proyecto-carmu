@@ -37,5 +37,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('menu', [MenuController::class, 'index'])->name('menu');
     Route::post('menu', [MenuController::class, 'store'])->name('menu_store');
     Route::get('menu/crear', [MenuController::class, 'create'])->name(('menu_create'));
+    Route::post('menu/guardar-orden', [MenuController::class, 'saveOrder']);
   });
 });
