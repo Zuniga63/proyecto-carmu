@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\MenuController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,11 +26,16 @@ Route::get('/', function () {
 //  RUTAS PARA EL PANEL DE ADMINISTRACION
 //---------------------------------------------------------
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-  Route::view('/dashboard','dashboard')->name('dashboard');
-  
+  Route::view('/dashboard', 'dashboard')->name('dashboard');
+
   Route::name('admin.')->prefix('admin')->group(function () {
     Route::redirect('/', 'admin/dashboard', 301)->name('admin');
     Route::view('dashboard', 'admin.dashboard.index')->name('dashboard');
+    // ---------------------------------------------------
+    // Rutas para la gestion de los menus
+    // ---------------------------------------------------
+    Route::get('menu', [MenuController::class, 'index'])->name('menu');
+    Route::post('menu', [MenuController::class, 'store'])->name('menu_store');
+    Route::get('menu/crear', [MenuController::class, 'create'])->name(('menu_create'));
   });
 });
-
