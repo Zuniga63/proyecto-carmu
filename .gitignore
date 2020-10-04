@@ -1,4 +1,5 @@
 /node_modules
+/database/models
 /public/hot
 /public/assets/lte
 /public/storage
