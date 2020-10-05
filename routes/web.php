@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\RoleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,5 +39,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('menu', [MenuController::class, 'store'])->name('menu_store');
     Route::get('menu/crear', [MenuController::class, 'create'])->name(('menu_create'));
     Route::post('menu/guardar-orden', [MenuController::class, 'saveOrder']);
+    // ---------------------------------------------------
+    // Rutas para la gestion de los roles
+    // ---------------------------------------------------
+    Route::get('rol', [RoleController::class, 'index'])->name('role');
+    Route::get('rol/crear', [RoleController::class, 'create'])->name('create_role');
+    Route::get('rol/{id}/editar', [RoleController::class, 'edit'])->name('edit_role');
+    Route::post('rol', [RoleController::class, 'store'])->name('store_role');
+    Route::put('rol/{id}', [RoleController::class, 'update'])->name('update_role');
+    Route::delete('rol/{id}', [RoleController::class, 'destroy'])->name('delete_role');
   });
 });
