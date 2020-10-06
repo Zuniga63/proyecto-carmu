@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\RoleHasMenuController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,5 +49,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('rol', [RoleController::class, 'store'])->name('store_role');
     Route::put('rol/{id}', [RoleController::class, 'update'])->name('update_role');
     Route::delete('rol/{id}', [RoleController::class, 'destroy'])->name('delete_role');
+    // ---------------------------------------------------
+    // Rutas para la asignacion de menus
+    // ---------------------------------------------------
+    Route::get('menu-rol', [RoleHasMenuController::class, 'index'])->name('menu_role');
+    Route::post('menu-rol', [RoleHasMenuController::class, 'store'])->name('store_menu_rol');
   });
 });
