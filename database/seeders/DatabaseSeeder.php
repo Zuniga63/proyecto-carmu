@@ -15,11 +15,16 @@ class DatabaseSeeder extends Seeder
   public function run()
   {
     $tables = [
-      'role'
+      'role',
+      'menu',
+      'user_has_role',
+      'user',
     ];
 
     $this->truncateTables($tables);
     $this->call(RoleTableSeeder::class);
+    $this->call(MenuTableSeeder::class);
+    $this->call(AdminUserSeeder::class);
   }
 
   /**

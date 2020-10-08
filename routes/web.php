@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RoleHasMenuController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,7 +31,10 @@ Route::get('/', function () {
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
   Route::view('/dashboard', 'dashboard')->name('dashboard');
 
-  Route::name('admin.')->prefix('admin')->group(function () {
+  // ---------------------------------------------------
+  // Rutas para la adminstracion
+  // ---------------------------------------------------
+  Route::middleware(['superadmin'])->name('admin.')->prefix('admin')->group(function () {
     Route::redirect('/', 'admin/dashboard', 301)->name('admin');
     Route::view('dashboard', 'admin.dashboard.index')->name('dashboard');
     // ---------------------------------------------------

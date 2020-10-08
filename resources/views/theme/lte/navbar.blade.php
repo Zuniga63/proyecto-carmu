@@ -37,7 +37,8 @@
         <a href="#" class="dropdown-item">
           <!-- Message Start -->
           <div class="media">
-            <img src="{{asset("assets/$theme/dist/img/user1-128x128.jpg")}}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+            <img src="{{asset("assets/$theme/dist/img/user1-128x128.jpg")}}" alt="User Avatar"
+              class="img-size-50 mr-3 img-circle">
             <div class="media-body">
               <h3 class="dropdown-item-title">
                 Brad Diesel
@@ -53,7 +54,8 @@
         <a href="#" class="dropdown-item">
           <!-- Message Start -->
           <div class="media">
-            <img src="{{asset("assets/$theme/dist/img/user1-128x128.jpg")}}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+            <img src="{{asset("assets/$theme/dist/img/user1-128x128.jpg")}}" alt="User Avatar"
+              class="img-size-50 mr-3 img-circle">
             <div class="media-body">
               <h3 class="dropdown-item-title">
                 John Pierce
@@ -69,7 +71,8 @@
         <a href="#" class="dropdown-item">
           <!-- Message Start -->
           <div class="media">
-            <img src="{{asset("assets/$theme/dist/img/user1-128x128.jpg")}}" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+            <img src="{{asset("assets/$theme/dist/img/user1-128x128.jpg")}}" alt="User Avatar"
+              class="img-size-50 mr-3 img-circle">
             <div class="media-body">
               <h3 class="dropdown-item-title">
                 Nora Silvester
@@ -112,10 +115,36 @@
         <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
       </div>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
-        <i class="fas fa-th-large"></i>
+
+    <li class="nav-item dropdown user-menu">
+      <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+        <img src="{{auth()->user()->profile_photo_url}}" class="user-image img-circle elevation-2" alt="User Image">
+        <span class="d-none d-md-inline">{{auth()->user()->name}}</span>
       </a>
+      <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+        <!-- User image -->
+        <li class="user-header bg-primary">
+          <img src="{{auth()->user()->profile_photo_url}}" class="img-circle elevation-2" alt="User Image">
+
+          <p>
+            {{auth()->user()->name}} - {{session()->get('role_name')}}
+            <small>Member since Nov. 2012</small>
+          </p>
+        </li>
+        <!-- Menu Body -->
+        <li class="user-body">
+
+          <!-- /.row -->
+        </li>
+        <!-- Menu Footer-->
+        <li class="user-footer">
+          <a href="{{route('profile.show')}}" class="btn btn-default btn-flat">Profile</a>
+          <form action="{{route('logout')}}" method="POST" class="float-right">
+            @csrf
+            <button type="submit" href="#" class="btn btn-default btn-flat">Sign out</button>
+          </form>
+        </li>
+      </ul>
     </li>
   </ul>
 </nav>
