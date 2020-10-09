@@ -12,21 +12,35 @@ class Menu extends Model
   protected $fillable = ['name', 'url', 'icon'];
   protected $guarded = ['id'];
 
+  public function roles()
+  {
+    return $this->belongsToMany(Role::class, 'role_has_menu');
+  }
+
   /**
    * Este metodo se encarga de recuperar todas los
    * menus que no son hijos de otros menus segun su orden. 
    * Retorna un array de objetos y no una collection
    */
-  public function getRootMenus()
+  public function getRootMenus($front = false)
   {
-    /**
-     * Con el metodo this, lo que hago es llamar a 
-     * este modelo y aplicar una clase de Eloquent
-     */
-    return $this->whereNull('father_id')
-      ->orderBy('order')
-      ->get()
-      ->toArray();
+    if($front){
+      return $this->whereHas('roles', function($query){
+        $query->where('role_id', session()->get('role_id'))->orderBy('menu_id');
+      })->whereNull('father_id')
+        ->orderBy('order')
+        ->get()
+        ->toArray();
+    }else{
+      /**
+       * Con el metodo this, lo que hago es llamar a 
+       * este modelo y aplicar una clase de Eloquent
+       */
+      return $this->whereNull('father_id')
+        ->orderBy('order')
+        ->get()
+        ->toArray();
+    }
   }
 
   /**
@@ -67,15 +81,15 @@ class Menu extends Model
    * Recupera todos los menus raiz junto
    * con toda su descendencia.
    */
-  public static function getMenus()
+  public static function getMenus($front = false)
   {
     $allMenus = [];
     //Se crea una instancia  de Menu
     $menu = new Menu();
-    $parents = $menu->getRootMenus();
+    $parents = $menu->getRootMenus($front);
     $allChildren = $menu->getAllMenuChildren();
 
-    foreach($parents as $father){
+    foreach ($parents as $father) {
       $chidren = $menu->getChildrenOf($father, $allChildren);
       $item = [array_merge($father, ['submenus' => $chidren])];
       $allMenus = array_merge($allMenus, $item);
@@ -84,22 +98,23 @@ class Menu extends Model
     return $allMenus;
   }
 
-  public function saveOrder($menus){
+  public function saveOrder($menus)
+  {
     $menus = json_decode($menus);
-    foreach($menus as $key => $menu){
-      $this->assignOrder($menu, null, $key +1);
-    }//End of forEach
-  }//end saveOrder
+    foreach ($menus as $key => $menu) {
+      $this->assignOrder($menu, null, $key + 1);
+    } //End of forEach
+  } //end saveOrder
 
   protected function assignOrder($menu, $fatherID, $order)
   {
     //Se actualiza el orden actual
     $this->where('id', $menu->id)->update(['father_id' => $fatherID, 'order' => $order]);
-    if(!empty($menu->children)){
+    if (!empty($menu->children)) {
       $submenus = $menu->children;
-      foreach($submenus as $index => $submenu){
-        $this->assignOrder($submenu, $menu->id, $index +1);
+      foreach ($submenus as $index => $submenu) {
+        $this->assignOrder($submenu, $menu->id, $index + 1);
       }
     }
-  }//end assignOrder
+  } //end assignOrder
 }

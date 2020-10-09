@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Admin\Menu;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
      * nombre del tema que deben utilizar
      */
     View::share('theme', 'lte');
+
+    View::composer("theme.lte.sidebar", function($view){
+      $menus = Menu::getMenus(true);
+      $view->with('menusComposer', $menus);
+    });
   }
 }

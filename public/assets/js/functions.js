@@ -47,3 +47,26 @@ const functions = function () {
     },//End of notifications
   }
 }();
+
+window.addEventListener('load', function (){
+  const sidebar = document.getElementById('mainSidebar');
+  /**
+   * Recupero el link activo dentro de sidebar
+   * y desde aquí empiezo a ascender hasta llegar al sidebar
+   */
+  const linkActive = sidebar.querySelector('a.active');
+  if(linkActive){
+    let father = linkActive.parentElement;
+    while(!father.getAttribute('id')){
+      //El siguiente punto de corte es cuando encuentra
+      //un elemento con la clase has-treeview
+      if(father.classList.contains('has-treeview')){
+        father.classList.add('menu-open');
+        father.querySelector('a').classList.add('active');
+      }
+      console.log(father)
+      father = father.parentElement;
+    }
+  }
+})
+

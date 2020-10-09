@@ -20,7 +20,7 @@ class AdminPermission
       return $next($request);
     }
 
-    return redirect(route('dashboard'));
+    return redirect(route('admin.dashboard'));
   }
 
   private function Permission()
