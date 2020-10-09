@@ -17,8 +17,22 @@ class MenuTableSeeder extends Seeder
   {
     $menus = [
       ["name" => "Dashboard", "url" => "admin/dashboard", "icon" => "fas fa-tachometer-alt"],
-      ["name" => "Menu", "url" => "admin/menu", "icon" => "fas fa-server"],
-      ["name" => "Crear Menú", "url" => "admin/menu/crear", "icon" => null],
+      ["name" => "Admin", "url" => "#", "icon" => "fas fa-user-cog"],
+      ["name" => "Menus", "url" => "#", "icon" => "fas fa-bars"],
+      ["name" => "Listado actual", "url" => "admin/menu", "icon" => "fas fa-server"],
+      ["name" => "Crear Menú", "url" => "admin/menu/crear", "icon" => "fas fa-edit"],
+      ["name" => "Permisos", "url" => "#", "icon" => "fas fa-cog"],
+      ["name" => "Listado de permisos", "url" => "#", "icon" => "fas fa-book"],
+      ["name" => "Crear permiso", "url" => "#", "icon" => "fas fa-edit"],
+      ["name" => "Roles", "url" => "#", "icon" => "fas fa-user-tie"],
+      ["name" => "Roles actuales", "url" => "admin/rol", "icon" => "fas fa-book"],
+      ["name" => "Nuevo rol", "url" => "admin/menu/rol/crear", "icon" => "fas fa-edit"],
+      ["name" => "Asignar Menús", "url" => "admin/menu-rol", "icon" => "fas fa-edit"],
+      ["name" => "Asignar permisos", "url" => "#", "icon" => "fas fa-cogs"],
+      ["name" => "Usuarios", "url" => "#", "icon" => "fas fa-users"],
+      ["name" => "Listado", "url" => "#", "icon" => "fas fa-book"],
+      ["name" => "Asignar roles", "url" => "#", "icon" => "fas fa-users-cog"],
+
     ];
 
     foreach($menus as $key => $menu){
