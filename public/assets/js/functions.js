@@ -64,7 +64,6 @@ window.addEventListener('load', function (){
         father.classList.add('menu-open');
         father.querySelector('a').classList.add('active');
       }
-      console.log(father)
       father = father.parentElement;
     }
   }
