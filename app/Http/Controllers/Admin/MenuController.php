@@ -60,9 +60,10 @@ class MenuController extends Controller
    * @param  \App\Models\Admin\Menu  $menu
    * @return \Illuminate\Http\Response
    */
-  public function edit(Menu $menu)
+  public function edit($id)
   {
-    //
+    $menu = Menu::findOrFail($id);
+    return view('admin.menu.edit', compact('menu'));
   }
 
   /**
@@ -72,9 +73,10 @@ class MenuController extends Controller
    * @param  \App\Models\Admin\Menu  $menu
    * @return \Illuminate\Http\Response
    */
-  public function update(Request $request, Menu $menu)
+  public function update(MenuValidation $request, $id)
   {
-    //
+    Menu::findOrFail($id)->update($request->all());
+    return redirect(route('admin.menu'))->with('message', "Menú actualizado correctamente");
   }
 
   /**
