@@ -16,6 +16,8 @@ class CreateRoleHasPermissionTable extends Migration
     Schema::create('role_has_permission', function (Blueprint $table) {
       $table->foreignId('role_id')->constrained('role');
       $table->foreignId('permision_id')->constrained('permission');
+      $table->charset = 'utf8mb4';
+      $table->collation = 'utf8mb4_spanish_ci';
     });
   }
 

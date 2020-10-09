@@ -21,6 +21,8 @@ class CreateMenuTable extends Migration
       $table->string('icon', 50)->nullable();
       $table->unsignedTinyInteger('order')->default(0);
       $table->timestamps();
+      $table->charset = 'utf8mb4';
+      $table->collation = 'utf8mb4_spanish_ci';
     });
   }
 

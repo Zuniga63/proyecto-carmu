@@ -19,6 +19,8 @@ class CreateUserHasRoleTable extends Migration
       $table->foreignId('role_id')->constrained('role');
       $table->boolean('state')->default(true);
       $table->timestamps();
+      $table->charset = 'utf8mb4';
+      $table->collation = 'utf8mb4_spanish_ci';
     });
   }
 
