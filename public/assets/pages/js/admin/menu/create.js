@@ -1,11 +1,29 @@
 window.addEventListener('load', ()=>{
   functions.generalValidation('form-general');
   document.getElementById('icon').addEventListener('input', ()=>{
-    const element = document.getElementById('show-icon');
-    element.classList = '';
-    if(document.getElementById('icon').value){
-      element.classList.add('fas');
-      element.classList.add(document.getElementById('icon').value);
-    }
+    showIcon();
   });
 })
+
+const showIcon = () =>{
+  /**
+   * Se recupera el elemento y se limpia su listado
+   * de clases
+   */
+  const element = document.getElementById('show-icon');
+  element.classList = '';
+
+  /**
+   * Recupero las clases de los iconos
+   * y las separo para signarlas al elemento
+   */
+
+  const classIcons = document.getElementById('icon').value;
+  const array = classIcons.split(' ');
+  array.forEach(item => {
+    item = item.trim();
+    if(item){
+      element.classList.add(item);
+    }
+  });
+}
