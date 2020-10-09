@@ -48,6 +48,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       Route::post('menu', [MenuController::class, 'store'])->name('menu_store');
       Route::post('menu/guardar-orden', [MenuController::class, 'saveOrder']);
       Route::put('menu/{id}', [MenuController::class, 'update'])->name('update_menu');
+      Route::delete('menu/{id}', [MenuController::class, 'destroy'])->name('delete_menu');
       // ---------------------------------------------------
       // Rutas para la gestion de los roles
       // ---------------------------------------------------

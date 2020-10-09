@@ -59,7 +59,7 @@
     <!-- /.card-body -->
     <div class="card-footer">
       <button type="submit" class="btn btn-success">Editar</button>
-      <a href="{{route('admin.menu')}}" class="btn btn-danger float-right">Eliminar</a>
+      <a href="{{route('admin.menu')}}" class="btn btn-danger float-right">Cancelar</a>
     </div>
     <!-- /.card-footer -->
   </form>

@@ -85,9 +85,13 @@ class MenuController extends Controller
    * @param  \App\Models\Admin\Menu  $menu
    * @return \Illuminate\Http\Response
    */
-  public function destroy(Menu $menu)
+  public function destroy($id)
   {
-    //
+    if(Menu::destroy($id)){
+      return redirect(route('admin.menu'))->with('message', "Menú eliminado del sistema");
+    }
+
+    return redirect(route('admin.menu'));
   }
 
   public function saveOrder(Request $request)

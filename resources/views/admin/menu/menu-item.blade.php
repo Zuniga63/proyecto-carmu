@@ -7,6 +7,12 @@
       url -> {{$item['url']}} ||
       icono -> <i class="fas {{$item['icon']}}"></i>
     </a>
+    <form action="{{route('admin.delete_menu', ['id' => $item['id']])}}" class="d-inline form-delete float-right" method="POST">
+      @csrf @method('delete')
+      <button type="submit" class="btn-action-table delete tooltipsC" title="Eliminar registro">
+        <i class="fas fa-trash text-danger"></i>
+      </button>
+    </form>
   </div>
 </li>
 @else
