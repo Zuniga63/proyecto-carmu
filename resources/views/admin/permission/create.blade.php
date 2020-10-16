@@ -7,7 +7,7 @@
       @include('admin.permission.form')
     </div>
     <div class="card-footer">
-      <button class="btn btn-success float-right" wire:click="store">Crear</button>
+      <button class="btn btn-success" wire:click="store">Crear</button>
     </div>
   </div>
 

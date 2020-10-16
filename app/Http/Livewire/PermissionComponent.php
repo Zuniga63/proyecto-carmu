@@ -9,9 +9,25 @@ use Livewire\Component;
 class PermissionComponent extends Component
 {
   // use WithPagination;
+  /**
+   * Este parametro es para intercarlar 
+   * entre el formulario de crear y actualizar
+   */
   public $view = "create";
+
+  /**
+   * Campos relacionados con el estado del componente
+   */
   public $permission_id, $name, $slug;
 
+  // protected $listener = ['triggerDelete' => 'destroy'];
+
+  /**
+   * Este metodo se encarga de crear el slug del permiso
+   * y tambien de guardar los datos en la base de datos
+   * despues de validarlos. Al final emite un evento 
+   * notificando que se ha guardado.
+   */
   public function store()
   {
     $this->slug = str_replace(' ', '-', mb_strtolower($this->name));
@@ -23,9 +39,15 @@ class PermissionComponent extends Component
       'slug' => $this->slug,
     ]);
 
+    //Se monta el formulario para editar
     $this->edit($permission->id);
+    $this->emit('permissionCreated');
   }
 
+  /**
+   * Contiene las reglas de validacion para los
+   * dos campos que van a ser agregados
+   */
   protected function fieldValidation()
   {
     $this->validate([
@@ -36,13 +58,14 @@ class PermissionComponent extends Component
 
   public function render()
   {
-    $permissions = Permission::get();
+    $permissions = Permission::orderBy('name')->get();
     return view('livewire.permission-component', compact('permissions'));
   }
 
   public function destroy($id)
   {
     Permission::destroy($id);
+    $this->emit('permissionDestroyed');
   }
 
   public function edit($id)

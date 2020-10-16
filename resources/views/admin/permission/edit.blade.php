@@ -11,5 +11,4 @@
       <button class="btn btn-link" wire:click="default">Cancelar</button>
     </div>
   </div>
-
 </div>
