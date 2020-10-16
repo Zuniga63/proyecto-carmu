@@ -14,6 +14,7 @@ class PermissionComponent extends Component
    * entre el formulario de crear y actualizar
    */
   public $view = "create";
+  public $placeholder = "Escribe el nombre aquí";
 
   /**
    * Campos relacionados con el estado del componente

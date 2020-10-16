@@ -12,33 +12,32 @@
   </div>
   <script type="text/javascript">
     document.addEventListener('livewire:load', function (){
-      console.log('probando');
-    Livewire.on('triggerDelete', permissionId => {
-        Swal.fire({
-        title: '¿Desea eliminar este permiso?',
-        text: 'Está accion no puede revertirse',
-        type: 'warning', 
-        showCancelButton: true,
-        confirmButtonColor: 'var(--success)',
-        cancelButtonColor: 'var(--primary)',
-        confirmButtonText: '¡Eliminar!',
-      }).then((result) => {
-        let type = 'success';
-        if(result.value){
-          @this.call('destroy', permissionId);
-        }else{
-          functions.notifications('', 'Operacion cancelada', type);
-        }
+      Livewire.on('triggerDelete', permissionId => {
+          Swal.fire({
+          title: '¿Desea eliminar este permiso?',
+          text: 'Está accion no puede revertirse',
+          icon: 'warning', 
+          showCancelButton: true,
+          confirmButtonColor: 'var(--success)',
+          cancelButtonColor: 'var(--primary)',
+          confirmButtonText: '¡Eliminar!',
+        }).then((result) => {
+          let type = 'success';
+          if(result.value){
+            @this.call('destroy', permissionId);
+          }else{
+            functions.notifications('', 'Operacion cancelada', type);
+          }
+        })
+      });
+
+      Livewire.on('permissionCreated', ()=>{
+        functions.notifications('El registro creado', '¡Permiso creado!', 'success');
       })
-    });
 
-    Livewire.on('permissionCreated', ()=>{
-      functions.notifications('El registro creado', '¡Permiso creado!', 'success');
-    })
-
-    Livewire.on('permissionDestroyed', ()=>{
-      functions.notifications('', '¡Permiso eliminado!', 'success');
-    })
+      Livewire.on('permissionDestroyed', ()=>{
+        functions.notifications('', '¡Permiso eliminado!', 'success');
+      })
   });
     
   </script>
