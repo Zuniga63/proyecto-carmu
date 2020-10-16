@@ -14,8 +14,8 @@ class CreateRoleHasMenuTable extends Migration
   public function up()
   {
     Schema::create('role_has_menu', function (Blueprint $table) {
-      $table->foreignId('role_id')->constrained('role');
-      $table->foreignId('menu_id')->constrained('menu');
+      $table->foreignId('role_id')->constrained('role')->onDelete('cascade');
+      $table->foreignId('menu_id')->constrained('menu')->onDelete('cascade');
     });
   }
 

@@ -63,6 +63,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       // ---------------------------------------------------
       Route::get('menu-rol', [RoleHasMenuController::class, 'index'])->name('menu_role');
       Route::post('menu-rol', [RoleHasMenuController::class, 'store'])->name('store_menu_rol');
+      // ---------------------------------------------------
+      // Rutas para la administracion de permisos
+      // ---------------------------------------------------
+      Route::view('permiso', 'admin.permission.index')->name('permission');
     });
   });
 });
