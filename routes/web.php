@@ -21,6 +21,8 @@ Route::get('/', function () {
   return view('welcome');
 });
 
+Route::redirect('/register', '/login', 301);
+
 // Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
 //   return view('dashboard');
 // })->name('dashboard');
