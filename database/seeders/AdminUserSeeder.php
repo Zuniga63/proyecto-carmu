@@ -16,6 +16,10 @@ class AdminUserSeeder extends Seeder
    */
   public function run()
   {
+    /**
+     * Se crea los datos del administrador
+     * por defecto
+     */
     DB::table('user')->insert([
       'id' => 1,
       'name' => "Andrés Zuñiga",
@@ -25,6 +29,9 @@ class AdminUserSeeder extends Seeder
       'updated_at' => Carbon::now(),
     ]);
 
+    /**
+     * Se asigna el rol de administrador
+     */
     DB::table('user_has_role')->insert([
       'user_id' => 1,
       'role_id' => 1,
