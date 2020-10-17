@@ -41,3 +41,36 @@
   <!-- /. card-body -->
   
 </div>
+
+<div class="card card-info">
+  <div class="card-header">
+    <h3 class="card-title">Asignar permisos a roles</h3>
+  </div>
+  <!-- /.card-header -->
+  <div class="card-body table-responsive p-0" style="height: 300px;">
+    <table class="table table-head-fixed table-hover table-striped text-center">
+      <thead>
+        <tr>
+          <th>Permiso</th>
+          @foreach ($roles as $role)
+            <th>{{$role->name}}</th>
+          @endforeach
+        </tr>
+      </thead>
+      <tbody>
+        @foreach ($permissions as $permission)
+        <tr>
+          <td>{{$permission->name}}</td>
+          @foreach ($roles as $role)
+            <td>
+              <input type="checkbox" {{in_array($role->id, array_column($permissionRole[$permission->id], "id")) ? "checked" : ''}} wire:click="$emit('triggerAssignment', {{$permission->id}}, {{$role->id}}, $event.target.checked)">
+            </td>
+          @endforeach
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
+  </div>
+  <!-- /. card-body -->
+  
+</div>

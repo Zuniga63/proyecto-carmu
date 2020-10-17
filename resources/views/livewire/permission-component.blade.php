@@ -31,12 +31,23 @@
         })
       });
 
+      Livewire.on('triggerAssignment', (permissionID, roleId, checked) =>{
+        console.log(permissionID, roleId, checked);
+        @this.call('permissionAssignment', permissionID, roleId, checked);
+      })
+
       Livewire.on('permissionCreated', ()=>{
         functions.notifications('El registro creado', '¡Permiso creado!', 'success');
       })
 
       Livewire.on('permissionDestroyed', ()=>{
         functions.notifications('', '¡Permiso eliminado!', 'success');
+      })
+      Livewire.on('permissionAssigned', ()=>{
+        functions.notifications('', '¡Permiso asignado correctamente!', 'success');
+      })
+      Livewire.on('permissionRemoved', ()=>{
+        functions.notifications('', '¡Permiso removido correctamente!', 'success');
       })
   });
     

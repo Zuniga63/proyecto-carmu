@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Models\Admin\Permission;
+use App\Models\Admin\Role;
 use Livewire\Component;
 // use Livewire\WithPagination;
 
@@ -59,8 +60,14 @@ class PermissionComponent extends Component
 
   public function render()
   {
-    $permissions = Permission::orderBy('name')->get();
-    return view('livewire.permission-component', compact('permissions'));
+    $permissions = Permission::orderBy('name')->with('roles')->get();
+    $roles = Role::orderBy('id')->get();
+    $permissionRole = Permission::with('roles')
+      ->get()
+      ->pluck('roles', 'id')
+      ->toArray();
+      // dd($permissionRole);
+    return view('livewire.permission-component', compact('permissions', 'roles', 'permissionRole'));
   }
 
   public function destroy($id)
@@ -87,6 +94,19 @@ class PermissionComponent extends Component
       'slug' => str_replace(' ', '-', mb_strtolower($this->name))
     ]);
     $this->default();
+  }
+
+  public function permissionAssignment($permissionId, $roleId, $checked)
+  {
+    $permission = new Permission();
+    if($checked)
+    {
+      $permission->find($permissionId)->roles()->attach($roleId);
+      $this->emit('permissionAssigned');
+    }else{
+      $permission->find($permissionId)->roles()->detach($roleId);
+      $this->emit('permissionRemoved');
+    }
   }
 
   public function default()
