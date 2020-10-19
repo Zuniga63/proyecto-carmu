@@ -1,4 +1,4 @@
-@include('includes.form-error')
+{{-- @include('includes.form-error')
 @include('includes.message')
 <!-- Horizontal Form -->
 <div class="card card-success">
@@ -43,4 +43,53 @@
     <!-- /.card-footer -->
   </form>
 </div>
-<!-- /.card -->
+<!-- /.card --> --}}
+<div class="form-group">
+  <label>Nombre</label>
+  <input 
+    type="text" 
+    name="permission-name" 
+    class="form-control"
+    placeholder="Escribe el nombre aquí"
+    wire:model.trim.lazy="name"
+    autocomplete="off"
+    autofocus="autofocus"
+  >
+  @error('name')
+  <div class="text-danger pl-1" role="alert">
+    {{$message}}
+  </div>
+  @enderror
+</div>
+
+<div class="form-group">
+  <label>Url</label>
+  <input 
+    type="text" 
+    name="permission-name" 
+    class="form-control"
+    placeholder="Ej: admin/menu"
+    wire:model.trim.lazy="url"
+    autocomplete="off"
+  >
+  @error('url')
+  <div class="text-danger pl-1" role="alert">
+    {{$message}}
+  </div>
+  @enderror
+</div>
+
+<div class="form-group" x-data="{icon: ''}">
+  {{-- Cuando el componente es renderizado se actualiza el valor del icono --}}
+  <label>Icono: <i class="{{$icon}}" x-ref="icon"></i></label>
+
+  <input 
+    type="text" 
+    name="permission-name" 
+    class="form-control" 
+    placeholder="Escribelo aquí"
+    x-on:input="$refs.icon.classList=icon"
+    x-model.trim="icon" 
+    wire:model.lazy="icon" 
+  >
+</div>

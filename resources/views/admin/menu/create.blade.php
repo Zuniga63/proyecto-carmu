@@ -1,19 +1,17 @@
-@extends("theme.$theme.layout")
-@section('title', 'Menu')
+<div class="card card-success">
+  <div class="card-header">
+    <h2 class="card-title">Registrar un nuevo menú</h2>
+  </div>
+  <div class="form-horizontal">
+    <div class="card-body">
+      @include('admin.menu.form')
+      {{-- <div wire:loading wire:target="store"> --}}
+        {{-- Realizando el registro... --}}
+      {{-- </div> --}}
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-success" wire:click="store">Registrar</button>
+    </div>
+  </div>
 
-@section('scripts')
-  <script src="{{asset("assets/pages/js/admin/menu/create.js")}}"></script>
-@endsection
-
-@section('contentTitle', "Crear un nuevo menú")
-@section('contentBreadcrum')
-<ol class="breadcrumb float-sm-right">
-  <li class="breadcrumb-item"><a href="{{route('admin.admin')}}">Home</a></li>
-  <li class="breadcrumb-item"><a href="{{route('admin.menu')}}">Menu</a></li>
-  <li class="breadcrumb-item active">Crear</li>
-</ol>
-@endsection
-
-@section('content')
-@include('admin.menu.form')
-@endsection
+</div>
