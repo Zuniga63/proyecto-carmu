@@ -70,5 +70,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       // ---------------------------------------------------
       Route::view('permiso', 'admin.permission.index')->name('permission');
     });
+
+    //-----------------------------------------------------------
+    // RUTAS PARA LA ADMINISTRACION DE LA TIENDA
+    //-----------------------------------------------------------
+    Route::view('tienda/categorias', 'admin.shop.category.index')->name('shop_categories');
   });
 });
