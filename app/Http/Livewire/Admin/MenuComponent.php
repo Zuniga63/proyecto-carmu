@@ -13,35 +13,29 @@ class MenuComponent extends Component
   public $view = "create";
 
   public $menuId = '';
-  public $name = "Listado actual";
-  public $url = "admin/menu";
-  public $icon = "fas fa-users";
+  public $name = "";
+  public $url = "";
+  public $icon = "";
 
-  // protected $rules = [
-  //   'name' => "required|max:50|unique:menu,name,",
-  //   'url' => 'required|max:100',
-  //   'icon' => 'nullable|max:50'
-  // ];
-
-  
   /**
-   * En este codigo se utilizó un closure para poder validar el campo url
-   * ya que debe hacer una consulta a la base de datos para ello
+   * Este sistema de reglas fue la formaque encontre de solucionar 
+   * la migracion del antiguo sistema por medio de migraciones 
+   * con el fin de agregar una regla para verificar la url. tomado de la
+   * documentacion de laravel
    */
   protected function rules()
   {
     return [
       'name' => "required|max:50|unique:menu,name,$this->menuId",
-      'url' => ['required', 'max:100', function($attribute, $value, $fail){
+      'icon' => 'nullable|max:50',
+      'url' => ['required', 'max:100', function ($attribute, $value, $fail) {
         if ($value !== '#') {
           $menu = Menu::where('url', $value)->where('id', '!=', $this->menuId)->get();
-          if(!$menu->isEmpty()){
-            $fail("ya está asignada");
-            // $this->addError('url', 'Ya esta asignada');
+          if (!$menu->isEmpty()) {
+            $fail("Está url ya fue asiganda");
           }
         }
       }],
-      'icon' => 'nullable|max:50'
     ];
   }
 
@@ -55,30 +49,75 @@ class MenuComponent extends Component
 
   public function render()
   {
-    return view('livewire.admin.menu-component');
+    $menus = Menu::getMenus();
+    return view('livewire.admin.menu-component', compact('menus'));
   }
 
   public function resetFields()
   {
-    $this->reset(['categoryId', 'name', 'url', 'icon']);
+    $this->reset(['menuId', 'name', 'url', 'icon', 'view']);
+  }
+
+  public function updated($propertyName)
+  {
+    $this->validateOnly($propertyName, $this->rules(), [], $this->attributes);
   }
 
   public function store()
   {
+    $validateData = $this->validate($this->rules(), [], $this->attributes);
+    Menu::create($validateData);
+    $this->emit('storedMenu', $this->name);
+    $this->resetFields();
+  }
 
+  public function edit($id)
+  {
+    $menu = Menu::find($id, ['id', 'name', 'icon', 'url']);
+    if($menu !== null)
+    {
+      $this->menuId = $menu->id;
+      $this->name = $menu->name;
+      $this->url = $menu->url;
+      $this->icon = $menu->icon;
+      $this->view = "edit";
+    }else{
+      $message = "El recurso que se intenta editar no existe";
+      $this->emit('menuNotFound', $message);
+    }
+  }
+
+  public function update()
+  {
     $this->validate($this->rules(), [], $this->attributes);
+    $menu = Menu::find($this->menuId, ['id']);
+    if($menu !== null){
+      $menu->update([
+        'name' => $this->name,
+        'url' => $this->url,
+        'icon' => $this->icon
+      ]);
 
-    // dd('foo');
-    
+      $this->emit('menuUpdated');
+      $this->resetFields();
+    }else{
+      $message = "El recurso que se intenta actualizar no existe";
+      $this->emit('menuNotFound', $message);
+    }
+  }
 
-    // $this->validate($this->rules, [], $this->attributes);
-    // Menu::create([
-    //   'name' => $this->name,
-    //   'url' => $this->url,
-    //   'icon' => $this->icon,
-    // ]);
+  public function destroy($id)
+  {
+    $message = "Menú eliminado!";
 
-
-    // $this->resetFields();
+    $menu = Menu::find($id);
+    if($menu != null){
+      $menu->delete();
+      $this->emit('menuDeleted', $message);
+      $this->resetFields();
+    }else{
+      $message = "El recurso que se intenta eliminar no existe";
+      $this->emit('menuNotFound', $message);
+    }
   }
 }

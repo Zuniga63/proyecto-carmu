@@ -49,14 +49,14 @@
   <input 
     type="text" 
     name="permission-name" 
-    class="form-control"
+    class="form-control {{$errors->has('name') ? 'is-invalid' : ''}}"
     placeholder="Escribe el nombre aquí"
-    wire:model.trim.lazy="name"
+    wire:model.trim="name"
     autocomplete="off"
     autofocus="autofocus"
   >
   @error('name')
-  <div class="text-danger pl-1" role="alert">
+  <div class="invalid-feedback" role="alert">
     {{$message}}
   </div>
   @enderror
@@ -67,13 +67,13 @@
   <input 
     type="text" 
     name="permission-name" 
-    class="form-control"
+    class="form-control {{$errors->has('url') ? 'is-invalid' : ''}}""
     placeholder="Ej: admin/menu"
-    wire:model.trim.lazy="url"
+    wire:model.trim="url"
     autocomplete="off"
   >
   @error('url')
-  <div class="text-danger pl-1" role="alert">
+  <div class="invalid-feedback" role="alert">
     {{$message}}
   </div>
   @enderror
