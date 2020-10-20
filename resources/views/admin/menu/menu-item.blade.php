@@ -2,14 +2,17 @@
 <li class="dd-item dd3-item" data-id="{{$item["id"]}}">
   <div class="dd-handle dd3-handle"></div>
   <div class="dd3-content">
-    <i class="{{$item['icon']}}"></i>
-    <span>{{$item['name']}}</span>
+    <a href="{{url($item['url'])}}">
+      <i class="{{$item['icon']}}"></i>
+      <span>{{$item['name']}}</span>
+      <span>[url:{{$item['url']}}]</span>
+    </a>
     <div class="float-right">
       <a href="#" class="btn-action-table" wire:click="edit({{$item['id']}})">
         <i class="fas fa-pencil-alt text-success" title="Editar categoría"></i>
       </a>
 
-      <a href="#" class="btn-action-table" wire:click="destroy({{$item['id']}})">
+      <a href="#" class="btn-action-table" x-on:click="showDeleteAlert({{$item['id']}}, '{{$item['name']}}')">
         <i class="fas fa-trash text-danger" title="Eliminar categoría"></i>
       </a>
     </div>
@@ -21,6 +24,7 @@
   <div class="dd3-content">
     <i class="{{$item['icon']}}"></i>
     <span>{{$item['name']}}</span>
+    <span>[url:{{$item['url']}}]</span>
     <div class="float-right">
       <a href="#" class="btn-action-table" wire:click="edit({{$item['id']}})">
         <i class="fas fa-pencil-alt text-success" title="Editar categoría"></i>

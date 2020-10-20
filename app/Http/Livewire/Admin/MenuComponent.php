@@ -67,7 +67,7 @@ class MenuComponent extends Component
   {
     $validateData = $this->validate($this->rules(), [], $this->attributes);
     Menu::create($validateData);
-    $this->emit('storedMenu', $this->name);
+    $this->emit('menuStored', $this->name);
     $this->resetFields();
   }
 
@@ -108,16 +108,21 @@ class MenuComponent extends Component
 
   public function destroy($id)
   {
-    $message = "Menú eliminado!";
-
-    $menu = Menu::find($id);
+    $menu = Menu::find($id, ['id', 'name']);
     if($menu != null){
       $menu->delete();
-      $this->emit('menuDeleted', $message);
+      $this->emit('menuDeleted', $menu->name);
       $this->resetFields();
     }else{
       $message = "El recurso que se intenta eliminar no existe";
       $this->emit('menuNotFound', $message);
     }
+  }
+
+  public function saveOrder($menus)
+  {
+    $menu = new Menu();
+    $menu->saveOrder($menus);
+    $this->emit('menuOrderSaved');
   }
 }

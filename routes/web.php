@@ -44,13 +44,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       // ---------------------------------------------------
       // Rutas para la gestion de los menus
       // ---------------------------------------------------
-      Route::get('menu', [MenuController::class, 'index'])->name('menu');
-      Route::get('menu/crear', [MenuController::class, 'create'])->name('menu_create');
-      Route::get('menu/{id}/editar', [MenuController::class, 'edit'])->name('edit_menu');
-      Route::post('menu', [MenuController::class, 'store'])->name('menu_store');
-      Route::post('menu/guardar-orden', [MenuController::class, 'saveOrder']);
-      Route::put('menu/{id}', [MenuController::class, 'update'])->name('update_menu');
-      Route::delete('menu/{id}', [MenuController::class, 'destroy'])->name('delete_menu');
+      Route::view('menu', 'admin.menu.index');
+      // Route::get('menu', [MenuController::class, 'index'])->name('menu');
+      // Route::get('menu/crear', [MenuController::class, 'create'])->name('menu_create');
+      // Route::get('menu/{id}/editar', [MenuController::class, 'edit'])->name('edit_menu');
+      // Route::post('menu', [MenuController::class, 'store'])->name('menu_store');
+      // Route::post('menu/guardar-orden', [MenuController::class, 'saveOrder']);
+      // Route::put('menu/{id}', [MenuController::class, 'update'])->name('update_menu');
+      // Route::delete('menu/{id}', [MenuController::class, 'destroy'])->name('delete_menu');
       // ---------------------------------------------------
       // Rutas para la gestion de los roles
       // ---------------------------------------------------
