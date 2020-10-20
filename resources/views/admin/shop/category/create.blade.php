@@ -8,6 +8,9 @@
       <div wire:loading wire:target="store">
         Realizando el registro...
       </div>
+      <div wire:loading wire:target="edit">
+        Recuperando informacion...
+      </div>
     </div>
     <div class="card-footer">
       <button class="btn btn-success" wire:click="store">Registrar</button>
