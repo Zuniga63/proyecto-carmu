@@ -44,7 +44,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       // ---------------------------------------------------
       // Rutas para la gestion de los menus
       // ---------------------------------------------------
-      Route::view('menu', 'admin.menu.index');
+      Route::view('menu', 'admin.menu.index')->name('menu');
       // Route::get('menu', [MenuController::class, 'index'])->name('menu');
       // Route::get('menu/crear', [MenuController::class, 'create'])->name('menu_create');
       // Route::get('menu/{id}/editar', [MenuController::class, 'edit'])->name('edit_menu');
@@ -55,12 +55,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       // ---------------------------------------------------
       // Rutas para la gestion de los roles
       // ---------------------------------------------------
-      Route::get('rol', [RoleController::class, 'index'])->name('role');
-      Route::get('rol/crear', [RoleController::class, 'create'])->name('create_role');
-      Route::get('rol/{id}/editar', [RoleController::class, 'edit'])->name('edit_role');
-      Route::post('rol', [RoleController::class, 'store'])->name('store_role');
-      Route::put('rol/{id}', [RoleController::class, 'update'])->name('update_role');
-      Route::delete('rol/{id}', [RoleController::class, 'destroy'])->name('delete_role');
+      Route::view('rol', "admin.role.index")->name('role');
+      // Route::get('rol/crear', [RoleController::class, 'create'])->name('create_role');
+      // Route::get('rol/{id}/editar', [RoleController::class, 'edit'])->name('edit_role');
+      // Route::post('rol', [RoleController::class, 'store'])->name('store_role');
+      // Route::put('rol/{id}', [RoleController::class, 'update'])->name('update_role');
+      // Route::delete('rol/{id}', [RoleController::class, 'destroy'])->name('delete_role');
       // ---------------------------------------------------
       // Rutas para la asignacion de menus
       // ---------------------------------------------------
