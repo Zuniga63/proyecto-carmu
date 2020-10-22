@@ -77,5 +77,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     //-----------------------------------------------------------
     Route::view('tienda/categorias', 'admin.shop.category.index')->name('shop_categories');
     Route::view('tienda/etiquetas', 'admin.shop.tag.index')->name('shop_tags');
+    Route::view('tienda/marcas', 'admin.shop.brand.index')->name('shop_brands');
   });
 });
