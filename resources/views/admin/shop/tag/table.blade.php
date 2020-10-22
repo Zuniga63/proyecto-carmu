@@ -15,7 +15,7 @@
       </thead>
       <tbody>
         @foreach ($tags as $tag)
-        <tr>
+        <tr x-data="{id:{{$tag->id}}, name:'{{$tag->name}}'}">
           <td>{{$tag->id}}</td>
           <td>{{$tag->name}}</td>
           <td>{{$tag->slug}}</td>
@@ -35,7 +35,7 @@
               title="Eliminar permiso"
               data-toggle="tooltip" 
               data-placement="top"
-              x-on:click="showDeleteAlert({{$tag->id}}, '{{$tag->name}}')"
+              x-on:click="showDeleteAlert(id, name)"
             >
               <i class="fas fa-trash"></i>
             </a>

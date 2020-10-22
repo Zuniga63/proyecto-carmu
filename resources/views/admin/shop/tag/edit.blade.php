@@ -5,8 +5,8 @@
   <div class="form-horizontal">
     <div class="card-body">
       @include('admin.shop.tag.form')
-      <div wire:loading wire:target="store">
-        Realizando el registro...
+      <div wire:loading wire:target="update">
+        Actualizando el registro...
       </div>
       <div wire:loading wire:target="edit">
         Recuperando informacion...

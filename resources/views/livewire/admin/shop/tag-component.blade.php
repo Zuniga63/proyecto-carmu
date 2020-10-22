@@ -1,5 +1,8 @@
 <section class="content">
-  <div class="container-fluid" x-data="{tags:{{json_encode($tags->toArray())}}}">
+  <div 
+    class="container-fluid" 
+    x-data="{name:@entangle('name').defer, slug:@entangle('slug')}"
+  >
     <div class="row">
       <div class="col-md-4">
         @include("admin.shop.tag.$view")
@@ -44,7 +47,7 @@
     })
   })
 
-    const showDeleteAlert = (id, name) => {
+    window.showDeleteAlert = (id, name) => {
       console.log(id);
         Swal.fire({
           title:`¿Desea eliminar el menú?`,

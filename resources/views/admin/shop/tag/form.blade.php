@@ -5,7 +5,8 @@
     name="tag_name" 
     class="form-control {{$errors->has('name') ? 'is-invalid' : ''}}"
     placeholder="Escribe el nombre aquí"
-    wire:model.trim="name"
+    x-model.trim="name"
+    x-on:input="slug = name.toLowerCase().replace(/\s/gi, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '')"
     autocomplete="off"
     autofocus="autofocus"
   >
@@ -23,7 +24,7 @@
     name="tag_name" 
     class="form-control {{$errors->has('slug') ? 'is-invalid' : ''}}"
     placeholder="Escribe el slug"
-    wire:model.trim="slug"
+    x-model.trim="slug"
     autocomplete="off"
     autofocus="autofocus"
   >
