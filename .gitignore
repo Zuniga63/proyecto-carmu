@@ -2,6 +2,7 @@
 /public/hot
 /public/css/app.css
 /public/js/app.js
+/public/js/app.js.LICENSE.txt
 /public/assets/lte
 /public/storage
 /storage/*.key
