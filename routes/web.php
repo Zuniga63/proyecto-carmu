@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RoleHasMenuController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,9 +18,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-  return view('welcome');
-});
+Route::get('/', [HomeController::class, 'index']);
+Route::get('/catalogo', [HomeController::class, 'catalog'])->name('catalog');
 
 Route::redirect('/register', '/login', 301);
 

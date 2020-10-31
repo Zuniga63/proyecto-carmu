@@ -57,7 +57,7 @@
                 </path>
               </svg>
 
-              <span>Productos</span>
+              <span>Catalogo</span>
             </div>
 
             <svg x-bind:class="{'text-gray-400': !active, 'text-gray-600': active}"
@@ -79,7 +79,7 @@
             <div class="rounded-lg shadow-lg">
               <div class="rounded-lg shadow-xs overflow-hidden">
                 <div class="z-20 relative grid gap-6 bg-white px-5 py-6 sm:gap-8 sm:p-8">
-                  <a href="#"
+                  <a href="{{route('catalog')}}"
                     class="-m-3 p-3 flex items-start space-x-4 rounded-lg hover:bg-gray-50 transition ease-in-out duration-150">
                     <!-- Heroicon name: clock -->
                     <svg class="flex-shrink-0 h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -189,7 +189,7 @@
                 <div class="text-base leading-6 font-medium text-gray-900">
                   Catalogo
                   <div class="mt-3 px-2 space-y-1">
-                    <a href="#"
+                    <a href="{{route('catalog')}}"
                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700">Relojería</a>
                   </div>
                 </div>
