@@ -21,7 +21,9 @@ class HomeController extends Controller
       ->take(8)
       ->get();
 
-    return view('welcome', compact('products'));
+    $title = "Lo más reciente de nuestro catálogo";
+
+    return view('welcome', compact('products', 'title'));
   }
 
   public function catalog()
@@ -30,7 +32,8 @@ class HomeController extends Controller
       ->whereNotNull('img')
       ->latest('updated_at')
       ->get();
-    return view('welcome', compact('products'));
+      $title = "Catálogo de relojes";
+    return view('welcome', compact('products', 'title'));
   }
 
   /**
