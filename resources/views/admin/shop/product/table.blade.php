@@ -16,7 +16,7 @@
       </thead>
       <tbody>
         @foreach ($products as $item)
-        <tr>
+        <tr x-data="{id:{{$item->id}}, name:'{{$item->name}}'}">
           <td>
             <img src="{{$item->img ? url('storage/' . $item->img) : url('storage/img/products/no-image-available.png')}}"
               width="100px" lazy>
