@@ -30,7 +30,7 @@
   @endforeach
 
   <div 
-    class="bg-gray-900 bg-opacity-75 min-w-full min-h-screen z-50 absolute inset-0 flex items-center" 
+    class="bg-gray-900 bg-opacity-75 min-w-full min-h-screen z-50 fixed inset-0 flex items-center" 
     x-show="showModal" 
     x-transition:enter="duration-200 ease-out" 
     x-transition:enter-start="opacity-0 scale-95" 
