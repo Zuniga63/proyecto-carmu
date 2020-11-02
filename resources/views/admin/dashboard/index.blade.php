@@ -12,6 +12,5 @@
 @endsection
 
 @section('content')
-<p>Aquí va el contenido del dashboard</p>
-<a href="{{route('admin.menu')}}">Admin->Menu</a>
+<livewire:admin.dashboard-component>
 @endsection
