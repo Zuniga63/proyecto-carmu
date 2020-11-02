@@ -90,28 +90,28 @@
 
     @if ($view==="edit")
       <div class="container">
-        @if ($actualImage && $image)
+        @if ($image)
           <div class="row">
             <div class="col-lg-6">
               <div class="card">
-                <h5 class="card-header">Imagen Actual</h5>
+                <h5 class="card-header">Actual</h5>
               </div>
               <div class="card-body">
-                <img src="{{url('storage/' . $actualImage)}}" alt="{{$name}}" class="img-thumbnail mx-auto">
+                <img src="{{url($actualImage ? "storage/$actualImage" : 'storage/img/no-image-available.png')}}" alt="{{$name}}" class="img-thumbnail mx-auto">
               </div>
             </div>
             <div class="col-lg-6">
               <div class="card">
-                <h5 class="card-header">Nueva imagen</h5>
+                <h5 class="card-header">Nueva</h5>
               </div>
               <div class="card-body">
                 <img src="{{$this->path}}" alt="{{$name}}" class="img-thumbnail mx-auto">
               </div>
             </div>
           </div>
-        @elseif($actualImage)
+        @else
           <div class="contaier">
-            <img src="{{url('storage/' . $actualImage)}}" alt="{{$name}}" class="img-thumbnail mx-auto">
+            <img src="{{url($actualImage ? "storage/$actualImage" : 'storage/img/no-image-available.png')}}" alt="{{$name}}" class="img-thumbnail mx-auto">
           </div>
         @endif
       </div>

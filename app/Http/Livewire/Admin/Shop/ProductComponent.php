@@ -165,7 +165,7 @@ class ProductComponent extends Component
         ]);
 
         //Procedo a eliminar la imagen antigua
-        if($imagePath){
+        if($imagePath && $this->actualImage){
           $this->deleteImage($this->actualImage);
         }
 
