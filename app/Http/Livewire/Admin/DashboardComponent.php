@@ -9,7 +9,7 @@ use Livewire\Component;
 class DashboardComponent extends Component
 {
   public $now;
-  protected $months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Obtubre', 'Noviembre', 'Diciembre'];
+  protected $months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
   public function mount()
   {
@@ -18,11 +18,13 @@ class DashboardComponent extends Component
 
   public function render()
   {
-    $montlyReports = $this->getMontlySales();
-    return view('livewire.admin.dashboard-component', compact('montlyReports'));
+    $montlyReports = $this->getMontlyReports();
+    $categories = $this->getMontlyReportsByCategories();
+    $months = $this->months;
+    return view('livewire.admin.dashboard-component', compact('montlyReports', 'categories', 'months'));
   }
 
-  public function getMontlySales()
+  public function getMontlyReports()
   {
     $result = [];
     $reports = [];
@@ -67,6 +69,71 @@ class DashboardComponent extends Component
       'totalPayments' => $totalPayments,
       'totalCredits' => $totalCredits,
       'totalBalance' => $totalBalance
+    ];
+  }
+
+  public function getCategories()
+  {
+    return DB::connection('carmu')
+      ->table('sale_category')
+      ->pluck('name', 'category_id');
+  }
+
+  public function getMontlyReportsByCategories()
+  {
+    $categories = $this->getCategories();
+    $initialReports = [];
+    foreach ($categories as $id => $categoryName) {
+      $montlyReports = $this->getMontlyReportsByCategory($id);
+      $initialReports[] = [
+        'id' => $id,
+        'name' => $categoryName,
+        'sales' => $montlyReports['sales'],
+        'amount' => $montlyReports['amount'],
+        'average' => $montlyReports['amount'] / 12
+      ];
+    }
+
+    usort($initialReports, function ($a, $b) {
+      if($a['amount'] == $b['amount']){
+        return 0;
+      }
+      return ($a['amount'] < $b['amount']) ? '+1' : '-1';
+    });
+
+    return $initialReports;
+  }
+
+  public function sortByAmount($a, $b)
+  {
+    return $a['amount'] - $b['amount'];
+  }
+  public function getMontlyReportsByCategory($id = 4)
+  {
+    $sales = [];
+    $amount = 0;
+
+    $from = Carbon::now()->startOfYear();
+
+    for ($index=0; $index < 12; $index++) { 
+      $sale = floatval(DB::connection('carmu')
+        ->table('sale_has_category')
+        ->where('category_id', $id)
+        ->join('sale', 'sale.sale_id', '=', 'sale_has_category.sale_id')
+        ->where('sale.sale_date', '>=', $from->format('Y-m-d H:i:s'))
+        ->where('sale.sale_date', '<=', $from->copy()->endOfMonth()->format('Y-m-d H:i:s'))
+        ->select('sale.amount')
+        ->sum('amount'));
+      
+      $sales[] = $sale;
+      $amount += $sale;
+
+      $from->addMonth();
+    }
+
+    return [
+      'sales' => $sales,
+      'amount' => $amount
     ];
   }
 }
