@@ -40,6 +40,47 @@
           </div>
         </div>
       </div>
+
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Evolucion de los creditos [{{$now->format('Y')}}]</h3>
+          </div>
+          <div class="card-body table-responsive p-0" style="height: 60vh">
+            <table class="table table-head-fixed table-hover text-nowrap">
+              <thead>
+                <tr class="text-center">
+                  <th>Mes</th>
+                  <th>Creditos</th>
+                  <th>Abonos</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{intval($now->format('Y')) - 1}}</td>
+                  <td></td>
+                  <td></td>
+                  <td class="text-right">$ {{number_format($creditEvolutions['inititalBalance'], 0, ',', '.')}}</td>
+                </tr>
+                @foreach ($creditEvolutions['reports'] as $report)
+                <tr>
+                  <td>{{$report['month']}}</td>
+                  <td class="text-right">$ {{number_format($report['credits'], 0, ',', '.')}}</td>
+                  <td class="text-right">$ {{number_format($report['payments'], 0, ',', '.')}}</td>
+                  <td class="text-right">
+                    $ {{number_format($report['balance'], 0, ',', '.')}}
+                    <span class="text-small {{$report['grow'] <= 0 ? 'text-success' : 'text-danger'}}">
+                      ({{number_format(abs($report['grow'] * 100), 1)}}%)
+                    </span>
+                  </td>
+                </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
     <div>
       <div class="card">
@@ -57,20 +98,20 @@
               </tr>
             </thead>
             <tbody>
-              @for ($index = 0; $index < 12; $index++)
-              <tr>
+              @for ($index = 0; $index < 12; $index++) <tr>
                 <td>{{$months[$index]}}</td>
                 @foreach ($categories as $id => $category)
-                <td class="text-right {{$category['sales'][$index] < $category['average'] ? 'text-danger' : ''}}">$ {{number_format($category['sales'][$index], 0, ',', '.')}}</td>
+                <td class="text-right {{$category['sales'][$index] < $category['average'] ? 'text-danger' : ''}}">$
+                  {{number_format($category['sales'][$index], 0, ',', '.')}}</td>
                 @endforeach
-              </tr>
-              @endfor
-              <tr class="text-bold">
-                <td>Total:</td>
-                @foreach ($categories as $id => $category)
-                <td class="text-right">$ {{number_format($category['amount'], 0, ',', '.')}}</td>
-                @endforeach
-              </tr>
+                </tr>
+                @endfor
+                <tr class="text-bold">
+                  <td>Total:</td>
+                  @foreach ($categories as $id => $category)
+                  <td class="text-right">$ {{number_format($category['amount'], 0, ',', '.')}}</td>
+                  @endforeach
+                </tr>
             </tbody>
           </table>
         </div>

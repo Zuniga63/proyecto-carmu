@@ -21,7 +21,8 @@ class DashboardComponent extends Component
     $montlyReports = $this->getMontlyReports();
     $categories = $this->getMontlyReportsByCategories();
     $months = $this->months;
-    return view('livewire.admin.dashboard-component', compact('montlyReports', 'categories', 'months'));
+    $creditEvolutions = $this->creditEvolution();
+    return view('livewire.admin.dashboard-component', compact('montlyReports', 'categories', 'months', 'creditEvolutions'));
   }
 
   public function getMontlyReports()
@@ -95,7 +96,7 @@ class DashboardComponent extends Component
     }
 
     usort($initialReports, function ($a, $b) {
-      if($a['amount'] == $b['amount']){
+      if ($a['amount'] == $b['amount']) {
         return 0;
       }
       return ($a['amount'] < $b['amount']) ? '+1' : '-1';
@@ -108,6 +109,7 @@ class DashboardComponent extends Component
   {
     return $a['amount'] - $b['amount'];
   }
+
   public function getMontlyReportsByCategory($id = 4)
   {
     $sales = [];
@@ -115,7 +117,7 @@ class DashboardComponent extends Component
 
     $from = Carbon::now()->startOfYear();
 
-    for ($index=0; $index < 12; $index++) { 
+    for ($index = 0; $index < 12; $index++) {
       $sale = floatval(DB::connection('carmu')
         ->table('sale_has_category')
         ->where('category_id', $id)
@@ -124,7 +126,7 @@ class DashboardComponent extends Component
         ->where('sale.sale_date', '<=', $from->copy()->endOfMonth()->format('Y-m-d H:i:s'))
         ->select('sale.amount')
         ->sum('amount'));
-      
+
       $sales[] = $sale;
       $amount += $sale;
 
@@ -134,6 +136,64 @@ class DashboardComponent extends Component
     return [
       'sales' => $sales,
       'amount' => $amount
+    ];
+  }
+
+  public function creditEvolution()
+  {
+    
+    $montlyReports = [];
+
+    $from = Carbon::now()->startOfYear();
+    //Calculo el saldo de los creditos del año anterior
+    $initialCredits = floatval(
+      DB::connection('carmu')
+        ->table('customer_credit')
+        ->where('credit_date', '<', $from->format('Y-m-d H:i:s'))
+        ->sum('amount')
+    );
+
+    $initialPayments = floatval(
+      DB::connection('carmu')
+        ->table('customer_payment')
+        ->where('payment_date', '<', $from->format('Y-m-d H:i:s'))
+        ->sum('amount')
+    );
+
+    $initialBalance = $initialCredits - $initialPayments;
+    $balance = $initialBalance;
+
+    for ($index=0; $index < 12; $index++) { 
+      $credits = floatval(DB::connection('carmu')
+        ->table('customer_credit')
+        ->where('credit_date', '>=', $from->format('Y-m-d H:i:s'))
+        ->where('credit_date', '<=', $from->copy()->endOfMonth()->format('Y-m-d H:i:s'))
+        ->sum('amount'));
+
+      $payments = floatval(DB::connection('carmu')
+        ->table('customer_payment')
+        ->where('payment_date', '>=', $from->format('Y-m-d H:i:s'))
+        ->where('payment_date', '<=', $from->copy()->endOfMonth()->format('Y-m-d H:i:s'))
+        ->sum('amount'));
+
+      $grow = ($credits - $payments) / $balance;
+
+      $balance += $credits - $payments;
+
+      $montlyReports[] = [
+        'month' => $this->months[$index],
+        'credits' => $credits,
+        'payments' => $payments,
+        'balance' => $balance,
+        'grow' => $grow
+      ];
+
+      $from->addMonth();
+    }
+
+    return [
+      'inititalBalance' => $initialBalance,
+      'reports' => $montlyReports
     ];
   }
 }
