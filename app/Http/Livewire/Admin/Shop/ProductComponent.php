@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin\Shop;
 
 use App\Models\Shop\Brand;
+use App\Models\Shop\Category;
 use App\Models\Shop\Product;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class ProductComponent extends Component
   public $view = "create";
   public $productId = null;
   public $brandId = "";
+  public $categoryId ="";
   public $image = null;
   public $actualImage = '';
   public $name = "";
@@ -72,8 +74,9 @@ class ProductComponent extends Component
     $products = Product::where('name', 'like', '%' . $this->name . '%')
       ->orderBy('id')
       ->get(['id', 'name', 'img', 'price', 'is_new', 'outstanding', 'published']);
+    $categories = Category::whereNull('father_id')->pluck('name', 'id');
 
-    return view('livewire.admin.shop.product-component', compact('brands', 'products'));
+    return view('livewire.admin.shop.product-component', compact('brands', 'products', 'categories'));
   }
 
   //---------------------------------------------------
@@ -88,7 +91,7 @@ class ProductComponent extends Component
     try {
       $imagePath = $this->storeImage();
 
-      Product::create([
+      $product = Product::create([
         'brand_id' => 0 >= $this->brandId ? null : $this->brandId,
         'name' => $this->name,
         'slug' => $this->slug,
@@ -100,6 +103,14 @@ class ProductComponent extends Component
         'is_new' => $this->isNew,
         'published' => $this->published,
       ]);
+
+      if($this->categoryId && $this->categoryId > 0){
+        DB::table('category_has_product')->insert([
+          'product_id' => $product->id,
+          'category_id' => $this->categoryId
+        ]);
+      }
+
       $this->resetFields();
       $this->emit('stored');
       DB::commit();
@@ -137,6 +148,12 @@ class ProductComponent extends Component
       $this->outstanding  = $product->outstanding;
       $this->isNew        = $product->is_new;
       $this->published    = $product->published;
+
+      /**
+       * Codigo temporal para recuperar la categoría
+       */
+      $data =  DB::table('category_has_product')->where('product_id', $id)->first(['category_id']);
+      $this->categoryId = $data ? $data->category_id : '';
     }
   }
 
@@ -163,6 +180,16 @@ class ProductComponent extends Component
           'is_new' => $this->isNew,
           'published' => $this->published,
         ]);
+
+        //Elimino la rel prodcut-category
+        DB::table('category_has_product')->where('product_id', $product->id)->delete();
+        //Ahora creo la nueva relacion
+        if($this->categoryId && $this->categoryId > 0){
+          DB::table('category_has_product')->insert([
+            'product_id' => $product->id,
+            'category_id' => $this->categoryId
+          ]);
+        }
 
         //Procedo a eliminar la imagen antigua
         if($imagePath && $this->actualImage){
