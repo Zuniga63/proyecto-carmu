@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [HomeController::class, 'index']);
-Route::get('/catalogo', [HomeController::class, 'catalog'])->name('catalog');
+Route::get('/catalogo/{categorySlug?}', [HomeController::class, 'catalog'])->name('catalog');
 
 Route::redirect('/register', '/login', 301);
 
