@@ -68,6 +68,16 @@
       </template>
     </div>
 
+    <div class="form_group mb-4">
+      <label for="productCategory">Categoría Principal</label>
+      <select name="categoryId" id="productCategory" class="form-control" x-model.number="categoryId">
+        <option value="0" selected>Sin categoría</option>
+        @foreach ($categories as $id => $name)
+        <option value="{{$id}}">{{$name}}</option>
+        @endforeach
+      </select>
+    </div>
+
     <div class="custom-file mb-2">
       <input 
         type="file" 

@@ -10,7 +10,7 @@
   <!-- Fonts -->
   {{-- <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"> --}}
 
-  <link rel="stylesheet" href="./css/app.css">
+  <link rel="stylesheet" href="{{asset('/css/app.css')}}">
 
   @env('production')
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -41,7 +41,7 @@
     <span class="text-white text-xs">Tienda Carmú &copy;2020</span>
   </footer>
 
-  <script src="./js/app.js"></script>
+  <script src="{{asset('js/app.js')}}"></script>
 </body>
 
 </html>

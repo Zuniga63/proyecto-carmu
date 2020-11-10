@@ -71,7 +71,7 @@
           </button>
 
           {{-- Dropdown --}}
-          <div class="absolute -ml-4 mt-3 transform px-2 w-screen max-w-md sm:px-0 lg:ml-0 lg:left-1/2 lg:-translate-x-1/2"
+          <div class="absolute -ml-4 mt-3 transform px-2 w-screen max-w-md sm:px-0 lg:ml-0 lg:left-1/2 lg:-translate-x-1/2 z-50"
             x-show="active" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
@@ -79,23 +79,25 @@
             <div class="rounded-lg shadow-lg">
               <div class="rounded-lg shadow-xs overflow-hidden">
                 <div class="z-20 relative grid gap-6 bg-white px-5 py-6 sm:gap-8 sm:p-8">
-                  <a href="{{route('catalog')}}"
+                  @foreach ($categories as $category)
+                  <a href="{{route('catalog', ['categorySlug' => $category->slug])}}"
                     class="-m-3 p-3 flex items-start space-x-4 rounded-lg hover:bg-gray-50 transition ease-in-out duration-150">
                     <!-- Heroicon name: clock -->
-                    <svg class="flex-shrink-0 h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    {{-- <svg class="flex-shrink-0 h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                    </svg> --}}
                     <div class="space-y-1">
                       <p class="text-base leading-6 font-medium text-gray-900">
-                        Relojería
+                        {{$category->name}}
                       </p>
-                      <p class="text-sm leading-5 text-gray-500">
+                      <!--p class="text-sm leading-5 text-gray-500">
                         De las marcas Q&Q y Q&Q Superior
-                      </p>
+                      </p-->
                     </div>
                   </a>
+                  @endforeach
                 </div>
               </div>
             </div>
@@ -165,7 +167,7 @@
             {{-- Links de la aplicación --}}
             <nav class="grid gap-y-8">
               <!-- Link to home -->
-              <a href="#" class="-m-3 p-3 flex items-center space-x-3 rounded-md hover:bg-gray-50 transition ease-in-out duration-150">
+              <a href="{{url('/')}}" class="-m-3 p-3 flex items-center space-x-3 rounded-md hover:bg-gray-50 transition ease-in-out duration-150">
                 <!-- Heroicon:home -->
                 <svg class="flex-shrink-0 h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg">
@@ -186,11 +188,13 @@
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
                   </path>
                 </svg>
-                <div class="text-base leading-6 font-medium text-gray-900 flex-grow">
+                <div class="flex-grow text-base leading-6 font-medium text-gray-900">
                   Catalogo
                   <div class="mt-3 px-2 space-y-1">
-                    <a href="{{route('catalog')}}"
-                      class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700">Relojería</a>
+                    @foreach ($categories as $category)
+                    <a href="{{route('catalog', ['categorySlug' => $category->slug])}}"
+                      class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700">{{$category->name}}</a>
+                    @endforeach
                   </div>
                 </div>
               </div>

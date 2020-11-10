@@ -6,6 +6,7 @@
     stock: @entangle('stock'),
     price: @entangle('price'),
     brandId: @entangle('brandId'),
+    categoryId: @entangle('categoryId'),
     outstanding: @entangle('outstanding'),
     isNew: @entangle('isNew'),
     published: @entangle('published'),

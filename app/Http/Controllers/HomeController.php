@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shop\Category;
 use App\Models\Shop\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -14,6 +16,10 @@ class HomeController extends Controller
    */
   public function index()
   {
+    $categories = Category::whereNull('father_id')
+      ->orderBy('order')
+      ->get(['id', 'name', 'slug']);
+    
     $products = Product::where('published', 1)
       ->where('is_new', 1)
       ->whereNotNull('img')
@@ -23,17 +29,40 @@ class HomeController extends Controller
 
     $title = "Lo más reciente de nuestro catálogo";
 
-    return view('welcome', compact('products', 'title'));
+    return view('welcome', compact('products', 'title', 'categories'));
   }
 
-  public function catalog()
+  public function catalog($categorySlug = null)
   {
-    $products = Product::where('published', 1)
+    $title = "";
+    $products = [];
+    $categories = Category::whereNull('father_id')
+      ->orderBy('order')
+      ->get(['id', 'name', 'slug']);
+
+    if($categorySlug){
+      $category = Category::where('slug', 'like', '%'.$categorySlug.'%')->first();
+      if($category){
+        $title = "Catálogo de $category->name";
+        $products = DB::table('product')
+          ->join('category_has_product', 'product.id', '=', 'category_has_product.product_id' )
+          ->where('category_has_product.category_id', $category->id)
+          ->where('product.published', 1)
+          ->whereNotNull('product.img')
+          ->latest('product.updated_at')
+          ->get('product.*');
+      }else{
+        return redirect(url('/catalogo'));
+      }
+    }else{
+      $title = "Catálogo General";
+      $products = Product::where('published', 1)
       ->whereNotNull('img')
       ->latest('updated_at')
       ->get();
-      $title = "Catálogo de relojes";
-    return view('welcome', compact('products', 'title'));
+    }
+
+    return view('welcome', compact('products', 'title', 'categories'));
   }
 
   /**
