@@ -2,7 +2,7 @@
 <html lang="en">
 @include("theme.$theme.header")
 
-<body class="hold-transition sidebar-mini layout-fixed">
+<body class="hold-transition sidebar-mini layout-navbar-fixed sidebar-collapse">
   <!-- Site wrapper -->
   <div class="wrapper">
     @include("theme.$theme.navbar")
