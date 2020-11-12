@@ -24,14 +24,14 @@ class Menu extends Model
    */
   public function getRootMenus($front = false)
   {
-    if($front){
-      return $this->whereHas('roles', function($query){
+    if ($front) {
+      return $this->whereHas('roles', function ($query) {
         $query->where('role_id', session()->get('role_id'))->orderBy('menu_id');
       })->whereNull('father_id')
         ->orderBy('order')
         ->get()
         ->toArray();
-    }else{
+    } else {
       /**
        * Con el metodo this, lo que hago es llamar a 
        * este modelo y aplicar una clase de Eloquent
@@ -47,13 +47,24 @@ class Menu extends Model
    * Recuepera todas las tupla que tienen un valor asignado
    * para el campo father_id e incluye, hijos, nietos, etc.
    */
-  public function getAllMenuChildren()
+  public function getAllMenuChildren($front = false)
   {
-    return $this->whereNotNull('father_id')
-      ->orderBy('father_id')
-      ->orderBy('order')
-      ->get()
-      ->toArray();
+    if ($front) {
+      return $this->whereHas('roles', function ($query) {
+        $query->where('role_id', session()->get('role_id'))->orderBy('menu_id');
+      })
+        ->whereNotNull('father_id')
+        ->orderBy('father_id')
+        ->orderBy('order')
+        ->get()
+        ->toArray();
+    } else {
+      return $this->whereNotNull('father_id')
+        ->orderBy('father_id')
+        ->orderBy('order')
+        ->get()
+        ->toArray();
+    }
   }
 
   /**
@@ -87,7 +98,7 @@ class Menu extends Model
     //Se crea una instancia  de Menu
     $menu = new Menu();
     $parents = $menu->getRootMenus($front);
-    $allChildren = $menu->getAllMenuChildren();
+    $allChildren = $menu->getAllMenuChildren($front);
 
     foreach ($parents as $father) {
       $chidren = $menu->getChildrenOf($father, $allChildren);
