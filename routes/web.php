@@ -70,6 +70,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
       // Rutas para la administracion de permisos
       // ---------------------------------------------------
       Route::view('permiso', 'admin.permission.index')->name('permission');
+      // ---------------------------------------------------
+      // Rutas para la administracion de ususarios
+      // ---------------------------------------------------
+      Route::view('usuarios', 'admin.users.index')->name('users');
     });
 
     //-----------------------------------------------------------
