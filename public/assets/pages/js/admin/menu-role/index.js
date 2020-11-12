@@ -52,7 +52,7 @@ Vue.component('menu-list', {
           </div><!-- /.card-header -->
           <div 
             class="card-body table-responsive p-0" 
-            style="height: 300px;"
+            style="height: 60vh;"
           >
             <table class="table table-head-fixed table-hover table-striped text-nowrap">
               <thead>
