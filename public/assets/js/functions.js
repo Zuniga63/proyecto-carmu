@@ -50,6 +50,7 @@ const functions = function () {
 
 window.addEventListener('load', function (){
   const sidebar = document.getElementById('mainSidebar');
+  $(document.body).tooltip({ selector: "[title]" });
   /**
    * Recupero el link activo dentro de sidebar
    * y desde aquí empiezo a ascender hasta llegar al sidebar
