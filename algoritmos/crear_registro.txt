@@ -1,0 +1,60 @@
+ALGORITMO PARA CREAR UN REGISTRO DE HISTROIAL
++fecha: string
++credito:decimal
++pago: decimal
++creditosPendientes: int
++indexHistorial: int
++historial: []
+
+1.  historial.length > 0
+------------------------------------------------------
+  #SE VA CREAR EL PRIMER REGISTRO
+------------------------------------------------------
+2.  credito && pago
+3.  deuda = credito - pago;
+    registrarHistorial(historia, fechaCredito, credito, abono, deuda, creditosPendientes);
+4.  fechaCredito
+5.  registrarHistorial(historia, fechaCredito, credito, '', credito, creditosPendientes);
+      Error1: El primer registro del historial no puede ser un abono
+6.  ultimoRegistro = historial[indexHistorial];
+7.  ultimoRegistro.fecha === fecha
+8.  credito && pago
+9.  credito
+10. ultimoRegistro.credito += credito
+    ultimoRegistro.pago += pago
+    ultimoRegistro.deuda += credito - pago
+    ultimoRegistro.creditosPendientes = creditosPendientes
+11. ultimoRegistro.credito += credito
+    ultimoRegistro.deuda += credito
+    ultimoRegistro.creditosPendientes = creditosPendientes
+12. ultimoRegistro.pago += pago;
+    ultimoRegistro.deuda -= pago;
+    ultimoRegistro.creditosPendientes = creditosPendientes;
+13. deuda = ultimoRegistro.deuda + credito - pago;
+    registrarHistorial(historia, fechaCredito, credito, abono, deuda, creditosPendientes);
+14. deuda = ultimoRegistro.deuda + credito
+    registrarHistorial(historial, fechaCredito, credito, '', deuda, creditosPendientes)
+15. deuda = ultimoRegistro - pago
+    registrarHistorial(historial, fechaPago, '', pago, deuda, creditosPendientes)
+
+
+
+
+
+9.  
+10. 
+11. credito
+12. ultimoRegistro['fecha'] === fecha
+13. 
+14. 
+15. ultimoRegistro.fecha == fecha
+17. 
+18. 
+
+
+
+
+
+    
+    
+

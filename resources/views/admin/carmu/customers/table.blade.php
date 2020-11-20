@@ -25,7 +25,11 @@
         @foreach ($this->customers as $customer)
         <tr class="{{$customer->archived ? 'text-muted' : ''}}">
           <td>{{$customer->customer_id}}</td>
-          <td>{{$customer->first_name}}  {{$customer->last_name}}</td>
+          <td>
+            <a href="{{route('admin.carmu_profile', ['id' => $customer->customer_id])}}" class="link">
+              {{$customer->first_name}}  {{$customer->last_name}}
+            </a>
+          </td>
           <td>{{$customer->phone}}</td>
           <td class="text-right">${{number_format($customer->balance, 0, ".", ' ')}}</td>
           <td class="pr-0">

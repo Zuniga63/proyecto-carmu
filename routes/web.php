@@ -4,6 +4,8 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RoleHasMenuController;
 use App\Http\Controllers\HomeController;
+use App\Http\Livewire\Admin\Carmu\CustomerProfileComponent;
+use App\Http\Livewire\Admin\Carmu\CustomersComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -83,5 +85,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::view('tienda/etiquetas', 'admin.shop.tag.index')->name('shop_tags');
     Route::view('tienda/marcas', 'admin.shop.brand.index')->name('shop_brands');
     Route::view('tienda/productos', 'admin.shop.product.index')->name('shop_products');
+    //-----------------------------------------------------------
+    // RUTAS PARA EL MANEJO DE LOS DATOS DE CARMÚ
+    //-----------------------------------------------------------
+    Route::view('carmu', 'admin.carmu.index')->name('carmu');
+    Route::get('carmu/clientes/{id?}', CustomersComponent::class)->name('carmu_customers')->where('id', '[0-9]+');
+    Route::get('carmu/clientes/perfiles/{id?}', CustomerProfileComponent::class)->name('carmu_profile');
   });
 });

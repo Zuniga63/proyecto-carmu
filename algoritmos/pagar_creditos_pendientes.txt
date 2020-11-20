@@ -1,0 +1,27 @@
+ALGORITMO PARA CANCELAR LOS CREDITOS PENDIENTES
++creditos: [Credito]
++fechaPago: date
++importe: decimal
++pendientes:[Credito]
++pagados: [Creditos]
+
+1.  indexCredito = 0;
+2.  indexCredito < creditos.length
+3.  credito = creditoss[indexCredito]
+4.  credito.saldo <= importe
+5.  importe -= credito.saldo
+    credito.saldo = 0;
+    credito.ultimoPago = fechaPago
+    credito.duración = (fechaPago - credito.fecha).days
+    pagados.push(credito)
+6.  credito.vencimiento <= fechaPago
+7.  credito.mora = (fechaPago - credito.vencimiento).days
+8.  credito.anticipo = (fecha - credito.vencimiento).days
+9.  indexCredito++
+10. importe > 0
+11. credito.saldo -= importe;
+    importe = 0;
+    pendientes.push(credito)
+12. pendientes.push(creditos);
+13. result = [pendientes, pagados];
+    

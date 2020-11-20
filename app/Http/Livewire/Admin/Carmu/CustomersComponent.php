@@ -247,12 +247,12 @@ class CustomersComponent extends Component
     $last = $this->lastName ? trim($this->lastName) : null;
     $nit = $this->nit ? trim($this->nit) : null;
     $phone = $this->phone ? trim($this->phone) : null;
-    $email = $this->phone ? trim($this->email) : null;
+    $email = $this->email ? trim($this->email) : null;
 
     // Formateo los campos vacíos  con null
     $this->lastName = empty($last) ? null : $last;
     $this->nit = empty($nit) ? null : $nit;
-    $this->phone = empty($phone) ? null : $nit;
+    $this->phone = empty($phone) ? null : $phone;
     $this->email = empty($email) ? null : $email;
   }
 }

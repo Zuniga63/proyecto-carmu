@@ -1,0 +1,86 @@
+Con este algoritmo se busca obtener el historial del cliente
+*Variables importantes
+---------------------------------------------------------------------------------
++creditos:[Credito]               =>fecha|descripcion|importe|cancelado|duracion
++pagos:[Pagos]                    =>fecha|importe
++creditosPendientes: [Credito]
++creditosAtrasados: [Credito]
++creditosPagados: [Credito]
++fechaUltimoCredito: dateTime
++fechaUltimoAbono: datetime
++historial: [Historial]           => fecha|credito|pago|deuda|pendientes
++indexCredito: int
++indexPago: int
++indexHistorial: int
++dinero: float
++plazo: int                       =>Corresponde al plazo maximo del credito
+---------------------------------------------------------------------------------
+1.  indexCredito = 0;
+    indexHistorial = 0;
+    indexPago = 0
+    dinero = 0
+    fechaUltimoPago = null;
+    fechaUltimoCredito = null;
+2.  indexCredito < count(creditos)
+3.  credito = creditos[indexCredito];
+    fechaUltimoCredito = credito.fecha => Y-m-d
+    credito.saldo = credito.importe
+    credito.vencimiento = fechaUltimoCredito + plazo
+    creditosPendientes.push(credito)
+4.  0 >= dinero && indexPago < count(pagos)
+---------------------------------------------------------------------------------
+Ruta para el caso en el que existen mas pagos un bucle while
+---------------------------------------------------------------------------------
+5.  dinero = pagos[indexPago]
+    fechaUltimoPago = pagos[indexPago]
+    indexPago++
+---------------------------------------------------------------------------------
+Ruta en el que no hay mas pagos
+=>Caso en el que o no existen pagos o el ultimo pago es > ultimo credito
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+6.  fechaUltimoPago && fechaUltimoPago <= fechaUltimoCredito
+---------------------------------------------------------------------------------
+7.  procesarRegistro(
+      historial, 
+      indexHistorial, 
+      fechaUltimoCredito, 
+      credito.immporte, 
+      null, 
+      creditosPendientes.length)
+    indexHistorial++;
+---------------------------------------------------------------------------------
+8.  result = pagarCreditosPendientes(creditosPendientes, fechaUltimoAbono, importe)
+    creditosPendientes = result.pendientes
+    array.merge(creditosPagados, result.pagados)
+9.  fechaUltimoPago < fechaUltimoCredito
+10. procesarRegistro(
+      historial, 
+      indexHistorial, 
+      fechaUltimoPago, 
+      null, 
+      dinero, 
+      creditosPendientes.length)
+    indexHistorial++;
+11. procesarRegistro(
+      historial, 
+      indexHistorial, 
+      fechaUltimoPago, 
+      credito.importe, 
+      dinero, 
+      creditosPendientes.length)
+    indexHistorial++; 
+
+12. indexCredito++
+------------------------------------------------------------------------------------
+AHORA SE DEFINEN LOS CREDITOS ATRASADOS
+------------------------------------------------------------------------------------
+13. indexPendiente = 0
+14. indexPendiente < creditosPendientes.length
+15. credito = creditosPendientes[indexPendiente]
+16. now > credito.vencimiento
+17. creditosPendientes.push(credito)
+18.indexPendiente ++
+
+
+
