@@ -19,7 +19,7 @@ class HomeController extends Controller
     $categories = Category::whereNull('father_id')
       ->orderBy('order')
       ->get(['id', 'name', 'slug']);
-    
+
     $products = Product::where('published', 1)
       ->where('is_new', 1)
       ->whereNotNull('img')
@@ -28,41 +28,48 @@ class HomeController extends Controller
       ->get();
 
     $title = "Lo más reciente de nuestro catálogo";
+    $metaTitle = "Home";
+    $metaDescription = "Somos distribuidores oficiales de la marca TOTTO, ROTT+CO, BLUE INC entre otras y poseemos un amplio catálogo de relojería de la marca Q&Q en la jagua de Ibirico";
+    $metaKeywords = "La jagua de Ibirico, ROTT+CO, TOTTO, Q&Q, Q&Q Superior, Ropa, Relojería, Accesorios";
 
-    return view('welcome', compact('products', 'title', 'categories'));
+    return view('welcome', compact('products', 'title', 'categories', 'metaTitle', 'metaDescription', 'metaKeywords'));
   }
 
   public function catalog($categorySlug = null)
   {
     $title = "";
+    $metaTitle = "Home";
+    $metaDescription = "Catalogo de productos mas recientes.";
+    $metaKeywords = "La jagua de Ibirico";
     $products = [];
     $categories = Category::whereNull('father_id')
       ->orderBy('order')
       ->get(['id', 'name', 'slug']);
 
-    if($categorySlug){
-      $category = Category::where('slug', 'like', '%'.$categorySlug.'%')->first();
-      if($category){
+    if ($categorySlug) {
+      $category = Category::where('slug', 'like', '%' . $categorySlug . '%')->first();
+      $metaTitle = $category->name;
+      if ($category) {
         $title = "Catálogo de $category->name";
         $products = DB::table('product')
-          ->join('category_has_product', 'product.id', '=', 'category_has_product.product_id' )
+          ->join('category_has_product', 'product.id', '=', 'category_has_product.product_id')
           ->where('category_has_product.category_id', $category->id)
           ->where('product.published', 1)
           ->whereNotNull('product.img')
           ->latest('product.updated_at')
           ->get('product.*');
-      }else{
+      } else {
         return redirect(url('/catalogo'));
       }
-    }else{
+    } else {
       $title = "Catálogo General";
       $products = Product::where('published', 1)
-      ->whereNotNull('img')
-      ->latest('updated_at')
-      ->get();
+        ->whereNotNull('img')
+        ->latest('updated_at')
+        ->get();
     }
 
-    return view('welcome', compact('products', 'title', 'categories'));
+    return view('welcome', compact('products', 'title', 'categories', 'metaTitle', 'metaDescription', 'metaKeywords'));
   }
 
   /**
