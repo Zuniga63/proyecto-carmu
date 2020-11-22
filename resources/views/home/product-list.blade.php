@@ -12,7 +12,7 @@
         New
       </div>    
       @endif
-      <img src="{{url('storage/' . $item->img)}}" alt="{{$item->name}}" class="block rounded-t-lg w-full" lazy/>
+      <img src="{{url('storage/' . $item->img)}}" alt="{{$item->name}}" class="block rounded-t-lg w-full" lazy style="min-height: 120px"/>
     </figure>
 
     <div class="">
