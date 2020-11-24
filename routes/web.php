@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\RoleHasMenuController;
 use App\Http\Controllers\HomeController;
 use App\Http\Livewire\Admin\Carmu\CustomerProfileComponent;
 use App\Http\Livewire\Admin\Carmu\CustomersComponent;
+use App\Http\Livewire\Admin\DashboardComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -41,7 +42,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
   
   Route::name('admin.')->prefix('admin')->group(function () {
     Route::redirect('/', 'admin/dashboard', 301)->name('admin');
-    Route::view('dashboard', 'admin.dashboard.index')->name('dashboard');
+    Route::get('dashboard', DashboardComponent::class)->name('dashboard');
     Route::middleware(['superadmin'])->group(function(){
       // ---------------------------------------------------
       // Rutas para la gestion de los menus

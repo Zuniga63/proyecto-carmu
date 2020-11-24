@@ -2,11 +2,19 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Informe de ventas y creditos [{{$now->format('Y')}}]</h3>
+        <div class="card" x-data="monthlyReportsModel()">
+          <div class="card-header mb-2">
+            <ul class="nav nav-tabs card-header-tabs">
+              <div class="nav-item">
+                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
+              </div>
+              <div class="nav-item">
+                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
+              </div>
+            </ul>
           </div>
-          <div class="card-body table-responsive p-0" style="height: 60vh">
+          <h3 class="text-center mb-2">Ventas, Creditos y Abonos [{{$now->format('Y')}}]</h3>
+          <div class="card-body table-responsive p-0" style="height: 60vh" x-show.transition="tab === 'table'">
             <table class="table table-head-fixed table-hover text-nowrap">
               <thead>
                 <tr class="text-center">
@@ -38,15 +46,58 @@
               </tbody>
             </table>
           </div>
+
+          <div class="card-body" x-show.transition="tab === 'graph'">
+            <div class="container">
+              <div class="row justify-content-center">
+                <div class="form-group row col-5">
+                  <label for="" class="col-4 col-form-label">Periodo</label>
+                  <select name="" id="" class="form-control col-8" x-model.number="basicPeriod" x-on:change="setPeriod" x-on:input="specificPeriod = 1">
+                    <option value="annual">Anual</option>
+                    <option value="biannual">Semestral</option>
+                    <option value="quarterly">Trimestral</option>
+                  </select>
+                </div>
+
+                <div class="form-group row col-5" x-show.transition="basicPeriod === 'biannual'">
+                  <label for="" class="col-5 col-form-label">Semestre</label>
+                  <select name="" id="" class="form-control col-7" x-model.number="specificPeriod" x-on:change="setPeriod">
+                    <option value="1">Ene - Jun</option>
+                    <option value="2">Jul - Dic</option>
+                  </select>
+                </div>
+                
+                <div class="form-group row col-5" x-show.transition="basicPeriod === 'quarterly'">
+                  <label for="" class="col-5 col-form-label">Trimestre</label>
+                  <select name="" id="" class="form-control col-7" x-model.number="specificPeriod" x-on:change="setPeriod">
+                    <option value="1">Ene - Mar</option>
+                    <option value="2">Abr - Jun</option>
+                    <option value="3">Jul - Sep</option>
+                    <option value="4">Oct - Dic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <canvas id="monthlyReports"></canvas>
+          </div>
         </div>
       </div>
 
       <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Evolucion de los creditos [{{$now->format('Y')}}]</h3>
+        <div class="card" x-data="{tab:'graph'}">
+          <div class="card-header mb-2">
+            <ul class="nav nav-tabs card-header-tabs">
+              <div class="nav-item">
+                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
+              </div>
+              <div class="nav-item">
+                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
+              </div>
+            </ul>
           </div>
-          <div class="card-body table-responsive p-0" style="height: 60vh">
+          <h3 class="text-center mb-2">Deuda de los Clientes [{{$now->format('Y')}}]</h3>
+
+          <div class="card-body table-responsive p-0" style="height: 60vh" x-show.transition="tab === 'table'">
             <table class="table table-head-fixed table-hover text-nowrap">
               <thead>
                 <tr class="text-center">
@@ -78,6 +129,10 @@
                 @endforeach
               </tbody>
             </table>
+          </div>
+
+          <div class="card-body" x-show.transition="tab === 'graph'">
+            <canvas id="customersDebts"></canvas>
           </div>
         </div>
       </div>
@@ -121,3 +176,11 @@
   </div>
   <!--./container-fluid -->
 </div>
+
+@push('scripts')
+<script>
+  window.monthlyReports = @json($montlyReports);
+  window.customersDebts = @json($creditEvolutions);
+</script>  
+<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=1.0"></script>  
+@endpush

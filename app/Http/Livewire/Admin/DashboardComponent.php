@@ -22,7 +22,8 @@ class DashboardComponent extends Component
     $categories = $this->getMontlyReportsByCategories();
     $months = $this->months;
     $creditEvolutions = $this->creditEvolution();
-    return view('livewire.admin.dashboard-component', compact('montlyReports', 'categories', 'months', 'creditEvolutions'));
+    return view('livewire.admin.dashboard-component', compact('montlyReports', 'categories', 'months', 'creditEvolutions'))
+      ->layout("admin.dashboard.index");
   }
 
   public function getMontlyReports()
