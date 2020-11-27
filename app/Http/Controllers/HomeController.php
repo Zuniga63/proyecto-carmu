@@ -28,8 +28,9 @@ class HomeController extends Controller
       ->get();
 
     $title = "Lo más reciente de nuestro catálogo";
+    $home = true;
 
-    return view('welcome', compact('products', 'title', 'categories'));
+    return view('welcome', compact('products', 'title', 'categories', 'home'));
   }
 
   public function catalog($categorySlug = null)
@@ -62,7 +63,9 @@ class HomeController extends Controller
       ->get();
     }
 
-    return view('welcome', compact('products', 'title', 'categories'));
+    $home = false;
+
+    return view('welcome', compact('products', 'title', 'categories', 'home'));
   }
 
   /**
