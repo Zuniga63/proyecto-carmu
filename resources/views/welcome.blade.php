@@ -10,7 +10,7 @@
   <!-- Fonts -->
   {{-- <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"> --}}
 
-  <link rel="stylesheet" href="{{asset('/css/app.css')}}">
+  <link rel="stylesheet" href="{{asset('/css/app.css')}}?v=1.1">
   <style>
     :target::before {
       content: "";
@@ -62,11 +62,11 @@
   </div>
 
 
-  <footer class="bg-gray-900 p-2 text-center scrollReveal">
+  <footer class="bg-gray-900 p-2 text-center">
     <span class="text-white text-xs">Tienda Carmú &copy;2020</span>
   </footer>
 
-  <script src="{{asset('js/app.js')}}"></script>
+  <script src="{{asset('js/app.js')}}?v=1.0"></script>
   <script>
     const links = document.querySelectorAll('a[href^="#"]');
     for(const link of links){
@@ -78,7 +78,6 @@
     function clickHandler(e){
       e.preventDefault();
       const href = this.getAttribute("href");
-      location.hash = href;
       // const offsetTop = document.querySelector(href).offsetTop;
 
       // scrollTo({
@@ -88,6 +87,7 @@
       document.querySelector(href).scrollIntoView({
         behavior: "smooth"
       })
+      location.hash = href;
     }
 
     window.clickHandler = clickHandler;
