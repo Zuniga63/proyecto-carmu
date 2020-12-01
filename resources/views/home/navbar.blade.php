@@ -1,7 +1,7 @@
-<header class="relative bg-white mb-4" x-data="{toggler:false}">
+<header class="fixed w-full z-40 bg-white mb-4" x-data="{toggler:false}" id="mainNavbar">
   <div class="px-4 md:px-6 max-w-6xl mx-auto">
     {{-- Menú general --}}
-    <div class="flex justify-between items-center border-b-2 border-gray-100 py-6 lg:justify-start lg:space-x-10">
+    <div class="flex justify-between items-center border-b-2 border-gray-100 py-3 lg:justify-start lg:space-x-10">
       {{-- Logo de la empresa --}}
       <div class="lg:w-0 lg:flex-1">
         <a href="{{url('/')}}" class="flex">
@@ -143,7 +143,16 @@
     </div>
 
     {{-- Menú de la version movil --}}
-    <div class="absolute top-0 inset-x-0 p-2 transition transform origin-top-right lg:hidden z-50" x-show="toggler" x-transition:enter="duration-200 ease-out" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="duration-100 ease-in" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+    <div 
+      class="absolute top-0 inset-x-0 p-2 transition transform origin-top-right lg:hidden z-50" 
+      x-show="toggler" 
+      x-transition:enter="duration-200 ease-out" 
+      x-transition:enter-start="opacity-0 scale-95" 
+      x-transition:enter-end="opacity-100 scale-100" 
+      x-transition:leave="duration-100 ease-in" 
+      x-transition:leave-start="opacity-100 scale-100" 
+      x-transition:leave-end="opacity-0 scale-95"}
+    >
       <div class="rounded-lg shadow-lg">
         <div class="rounded-lg shadow-xs divide-y-2 divide-gray-50 bg-white">
           {{-- Header y links --}}
@@ -179,8 +188,8 @@
                   Home
                 </div>
               </a>
-              <!-- Link to products -->
-              <div class="-m-3 p-3 flex items-top space-x-3 rounded-md hover:bg-gray-50 transition ease-in-out duration-150">
+              <!-- Link to catalog -->
+              <div class="-m-3 p-3 flex items-top space-x-3 rounded-md hover:bg-gray-50 transition ease-in-out duration-150" x-data="{open:false}" x-on:click="open = !open" >
                 <!-- Heroicon:shop -->
                 <svg class="flex-shrink-0 h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg">
@@ -189,15 +198,32 @@
                   </path>
                 </svg>
                 <div class="flex-grow text-base leading-6 font-medium text-gray-900">
-                  Catalogo
-                  <div class="mt-3 px-2 space-y-1">
+                  Catalogos
+                  <div class="mt-3 px-2 space-y-1" x-show.transition.duration.75ms="open">
                     @foreach ($categories as $category)
                     <a href="{{route('catalog', ['categorySlug' => $category->slug])}}"
                       class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700">{{$category->name}}</a>
                     @endforeach
                   </div>
                 </div>
+
+                <svg class="w-6 h-6 float-right text-indigo-600 transform transition delay-200" x-bind:class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
+
+              <a href="#dondeEcontrarnos" class="-m-3 p-3 flex items-center space-x-3 rounded-md hover:bg-gray-50 transition ease-in-out duration-150" x-on:click="toggler = !toggler">
+                <!-- Heroicon:location -->
+
+                <svg class="flex-shrink-0 h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z">
+                  </path>
+                </svg>
+
+                <div class="text-base leading-6 font-medium text-gray-900">
+                  ¿Donde Encontrarnos?
+                </div>
+              </a>
             </nav>
           </div>
 
@@ -251,5 +277,4 @@
     </div>
     {{-- Fin del menú movil --}}
   </div>
-
 </header>

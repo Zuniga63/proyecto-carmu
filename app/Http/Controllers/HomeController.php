@@ -32,7 +32,9 @@ class HomeController extends Controller
     $metaDescription = "Somos distribuidores oficiales de la marca TOTTO, ROTT+CO, BLUE INC entre otras y poseemos un amplio catálogo de relojería de la marca Q&Q en la jagua de Ibirico";
     $metaKeywords = "La jagua de Ibirico, ROTT+CO, TOTTO, Q&Q, Q&Q Superior, Ropa, Relojería, Accesorios";
 
-    return view('welcome', compact('products', 'title', 'categories', 'metaTitle', 'metaDescription', 'metaKeywords'));
+    $home = true;
+
+    return view('welcome', compact('products', 'title', 'categories', 'metaTitle', 'metaDescription', 'metaKeywords', 'home'));
   }
 
   public function catalog($categorySlug = null)
@@ -69,7 +71,8 @@ class HomeController extends Controller
         ->get();
     }
 
-    return view('welcome', compact('products', 'title', 'categories', 'metaTitle', 'metaDescription', 'metaKeywords'));
+    $home = false;
+    return view('welcome', compact('products', 'title', 'categories', 'metaTitle', 'metaDescription', 'metaKeywords', 'home'));
   }
 
   /**

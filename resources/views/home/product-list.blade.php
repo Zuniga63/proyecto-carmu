@@ -1,18 +1,18 @@
 <div 
-  class="grid grid-cols-2 gap-2 px-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4" 
+  class="grid grid-cols-2 gap-2 px-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 mb-8" 
   x-data="{showModal:false, path:'', name:'', showImage(path, name){this.path=path; this.showModal=true; this.name=name}}" 
   x-on:keydown.escape="showModal=false"
 >
   <!-- item -->
   @foreach ($products as $item)
-  <div class="border border-gray-400 rounded-lg p-1 sm:p-2 lg:p-3 bg-white">
+  <div class="border border-gray-400 rounded-lg p-1 sm:p-2 lg:p-3 bg-white scrollReveal">
     <figure class="mb-3 relative" x-on:click="showImage('{{url('storage/' . $item->img)}}', '{{$item->name}}')">
       @if ($item->is_new)
       <div class="absolute left-0 top-0 p-1 mt-1 ml-1 text-xs sm:text-sm md:text-base tracking-wide text-white font-bold uppercase bg-red-600 rounded-md">
         New
       </div>    
       @endif
-      <img src="{{url('storage/' . $item->img)}}" alt="{{$item->name}}" class="block rounded-t-lg w-full" lazy style="min-height: 120px"/>
+      <img src="{{url('storage/' . $item->img)}}" alt="{{$item->name}}" class="block rounded-t-lg w-full" loading="lazy"/>
     </figure>
 
     <div class="">
