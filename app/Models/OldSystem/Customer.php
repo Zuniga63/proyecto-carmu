@@ -5,6 +5,7 @@ namespace App\Models\OldSystem;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon as SupportCarbon;
 use Illuminate\Support\Collection;
 use stdClass;
 
@@ -54,24 +55,19 @@ class Customer extends Model
      */
     foreach ($credits as $credit) {
       $creditRegistered = false;              //Variable utilizada para evitar que se dupliquen los creditos
+      $actualCredit = new stdClass();
+      $actualCredit->date = Carbon::createFromFormat('Y-m-d H:i:s', $credit->date)->startOfDay();
+      $actualCredit->paymentDate = null;
+      $actualCredit->expiration = $actualCredit->date->copy()->addMonth($this->calculateTerm($credit->amount));
+      $actualCredit->description = $credit->description;
+      $actualCredit->amount = floatval($credit->amount);
+      $actualCredit->balance = floatval($credit->amount);
 
-      //Se realiza un procesamiento preliminar del credito
-      $actualCreditDate = Carbon::createFromFormat('Y-m-d H:i:s', $credit->date)->startOfDay();
-      $lastCredit = $credit;
-
-      $credit->balance = floatval($credit->amount);
-      $credit->expiration = $actualCreditDate->copy()->addMonth($this->calculateTerm($credit->amount));
+      //Se actualiza la variable de memoria
+      $lastCredit = $actualCredit;
 
       //Se agrega el credito a la lista de creditos pendientes
-      $pendingCredits->push($credit);
-
-      /**
-       * Ya que los pagos se van liquidando inmediatamete, antes de entrar al bucle
-       * se comprueba la fecha del siguiente pago
-       */
-      // $nextPaymentDate = $payments->count() > 0
-      //   ? Carbon::createFromFormat('Y-m-d H:i:s', $payments->first()->date)->startOfDay()
-      //   : null;
+      $pendingCredits->push($actualCredit);
 
       /**
        * El siguiente codigo se debe repetir 
@@ -79,7 +75,7 @@ class Customer extends Model
        * sea mayor que la fecha del actual credito 
        * o en su defecto sea un valor null
        */
-      while ($nextPaymentDate && $nextPaymentDate->lessThanOrEqualTo($actualCreditDate)) {
+      while ($nextPaymentDate && $nextPaymentDate->lessThanOrEqualTo($actualCredit->date)) {
         //Se recupera la información del pago, retirandolo de la lista.
         $lastPayment = $payments->shift();
 
@@ -87,10 +83,10 @@ class Customer extends Model
         $this->payPendingCredits($nextPaymentDate, $lastPayment->amount, $pendingCredits, $creditsPaid);
 
         //Se verifica en que espacio temporal se encuentra el pago
-        if ($nextPaymentDate->lessThan($actualCreditDate)) {
+        if ($nextPaymentDate->lessThan($actualCredit->date)) {
           //Solo se procesa el pago
           $this->processTransaction(
-            $nextPaymentDate->format('Y-m-d'),
+            $nextPaymentDate,
             null,
             $lastPayment->amount,
             $creditRegistered ? $pendingCredits->count() : $pendingCredits->count() - 1,
@@ -100,7 +96,7 @@ class Customer extends Model
           //Se procesa el credito si este no ha sido registrado
           if (!$creditRegistered) {
             $this->processTransaction(
-              $actualCreditDate->format('Y-m-d'),
+              $actualCredit->date,
               $credit->amount,
               null,
               $pendingCredits->count(),
@@ -112,7 +108,7 @@ class Customer extends Model
 
           //Se procesa el pago
           $this->processTransaction(
-            $nextPaymentDate->format('Y-m-d'),
+            $nextPaymentDate,
             null,
             $lastPayment->amount,
             $pendingCredits->count(),
@@ -132,7 +128,7 @@ class Customer extends Model
        */
       if (!$creditRegistered) {
         $this->processTransaction(
-          $actualCreditDate->format('Y-m-d'),
+          $actualCredit->date,
           $credit->amount,
           null,
           $pendingCredits->count(),
@@ -153,7 +149,7 @@ class Customer extends Model
 
       //Solo se procesa el pago
       $this->processTransaction(
-        $nextPaymentDate->format('Y-m-d'),
+        $nextPaymentDate,
         null,
         $lastPayment->amount,
         $creditRegistered ? $pendingCredits->count() : $pendingCredits->count() - 1,
@@ -172,7 +168,7 @@ class Customer extends Model
      * pendientes
      */
     foreach ($creditsPaid as $credit) {
-      if ($credit->expiration->lessThan($credit->paid)) {
+      if ($credit->expiration->lessThan($credit->paymentDate)) {
         $expiredCredits->push($credit);
       }else{
         $successCredits->push($credit);
@@ -186,9 +182,6 @@ class Customer extends Model
         $successCredits->push($credit);
       }
     }
-
-    // dd($lastPaymentDate->format('Y-m-d'));
-    // dd($payments->count());
 
     $result = [
       'history' => $creditHistory,
@@ -204,17 +197,17 @@ class Customer extends Model
 
   /**
    * Realiza todas las validacoiones correspondientes y luego crea un registro para el historial
-   * @param string $date Corresponde a la fecha de la transaccion para el historial en Y-m-d
+   * @param Carbon $date Corresponde a la fecha de la transaccion para el historial en Y-m-d
    * @param float $credit Es el valor del credito a registrar
    * @param float $payment Es el valor del abono realizado por el cliente
    * @param int $pendingCredits Es el numero de creditos pendientes al momento de la transaccion
    * @param Collection $creditHistory es el arreglo con todas las transacciones
    */
-  protected function processTransaction(string $date, $credit, $payment, int $pendingCredits, Collection $creditHistory)
+  protected function processTransaction(Carbon $date, $credit, $payment, int $pendingCredits, Collection $creditHistory)
   {
     $credit = $credit ? floatval($credit) : null;
     $payment = $payment ? floatval($payment) : null;
-
+    $date->startOfDay();
     if ($creditHistory->count() > 0) {
       //Se recupera el ultimo registro del historial
       $lastRecord = $creditHistory->last();
@@ -224,7 +217,7 @@ class Customer extends Model
        * ultimo registro del historia.
        * En la segunda parte se procede a crear un nuevo registro
        */
-      if ($lastRecord->date === $date) {
+      if ($lastRecord->date->equalTo($date)) {
         /**
          * En este punto se tienen tres posibles escenarios
          */
@@ -319,7 +312,7 @@ class Customer extends Model
         $credit = $pendingCredits->shift();
         $paymentAmount -= $credit->balance;
         $credit->balance = 0;
-        $credit->paid = $paymentDate->copy();
+        $credit->paymentDate = $paymentDate->copy();
         $creditsPaid->push($credit);
       } else {
         $pendingCredits->first()->balance -= $paymentAmount;

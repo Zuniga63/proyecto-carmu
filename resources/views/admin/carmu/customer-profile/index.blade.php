@@ -4,6 +4,14 @@
 @section('styles')
 @livewireStyles
 <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+<style>
+  :target::before {
+    content: "";
+    display: block;
+    height: 3.75rem; /* aquí la altura de la cabecera fija*/
+    margin: -3.75rem 0 0; /*altura negativa de la cabecera fija*/
+  }
+</style>
 @endsection
 
 @section('scripts')

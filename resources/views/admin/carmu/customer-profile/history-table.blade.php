@@ -1,4 +1,4 @@
-<div class="card card-info" style="max-height: 70vh;">
+<div class="card card-info" style="max-height: 70vh; min-height: 40vh;">
   <div class="card-header">
     <div class="card-title">Historial de Creditos y Pagos</div>
   </div>
@@ -13,17 +13,17 @@
         </tr>
       </thead>
       <tbody>
-        @foreach ($history as $record)
-        <tr class="{{$customer->archived ? 'text-muted' : ''}}">
-          <td>{{$this->formatDateWithFormat($record->date, 'Y-m-d', 'D-MM-YY') }}</td>
+        @foreach ($customer['history'] as $record)
+        <tr class="{{$customer['archived'] ? 'text-muted' : ''}}">
+          <td>{{$record['date']}}</td>
           <td class="text-right">
-            {{$record->credit ?  '$ ' . number_format($record->credit, 0, '.' , ' ') : ''}}
+            {{$record['credit'] ?  '$ ' . number_format($record['credit'], 0, '.' , ' ') : ''}}
           </td>
           <td class="text-right">
-            {{$record->payment ? '$ ' . number_format($record->payment, 0, '.' , ' ') : ''}}
+            {{$record['payment'] ? '$ ' . number_format($record['payment'], 0, '.' , ' ') : ''}}
           </td>
           <td class="text-right">
-            {{'$ ' . number_format($record->debt, 0, '.' , ' ')}}
+            {{'$ ' . number_format($record['debt'], 0, '.' , ' ')}}
           </td>
         </tr>
         @endforeach

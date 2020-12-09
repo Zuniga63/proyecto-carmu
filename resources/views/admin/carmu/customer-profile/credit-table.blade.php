@@ -1,4 +1,4 @@
-<div class="card card-primary" style="max-height: 70vh;" x-data="{type:'pending'}">
+<div class="card card-primary" style="max-height: 70vh; min-height: 40vh;" x-data="{type:'pending'}">
   <div class="card-header">
     <div class="card-title float-none text-center">Créditos</div>
     <div class="d-flex justify-content-around">
@@ -25,19 +25,19 @@
         </tr>
       </thead>
       <tbody>
-        @foreach ($pendingCredits as $key => $credit)
+        @foreach ($customer['pendingCredits'] as $key => $credit)
         <tr>
           <td>{{$key + 1}}</td>
           <td class="text-center">
-            {{$this->formatDate($credit->date, 'd-m-y')}}
+            {{$credit['date']}}
           </td>
           <td class="text-center">
-            {{$credit->expiration->shortRelativeToNowDiffForHumans()}}
+            {{$credit['expiration']}}
             {{-- {{$credit->expiration->format('d-m-Y H:i:s')}} --}}
           </td>
-          <td class="text-left">{{$credit->description}}</td>
+          <td class="text-left">{{$credit['description']}}</td>
           <td class="text-right">
-            $ {{$credit->balance ? number_format($credit->balance, 0, '.' , ' ') : ''}}
+            $ {{$credit['balance'] ? number_format($credit['balance'], 0, '.' , ' ') : ''}}
           </td>
         </tr>
         @endforeach
@@ -58,19 +58,19 @@
         </tr>
       </thead>
       <tbody>
-        @foreach ($creditsPaid as $key => $credit)
+        @foreach ($customer['creditsPaid'] as $key => $credit)
         <tr>
           <td>{{$key + 1}}</td>
-          <td>{{$this->formatDate($credit->date, 'd-m-y')}}</td>
+          <td>{{$credit['date']}}</td>
           <td class="text-center">
-            {{$credit->paid->format('d-m-y')}}
+            {{$credit['paymentDate']}}
           </td>
           <td class="text-center">
-            {{$this->diffDate($credit->date, 'Y-m-d H:i:s', $credit->paid->format('Y-m-d'), 'Y-m-d')}}
+            {{$credit['duration']}}
           </td>
-          <td class="text-left">{{$credit->description}}</td>
+          <td class="text-left">{{$credit['description']}}</td>
           <td class="text-right">
-            $ {{$credit->amount ? number_format($credit->amount, 0, '.' , ' ') : ''}}
+            $ {{$credit['amount'] ? number_format($credit['amount'], 0, '.' , ' ') : ''}}
           </td>
         </tr>
         @endforeach
