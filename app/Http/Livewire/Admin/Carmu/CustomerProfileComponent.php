@@ -481,6 +481,63 @@ class CustomerProfileComponent extends Component
     $this->customers = $customers;
   }
 
+  protected function getStateTwo($dataCredits, $dataPayments)
+  {
+    $credits = new Collection();      //Guarda los registro de los creditos pendientes
+    $creditsPaid = new Collection();  //Guarda los registros de los creditos pagados
+    $payments = new Collection();     //Guarda los registros de todos los abonos
+    $timeOfPaid = new Collection();   //Guarda todos los tiempos de pago del cliente
+
+    $balabce = 0;                     //Guarda el saldo pendiente del cliente
+    $balanceColor = 'text-success';   //Guarda el estado del saldo del cliente
+    $lastCredit = null;               
+    $lastPayment = null;
+    $state = 'No tiene movimientos';
+    $time = 0;
+
+    /**
+     * Primero creo las entidades de los creditos y los pagos
+     */
+    if($dataCredits){
+      foreach($dataCredits as $record){
+        $credit = new stdClass();
+        $credit->date = Carbon::createFromFormat('Y-m-d H:i:s', $record->credit_date);
+        $credit->amount = floatval($record->amount);
+        $credit->balance = $credit->amount;
+        $credits->push($credit);
+
+        $balabce += $credit->amount;
+      }
+  
+      foreach($dataPayments as $record){
+        $payment = new stdClass();
+        $payment->date = Carbon::createFromFormat('Y-md H:i:s', $record->payment_date);
+        $payment->amount = floatval($record->amount);
+        $payments->push($payment);
+      }
+
+      //Ahora se procede a pagar los creditos
+      foreach($payments as $payment){
+        $money = $payment->amount;
+
+        while($money > 0){
+          if($credits->first()->balance <= $money){
+            $credit = $credits->shift();
+            $money -= $credit->balance;
+            $credit->balance = 0;
+            //Se guarda el tiempo de duracion del pago
+            $timeOfPaid->push($payment->date->diffInDays($credit->date));
+          }else{
+            
+          }
+        }
+
+      }
+    }
+
+    
+  }
+
   public function render()
   {
     return view('livewire.admin.carmu.customer-profile-component')
