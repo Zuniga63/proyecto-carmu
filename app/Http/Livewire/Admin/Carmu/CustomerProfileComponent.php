@@ -346,9 +346,16 @@ class CustomerProfileComponent extends Component
     $customer->successCredits = $result['successCredits'];
 
     //Se asigna el estado del cliente
-    $customer->balance = $this->getBalance($customer);
-    $customer->balanceColor = $this->getBalanceColor($customer);
-    $customer->state = $this->getState($customer);
+    $credits = $data->credits()->orderBy('credit_date')->get();
+    $payments = $data->payments()->orderBy('payment_date')->get();
+
+    $statistics = $this->getStateTwo($credits, $payments);
+    // $customer->balance = $this->getBalance($customer);
+    $customer->balance = $statistics->balance;
+    // $customer->balanceColor = $this->getBalanceColor($customer);
+    $customer->balanceColor = $statistics->balanceState;
+    // $customer->state = $this->getState($customer);
+    $customer->state = $statistics->state;
     $customer->paymentStatistics = $this->getPaymentStatistics($customer);
     $customer->paymentStatisticsByTimeOfLive = $this->getPaymentStatisticsByTimeOfLive($customer);
 
@@ -402,140 +409,22 @@ class CustomerProfileComponent extends Component
       $customer->fullName = $record->first_name . ' ' . $record->last_name;
       $customer->archived = $record->archived == 0 ? false : true;
 
-      //Se recupera el saldo de la deuda del cliente
-      $creditAmount = floatval($record->credits()->sum('amount'));
-      $paymentAmount = floatval($record->payments()->sum('amount'));
-      $balance = $creditAmount - $paymentAmount;
+      //Recupero los creditos y abonos para calcular las estadisticas
+      $credits = $record->credits()->orderBy('credit_date')->get();
+      $payments = $record->payments()->orderBy('payment_date')->get();
 
-      //Se recuperan la fecha del ultimo abono
-      $lastPayment = $record->payments()->orderBy('payment_date', 'desc')->first(['payment_date']);
-      $lastPayment = $lastPayment ? Carbon::createFromFormat('Y-m-d H:i:s', $lastPayment->payment_date) : null;
+      $statistics = $this->getStateTwo($credits, $payments);
 
-      //Se recupera la fecha del primer credito
-      $firstCredit = $record->credits()->orderBY('credit_date', 'asc')->first(['credit_date']);
-      $firstCredit = $firstCredit ? Carbon::createFromFormat('Y-m-d H:i:s', $firstCredit->credit_date) : null;
+      $customer->balance = $statistics->balance;
+      $customer->state = $statistics->state;
+      $customer->lastCredit = $statistics->lastCredit;
+      $customer->balanceColor = $statistics->balanceState;
+      $customer->time = $statistics->paymentTime;
 
-      //Se recupera la fecha del ultimo credito
-      $lastCredit = $record->credits()->orderBy('credit_date', 'desc')->first(['credit_date']);
-      $lastCredit = $lastCredit ? Carbon::createFromFormat('Y-m-d H:i:s', $lastCredit->credit_date) : null;
-      $lastCredit = $lastCredit 
-                  ? 'Ultimo credito ' . $lastCredit->longRelativeToNowDiffForHumans()
-                  : 'No tiene creditos';
-
-      //Se definen las variables temporales
-      $diffForHumans = "";
-      $diffInDays = 0;
-      $balanceColor = "text-success";
-      $state = 'El cliente no tiene movimientos';
-
-      //Se define el estado del saldo
-      if ($balance > 0) {
-        /**
-         * Si el saldo es mayor que cero se presentan dos casos, 
-         * en el primero de ellos el cliente ha realizado un abono
-         * y en el segundo este no ha realizado ninguno.
-         */
-        if ($lastPayment) {
-          $diffForHumans = $lastPayment->longRelativeToNowDiffForHumans();
-          $diffInDays = $lastPayment->floatDiffInDays(Carbon::now());
-          $state = "Ultimo abono $diffForHumans";
-        } else {
-          $diffForHumans = $firstCredit->longRelativeToNowDiffForHumans();
-          $diffInDays = $firstCredit->floatDiffInDays(Carbon::now());
-          $state = "Saldo pendiente $diffForHumans";
-        }
-      } else {
-        /**
-         * En este caso el cliente tambien presenta dos situaciones, el la primera
-         * de ellas es que ya ha saldado su deuda y en el segundo caso simplemente
-         * el cliente no tiene registrado ningun movimiento
-         */
-        if ($lastPayment) {
-          $diffForHumans = $lastPayment->longRelativeToNowDiffForHumans();
-          $diffInDays = $lastPayment->floatDiffInDays(Carbon::now());
-          $state = "Deuda saldada $diffForHumans";
-        } else {
-          $state = "No tiene historial";
-        }
-      }
-
-      /**
-       * Ahora se define el color del saldo
-       */
-      if ($balance > 0) {
-        if ($diffInDays > 30 && $diffInDays <= 45) {
-          $balanceColor = "text-warning";
-        } else if ($diffInDays > 45) {
-          $balanceColor = "text-danger";
-        }
-      }
-
-      $customer->balance = $balance;
-      $customer->state = $state;
-      $customer->lastCredit = $lastCredit;
-      $customer->balanceColor = $balanceColor;
-      $customer->time = $diffInDays;
       $customers->push((array) $customer);
     }
 
     $this->customers = $customers;
-  }
-
-  protected function getStateTwo($dataCredits, $dataPayments)
-  {
-    $credits = new Collection();      //Guarda los registro de los creditos pendientes
-    $creditsPaid = new Collection();  //Guarda los registros de los creditos pagados
-    $payments = new Collection();     //Guarda los registros de todos los abonos
-    $timeOfPaid = new Collection();   //Guarda todos los tiempos de pago del cliente
-
-    $balabce = 0;                     //Guarda el saldo pendiente del cliente
-    $balanceColor = 'text-success';   //Guarda el estado del saldo del cliente
-    $lastCredit = null;               
-    $lastPayment = null;
-    $state = 'No tiene movimientos';
-    $time = 0;
-
-    /**
-     * Primero creo las entidades de los creditos y los pagos
-     */
-    if($dataCredits){
-      foreach($dataCredits as $record){
-        $credit = new stdClass();
-        $credit->date = Carbon::createFromFormat('Y-m-d H:i:s', $record->credit_date);
-        $credit->amount = floatval($record->amount);
-        $credit->balance = $credit->amount;
-        $credits->push($credit);
-
-        $balabce += $credit->amount;
-      }
-  
-      foreach($dataPayments as $record){
-        $payment = new stdClass();
-        $payment->date = Carbon::createFromFormat('Y-md H:i:s', $record->payment_date);
-        $payment->amount = floatval($record->amount);
-        $payments->push($payment);
-      }
-
-      //Ahora se procede a pagar los creditos
-      foreach($payments as $payment){
-        $money = $payment->amount;
-
-        while($money > 0){
-          if($credits->first()->balance <= $money){
-            $credit = $credits->shift();
-            $money -= $credit->balance;
-            $credit->balance = 0;
-            //Se guarda el tiempo de duracion del pago
-            $timeOfPaid->push($payment->date->diffInDays($credit->date));
-          }else{
-            
-          }
-        }
-
-      }
-    }
-
-    
   }
 
   public function render()
@@ -606,6 +495,220 @@ class CustomerProfileComponent extends Component
       return "No tiene transacciones";
     }
   }
+
+  /**
+   * Este metodo se basa en la amortisacion de los creditos del cliente
+   * para poder establecer el estado del mismo, el saldo y el estado del saldo
+   */
+  protected function getStateTwo($dataCredits, $dataPayments)
+  {
+    $credits = new Collection();          //Guarda los registro de los creditos pendientes
+    $creditsPaid = new Collection();      //Guarda los registros de los creditos pagados
+    $pendingCredits = new Collection();
+    $payments = new Collection();         //Guarda los registros de todos los abonos
+
+    $balance = 0;                         //Guarda el saldo pendiente del cliente
+    $refDate = null;
+    $refDates = new Collection();
+    $balanceState = 'text-muted';        //Guarda el estado del saldo del cliente
+    $paymentsTime = new Collection();     //Guarda todos los tiempos de pago del cliente
+    $paymentTime = 0;
+    $lastPayment = null;
+    $lastCredit = null;
+    $state = 'No tiene historial';
+    $onlyCredits = true;
+
+    /**
+     * Primero creo las entidades de los creditos y los pagos
+     */
+    if ($dataCredits) {
+      foreach ($dataCredits as $record) {
+        $credit = new stdClass();
+        $credit->date = Carbon::createFromFormat('Y-m-d H:i:s', $record->credit_date)->startOfDay();
+        $credit->amount = floatval($record->amount);
+        $credit->balance = $credit->amount;
+        $credits->push($credit);
+      }
+
+      foreach ($dataPayments as $record) {
+        $payment = new stdClass();
+        $payment->date = Carbon::createFromFormat('Y-m-d H:i:s', $record->payment_date)->startOfDay();
+        $payment->amount = floatval($record->amount);
+        $payment->availableBalance = $payment->amount;
+        $payments->push($payment);
+      }
+
+      /**
+       * Se procede a amortizar los creditos
+       */
+    }
+
+    while ($credits->count() > 0) {
+      //Recupero los datos del primer credito
+      $lastCredit = $credits->shift();
+      //Se agrega a la lista de pendientes
+      $pendingCredits->push($lastCredit);
+      //Se verifican los datos del siguiente pago
+      $nextPayment = $payments->count() > 0 ? $payments->first() : null;
+
+      /**
+       * Mientras existan pagos y el siguiente pago tenga una fecha menor 
+       * que la fecha del actual credito
+       */
+      while ($nextPayment && $nextPayment->date->lessThanOrEqualTo($lastCredit->date)) {
+        //Se recupera el primer credito pendiente
+        $firstPendingCredit = $pendingCredits->count() > 0
+          ? $pendingCredits->first()
+          : null;
+
+        $refDate = $nextPayment->date;
+        $onlyCredits = false;
+
+        /**
+         * En este puento se supone que debe haber almenos una fecha 
+         * pero por si acaso pongo la restricción
+         */
+        if ($refDates->count() > 0 && !$refDates->last()->equalTo($refDates)) {
+          $refDates->push($refDate);
+        }
+
+        if ($firstPendingCredit) {
+          if ($firstPendingCredit->balance <= $nextPayment->availableBalance) {
+            //Se descuenta el saldo del credito del saldo del pago
+            $nextPayment->availableBalance -= $firstPendingCredit->balance;
+            $balance -= $firstPendingCredit->balance;
+            //Se salda la cuenta del credito
+            $firstPendingCredit->balance = 0;
+
+            //Se retira de los creditos pendientes 
+            $creditsPaid->push($pendingCredits->shift());
+          } else {
+            //Se decuenta el saldo del pago al credito
+            $firstPendingCredit->balance -= $nextPayment->availableBalance;
+            $balance -= $nextPayment->availableBalance;
+            $nextPayment->availableBalance = 0;
+          } //end if-else
+
+          //Se establece la duracion de este pago
+          // $time = $nextPayment->date->floatDiffInRealMonths($firstPendingCredit->date);
+          $time = $nextPayment->date->floatDiffInRealMonths($refDates->get($refDates->count() - 2));
+          if ($time > 0) {
+            $paymentsTime->push($time);
+          } //end if
+
+          //Se verifica que todavía hay saldo en este pago
+          if ($nextPayment->availableBalance <= 0) {
+            $lastPayment = $payments->shift();
+            $nextPayment = $payments->count() > 0
+              ? $payments->first()
+              : null;
+          }
+        } else {
+          /**
+           * En el caso de no encontrar creditos pendientes
+           * para evitar un bucle infinito se rompe
+           */
+          break;
+        } //end if
+      } //end while
+
+      //Se hace un check sobre el saldo del cliente esto es lo que
+      //hace la magia y permite recordar si el cliente habia saldado su cuenta
+      if ($balance <= 0) {
+        $refDate = $lastCredit->date;
+        $refDates->push($refDate);
+        $onlyCredits = true;
+      } //end if
+
+      /**
+       * Se actualiza la dueda del cliente
+       */
+      $balance += $lastCredit->amount;
+    } //end while
+
+    //Ahora se saldan los pagos pendientes
+    while ($payments->count() > 0) {
+      $nextPayment = $payments->shift();
+      $refDate = $nextPayment->date;
+      $onlyCredits = false;
+
+      /**
+       * En este puento se supone que debe haber almenos una fecha 
+       * pero por si acaso pongo la restricción
+       */
+      if ($refDates->count() > 0 && !$refDates->last()->equalTo($refDates)) {
+        $refDates->push($refDate);
+      }
+
+      do {
+        $firstPendingCredit = $pendingCredits->count() > 0
+          ? $pendingCredits->first()
+          : null;
+
+        if ($firstPendingCredit) {
+          if ($firstPendingCredit->balance <= $nextPayment->availableBalance) {
+            $nextPayment->availableBalance -= $firstPendingCredit->balance;
+            $balance -= $firstPendingCredit->balance;
+            $firstPendingCredit->balance = 0;
+            $creditsPaid->push($pendingCredits->shift());
+          } else {
+            $firstPendingCredit->balance -= $nextPayment->availableBalance;
+            $balance -= $nextPayment->availableBalance;
+            $nextPayment->availableBalance = 0;
+          }
+
+          $time = $nextPayment->date->floatDiffInRealMonths($refDates->get($refDates->count() - 2));
+          if ($time > 0) {
+            $paymentsTime->push($time);
+          } //end if
+        }
+      } while ($nextPayment->availableBalance > 0 && $firstPendingCredit);
+    }
+
+
+    if ($refDate) {
+      //Por ultimo se agregan los tiempos de los creditos pendientes
+      foreach ($pendingCredits as $credit) {
+        $time = $refDate->floatDiffInRealMonths(Carbon::now());
+        if ($time > 0) {
+          $paymentsTime->push($time);
+        } //end if
+      }
+      $diffFromNow = $refDate->longRelativeToNowDiffForHumans();
+      $balanceDiff = $refDate->floatDiffInRealMonths(Carbon::now());
+      $paymentTime = $paymentsTime->avg();
+      if ($balance > 0) {
+        if ($onlyCredits) {
+          $state = "Saldo $diffFromNow";
+        } else {
+          $state = "Un abono $diffFromNow";
+        } //end if-else
+
+        $balanceState = $balanceDiff <= 0.8
+          ? 'text-success'
+          : ($balanceDiff <= 1.5  ? 'text-warning' : 'text-danger');
+      } else {
+        $state = "Deuda saldada $diffFromNow";
+      } //end if-else
+    }
+
+    $lastCredit = $lastCredit
+      ? 'Ultimo credito ' . $lastCredit->date->longRelativeToNowDiffForHumans()
+      : 'No tiene creditos';
+
+    $result = new stdClass();
+    $result->balance = $balance;
+    $result->refDate = $pendingCredits;
+    $result->balanceState = $balanceState;
+    // $result->pendingCredits = $pendingCredits->count();
+    $result->paymentTime = $paymentTime;
+    // $result->times = $paymentsTime;
+    $result->lastCredit = $lastCredit;
+    $result->state = $state;
+
+    // dd($refDate, $refDates);
+    return $result;
+  } //end of method
 
   protected function getPaymentStatistics($customer)
   {

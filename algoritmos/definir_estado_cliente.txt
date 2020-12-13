@@ -1,0 +1,82 @@
+ALGORITMO PARA EL ESTABLECIMIENTO DE ESTADISTICAS
+Y LA DEFINICION DEL ESTADO DEL CLIENTE
+
+#varibles
++credits: []
++creditsPaid: []
++pendingCredits: []
++payments: []
++paymentsTime: []
+
++refDate = date
++balance: decimal
++balanceState: string
++paymentTime: float
++lastPayment: payment
++lastCredit: credit
++state: string
+
+1.  balance = 0
+    refDate = null
+    balanceState = 'success'
+    paymentTime = 0
+    lastPayment = null
+    lastCredit = null
+    state = 'No tiene historial'
+    onlyCredits = false
+2.  credits.count() > 0
+  SI
+    3.  credit = credits.shift()
+        lastCredit = credit
+        pendingCredits.push(credit)
+        nextPayment = payments.count > 0 ? payments.first() : null
+    4.  balance <= 0
+      SI
+        5.  refDate = credit.date
+            onlyCredits = true
+    6. nextPayment && nextPayment.date.lessThanOrEqual(credit.date)
+      SI
+        7.  firstPendingCredit = pendingCredits.count > 0 ? firstPendingCredit = pendingCredits.first() : null
+            refDate = nextPayment.date
+            onlyCredits = false
+        8.  firstPendingCredit.balance <= nextPayment.availableBalance
+          SI
+            9.  nextPayment.availableBalance -= firstPendingCredit.balance
+                firstPendingCredit.balance = 0
+                time = nextPayment.date.diffInMonth(firstPendingCredit.date)
+                paymentsTime.push(time)
+                creditsPaid.push(pendingCredits.shift())
+            10. nextPayment.availableBalance <= 0
+              SI
+                11. lastPayment = payments.shift();
+                    nextPayment = payments.count > 0 ? payments.first() : null
+          NO
+            12. firstPendingCredit.balance -= nextPayment.availableBalance
+                time = nextPayment.date.diffInMonth(firstPendingCredit.date)
+                paymentsTime.push(time)
+                nextPayment.availableBalance = 0;
+                lastPayment = payments.shift()
+                nextPayment = payments.count > 0 ? payments.first() : null
+  13. paymentTime = paymentsTime.avg();
+  14. refDate
+    SI
+      15. onlyCredits
+        SI
+          16. state = "Saldo pendiente hace x tiempo"
+        NO
+          17. state = "Ultimo abono hace x tiempo"
+    18. balanceTime = refDate.diffInMonthFromNow()
+    19. balanceTime <= 0.9
+      SI
+        20. balanceState = "success"
+      NO
+        21. balanceTime <=1.5
+          SI
+            22. balanceState = "warning"
+          NO
+            23. balanceState = "danger"
+
+    NO
+      24. state = "No tiene transacciones"
+          balanceState = "mutted"
+    
