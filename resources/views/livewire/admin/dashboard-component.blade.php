@@ -50,7 +50,7 @@
           <div class="card-body" x-show.transition="tab === 'graph'">
             <div class="container">
               <div class="row justify-content-center">
-                <div class="form-group row col-5">
+                <div class="form-group row col-md-5">
                   <label for="" class="col-4 col-form-label">Periodo</label>
                   <select name="" id="" class="form-control col-8" x-model.number="basicPeriod" x-on:change="setPeriod" x-on:input="specificPeriod = 1">
                     <option value="annual">Anual</option>
@@ -59,7 +59,7 @@
                   </select>
                 </div>
 
-                <div class="form-group row col-5" x-show.transition="basicPeriod === 'biannual'">
+                <div class="form-group row col-md-5" x-show.transition="basicPeriod === 'biannual'">
                   <label for="" class="col-5 col-form-label">Semestre</label>
                   <select name="" id="" class="form-control col-7" x-model.number="specificPeriod" x-on:change="setPeriod">
                     <option value="1">Ene - Jun</option>
@@ -67,7 +67,7 @@
                   </select>
                 </div>
                 
-                <div class="form-group row col-5" x-show.transition="basicPeriod === 'quarterly'">
+                <div class="form-group row col-md-5" x-show.transition="basicPeriod === 'quarterly'">
                   <label for="" class="col-5 col-form-label">Trimestre</label>
                   <select name="" id="" class="form-control col-7" x-model.number="specificPeriod" x-on:change="setPeriod">
                     <option value="1">Ene - Mar</option>
@@ -138,11 +138,19 @@
       </div>
     </div>
     <div>
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Ventas mensuales por categoría [{{$now->format('Y')}}]</h3>
+      <div class="card" x-data="{tab:'table'}">
+        <div class="card-header mb-2">
+          <ul class="nav nav-tabs card-header-tabs">
+            <div class="nav-item">
+              <a href="#ventasPorCategoría-tabla" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
+            </div>
+            <div class="nav-item">
+              <a href="#ventas-por-categoria-grafica" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
+            </div>
+          </ul>
         </div>
-        <div class="card-body table-responsive p-0" style="height: 60vh">
+        <h3 class="text-center mb-2">Ventas mensuales por categoría [{{$now->format('Y')}}]</h3>
+        <div class="card-body table-responsive p-0" style="height: 60vh" x-show.transition="tab === 'table'">
           <table class="table table-head-fixed table-hover text-nowrap">
             <thead>
               <tr class="text-center">
@@ -170,6 +178,9 @@
             </tbody>
           </table>
         </div>
+        <div class="card-body" x-show.transition="tab === 'graph'" style="max-width: 1080px;">
+          <canvas id="salesByCategories"></canvas>
+        </div>
       </div>
     </div>
     <!--/.row -->
@@ -181,6 +192,7 @@
 <script>
   window.monthlyReports = @json($montlyReports);
   window.customersDebts = @json($creditEvolutions);
+  window.salesByCategories = @json($categories);
 </script>  
-<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=1.0"></script>  
+<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=2.0"></script>  
 @endpush

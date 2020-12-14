@@ -140,6 +140,86 @@ const customersDebtsDatasets = () =>{
   }
 }
 
+const salesByCategoriesDatasets = () => {
+  let labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+	let datasets = [];
+	let colors = [
+		'255, 99, 132', 
+		'255, 159, 64', 
+		'255, 205, 86',
+		'75, 192, 192',
+		'54, 162, 235',
+		'153, 102, 255',
+		'201, 203, 207',
+	];
+	let indexColor = 0;
+
+  salesByCategories.forEach(category => {
+		let color = colors[indexColor];
+		indexColor++;
+
+    datasets.push({
+      label: category.name,
+      backgroundColor: `rgba(${color}, 0.4)`,
+			borderColor: `rgba(${color}, 1)`,
+			borderWidth: 1,
+			data: category.sales
+		})
+		
+		indexColor = indexColor >= 7 ? 0 : indexColor;
+	})
+	
+	return {
+		labels,
+		datasets
+	}
+}
+
+const salesByCategoriesBuild = () => {
+	let ctx = document.getElementById('salesByCategories');
+	let data = salesByCategoriesDatasets();
+	let barChartData = {
+		labels: data.labels,
+		datasets: data.datasets,
+	}
+
+	window.salesByCategoriesChart = new Chart(ctx, {
+		type: 'bar',
+		data: barChartData,
+		options: {
+			responsive: true,
+			legend: {
+				position: 'top'
+			},
+			scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            callback: function (value, index, values) {
+              return formatCurrency(value, 0);
+            }//end callback
+          }//end ticks
+        }], //end yAxes
+      },//end scales
+      tooltips: {
+        callbacks: {
+          label: (tooltipItem, data) => {
+            let dataset = data.datasets[tooltipItem.datasetIndex];
+            let label = dataset.label || '';
+            let currentValue = dataset.data[tooltipItem.index]
+
+            if (label) {
+              label += ': ';
+            }
+
+            label += formatCurrency(currentValue, 0);
+            return label;
+          }, //end label
+        },//end callbacks
+      },//end tooltips
+		}
+	})
+}
 /**
  * Se encarga de contruir la estructura de la grafica que
  * organiza los datos de las ventas, los creditos y los abonos
@@ -301,5 +381,6 @@ window.formatCurrency = (number, fractionDigits) => {
 
 document.addEventListener('livewire:load', () => {
   monthlyReportsBuild();
-  customersDebtsBuild();
+	customersDebtsBuild();
+	salesByCategoriesBuild();
 })
