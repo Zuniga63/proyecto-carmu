@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\RoleHasMenuController;
 use App\Http\Controllers\HomeController;
 use App\Http\Livewire\Admin\Carmu\CustomerProfileComponent;
 use App\Http\Livewire\Admin\Carmu\CustomersComponent;
+use App\Http\Livewire\Admin\Carmu\SalesComponent;
 use App\Http\Livewire\Admin\DashboardComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -92,5 +93,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::view('carmu', 'admin.carmu.index')->name('carmu');
     Route::get('carmu/clientes/{id?}', CustomersComponent::class)->name('carmu_customers')->where('id', '[0-9]+');
     Route::get('carmu/clientes/perfiles/{id?}', CustomerProfileComponent::class)->name('carmu_profile');
+    Route::get('carmu/ventas', SalesComponent::class)->name('carmu_sales');
   });
 });
