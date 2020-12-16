@@ -2,9 +2,12 @@
   <div class="card-header">
     <h2 class="card-title">Registrar Venta</h2>
   </div>
-  <form wire:submit.prevent="store">
+  <form wire:submit.prevent="store" x-data="formModel()">
     <div class="card-body">
       @include('admin.carmu.sales.form')
+      <div wire:loading wire:target="store">
+        Procesando venta...
+      </div>
     </div>
     <div class="card-footer">
       <button class="btn btn-primary">Registrar</button>
