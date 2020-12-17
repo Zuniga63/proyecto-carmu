@@ -1,4 +1,10 @@
-<div class="card" x-data="{tab:'table', period:@entangle('period')}">
+<div class="card" 
+  x-data="{
+    tab:'table', 
+    period:@entangle('period'), 
+    periodCategory:@entangle('periodCategory')
+  }"
+>
   <div class="card-header mb-2">
     <div class="nav nav-tabs card-header-tabs">
       <li class="nav-item">
@@ -24,6 +30,18 @@
           @endforeach
         </select>
       </div>
+
+      <div class="form-group row col-md-5 col-lg-4">
+        <label for="" class="col-4 col-form-label">Categoría</label>
+        <select name="" id="" class="form-control col-8" x-model="periodCategory" 
+        >
+          <option value="all">Todas</option>
+          @foreach ($this->categories as $key => $categoryName)
+          <option value="{{$key}}">{{$categoryName}}</option>
+          @endforeach
+        </select>
+      </div>
+
       <div class="form-group row col-md-5 col-lg-4" x-show.transition="period==='other'">
         <label for="" class="col-4 col-form-label">Desde</label>
         <select name="" id="" class="form-control col-8" {{-- x-model.number="basicPeriod"  --}}

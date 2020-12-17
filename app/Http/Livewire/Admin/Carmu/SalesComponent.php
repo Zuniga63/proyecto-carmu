@@ -104,6 +104,8 @@ class SalesComponent extends Component
 
   public $period = 'today';
 
+  public $periodCategory = 'all';
+
   public function getPeriodDatesProperty()
   {
     $now = Carbon::now()->timezone("America/Bogota");
@@ -175,14 +177,26 @@ class SalesComponent extends Component
     $max = $this->periodDates['max'];
     $format = 'Y-m-d H:i:s';
     $result = [];
+    $data = [];
 
-    $data = DB::connection('carmu')
-      ->table('sale')
-      ->where('sale_date', '>=', $min->format($format))
-      ->where('sale_date', '<=', $max->format($format))
-      ->orderBy('sale_id')
-      ->orderBy('sale_date')
-      ->get();
+    if($this->periodCategory === 'all'){
+      $data = DB::connection('carmu')
+        ->table('sale')
+        ->where('sale_date', '>=', $min->format($format))
+        ->where('sale_date', '<=', $max->format($format))
+        ->orderBy('sale_id')
+        ->orderBy('sale_date')
+        ->get();
+    }else{
+      $data = DB::connection('carmu')
+        ->table('sale as t1')
+        ->join('sale_has_category as t2', 't1.sale_id', '=', 't2.sale_id')
+        ->where('t2.category_id', $this->periodCategory)
+        ->where('sale_date', '>=', $min->format($format))
+        ->where('sale_date', '<=', $max->format($format))
+        ->select('t1.*')
+        ->get();
+    }
 
     foreach ($data as $sale) {
       $result[] = [
