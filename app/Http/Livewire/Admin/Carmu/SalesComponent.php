@@ -103,8 +103,15 @@ class SalesComponent extends Component
   ];
 
   public $period = 'today';
-
   public $periodCategory = 'all';
+
+  public $graphPeriods = [
+    'thisWeek' => 'Esta semana',
+    'thisMonth' => 'Este mes'
+  ];
+
+  public $graphPeriod = 'thisWeek';
+  public $graphCategory = 'all';
 
   public function getPeriodDatesProperty()
   {
@@ -235,6 +242,11 @@ class SalesComponent extends Component
       'max' => $maxSale,
       'total' => $total
     ];
+  }
+
+  public function getGraphDataProperty()
+  {
+    //TODO
   }
 
 
