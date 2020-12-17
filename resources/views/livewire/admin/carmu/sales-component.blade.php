@@ -18,8 +18,10 @@
       return {
         moment:@entangle('moment'),
         date: @entangle('date'),
+        setTime: @entangle('setTime'),
+        time: @entangle('time'),
         categoryId: @entangle('categoryId'),
-        description: @entangle('description').defer,
+        description: @entangle('description'),
         amount: ''
       }
     }

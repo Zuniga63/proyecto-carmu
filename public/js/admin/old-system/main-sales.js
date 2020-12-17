@@ -33,14 +33,29 @@ document.addEventListener('livewire:load', () => {
     let body = '';
     let type = 'success';
     functions.notifications(body, title, type);
-    document.getElementById('saleAmount').value = '';
   });
 
   Livewire.on('reset', ()=>{
     document.getElementById('saleAmount').value = '';
   })
 
-  Livewire.on('storedError', ()=>{
+  Livewire.on('saleMount', (amount) => {
+    let title = "¡Los datos han sido cargados!"
+    let body = '';
+    let type = 'success';
+    functions.notifications(body, title, type);
+
+    document.getElementById('saleAmount').value = formatCurrency(amount, 0);
+  })
+
+  Livewire.on('updated', ()=>{
+    let title = "¡Datos actualizados!"
+    let body = '';
+    let type = 'success';
+    functions.notifications(body, title, type);
+  })
+
+  Livewire.on('serverError', ()=>{
     let title = `¡Oops, algo salio mal!`;
     let body = 'Algo en el servidor no funcionó correctamente';
     let type = 'error';

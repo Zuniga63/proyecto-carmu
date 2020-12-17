@@ -14,8 +14,11 @@ class SalesComponent extends Component
   //--------------------------------------------------------
   //  PROPIEDADES DEL FORMULARIO
   //--------------------------------------------------------
+  public $saleId = null;
   public $moment = 'now';
   public $date = '';
+  public $setTime = false;
+  public $time = "";
   public $categoryId = ' ';
   public $description = '';
   public $amount = '';
@@ -52,6 +55,7 @@ class SalesComponent extends Component
   protected $attributes = [
     'moment' => 'Momento de la venta',
     'date' => 'Fecha',
+    'time' => 'Hora',
     'categoryId' => 'Categoría',
     'description' => 'Descripción',
     'amount' => 'Importe'
@@ -67,9 +71,17 @@ class SalesComponent extends Component
     ];
 
     if ($this->moment === 'other') {
-      $rules = array_merge($rules, [
-        'date' => "required|date|before_or_equal:$this->maxDate"
-      ]);
+
+      if ($this->setTime) {
+        $rules = array_merge($rules, [
+          'date' => "required|date|before_or_equal:$this->maxDate",
+          'time' => "required|date_format:H:i"
+        ]);
+      } else {
+        $rules = array_merge($rules, [
+          'date' => "required|date|before_or_equal:$this->maxDate"
+        ]);
+      }
     }
 
     return $rules;
@@ -94,7 +106,7 @@ class SalesComponent extends Component
 
   public function getPeriodDatesProperty()
   {
-    $now = Carbon::now();
+    $now = Carbon::now()->timezone("America/Bogota");
     $min = $now->copy();
     $max = $now->copy();
 
@@ -171,9 +183,9 @@ class SalesComponent extends Component
       ->orderBy('sale_id')
       ->orderBy('sale_date')
       ->get();
-    
-    foreach($data as $sale){
-      $result [] = [
+
+    foreach ($data as $sale) {
+      $result[] = [
         'id' => $sale->sale_id,
         'date' => Carbon::createFromFormat('Y-m-d H:i:s', $sale->sale_date)->format('d-m-Y'),
         'description' => $sale->description,
@@ -191,13 +203,13 @@ class SalesComponent extends Component
     $total = 0;
     $first = true;
 
-    foreach($this->sales as $sale){
+    foreach ($this->sales as $sale) {
       $amount = $sale['amount'];
-      if($first){
+      if ($first) {
         $minSale = $amount;
         $maxSale = $amount;
         $first = false;
-      }else{
+      } else {
         $minSale = $minSale <= $amount ? $minSale : $amount;
         $maxSale = $maxSale >= $amount ? $maxSale : $amount;
       }
@@ -221,14 +233,7 @@ class SalesComponent extends Component
   public function store()
   {
     $this->validate($this->rules(), [], $this->attributes);
-    $saleData = [
-      'description' => $this->description,
-      'amount' => $this->amount
-    ];
-
-    $saleData = $this->moment === 'other'
-      ? array_merge($saleData, ['sale_date' => $this->date])
-      : $saleData;
+    $saleData = $this->buildData();
 
     DB::beginTransaction();
     try {
@@ -245,17 +250,117 @@ class SalesComponent extends Component
         ]);
       //Se emite el evento de guardado
       DB::commit();
-      $this->reset('moment', 'description', 'amount', 'categoryId');
+      $this->resetFields();
       $this->emit('stored');
     } catch (\Throwable $th) {
-      DB::rollBack();  
-      $this->emit('storedError');
+      DB::rollBack();
+      $this->emit('serverError');
     }
+  }
+
+  public function edit($id)
+  {
+    try {
+      $sale = DB::connection('carmu')
+        ->table('sale')
+        ->where('sale_id', $id)
+        ->first();
+      
+      if($sale){
+        $this->saleId = $sale->sale_id;
+        $this->moment = 'other';
+        $this->setTime = true;
+        $date = Carbon::createFromFormat('Y-m-d H:i:s', $sale->sale_date);
+        $this->date = $date->format('Y-m-d');
+        $this->time = $date->format('H:i');
+        $this->description = $sale->description;
+        $this->amount = $sale->amount;
+
+        //Ahora recupero el id de la categoría
+        $relation = DB::connection('carmu')
+          ->table('sale_has_category')
+          ->where('sale_id', $this->saleId)
+          ->first();
+        
+        if($relation){
+          $this->categoryId = $relation->category_id;
+        }
+
+        $this->view = 'edit';
+        $this->emit('saleMount', $this->amount);
+      }else{
+        $this->emit('saleNotFound');
+      }
+    } catch (\Throwable $th) {
+      $this->emit('serverError');
+    }
+  }
+
+  public function update()
+  {
+    $this->validate($this->rules(), [], $this->attributes);
+    $saleData = $this->buildData();
+
+    DB::beginTransaction();
+    try {
+      if(DB::connection('carmu')->table('sale')->where('sale_id', $this->saleId)->exists()){
+        //En primer lugar lo que hago es modificar los datos de la venta
+        DB::connection('carmu')->table('sale')
+          ->where('sale_id', $this->saleId)
+          ->update($saleData);
+
+        /**
+         * Se descruyen las relaciones de la venta
+         */
+        DB::connection('carmu')->table('sale_has_category')
+          ->where('sale_id', $this->saleId)
+          ->delete();
+        
+        //Se crean nuvamente las relaciones
+        DB::connection('carmu')->table('sale_has_category')
+          ->insert([
+            'sale_id' => $this->saleId,
+            'category_id' => $this->categoryId
+          ]);
+
+        $this->emit('updated');
+        $this->resetFields();
+        DB::commit();
+      }else{
+        $this->emit('saleNotFound');
+        DB::rollBack();
+      }
+    } catch (\Throwable $th) {
+      dd($th);
+      $this->emit('serverError');
+      DB::rollBack();
+    }
+  }
+
+  protected function buildData()
+  {
+    $saleData = [
+      'description' => $this->description,
+      'amount' => $this->amount
+    ];
+
+    if($this->moment === 'other'){
+      if($this->setTime){
+        $date = Carbon::createFromFormat('Y-m-d H:i', "$this->date $this->time");
+        $saleData = array_merge($saleData, ['sale_date' => $date]);
+      }else{
+        $saleData = array_merge($saleData, ['sale_date' => $this->date]);
+      }
+    }else if($this->view === 'edit'){
+      $saleData = array_merge($saleData, ['sale_date' => Carbon::now()->timezone('America/Bogota')]);
+    }
+
+    return $saleData;
   }
 
   public function resetFields()
   {
-    $this->reset('moment', 'description', 'amount', 'categoryId');
+    $this->reset('saleId', 'view', 'moment', 'description', 'amount', 'categoryId', 'setTime');
     $this->emit('reset');
   }
 }
