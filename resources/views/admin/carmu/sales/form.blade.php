@@ -103,6 +103,7 @@
     x-on:input="formatInput($event.target)" 
     x-on:change="$wire.amount = deleteCurrencyFormat($event.target.value)"
     style="font-size: 1.5em;letter-spacing: 2px;"
+    autocomplete="off"
   >
   @error('amount')
   <div class="invalid-feedback" role="alert">

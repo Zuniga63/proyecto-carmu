@@ -27,6 +27,54 @@ window.formatInput = (target) => {
   target.value = formatCurrency(value, 0);
 }
 
+window.updateGraph = data => {
+  document.getElementById('salesChart').remove();
+  const canvas = document.createElement("canvas");
+  canvas.id="salesChart";
+  document.getElementById('graphContainer').appendChild(canvas);
+
+  let ctx = document.getElementById('salesChart');
+  let graph = new Chart(ctx, {
+    type: data.type,
+    data: {
+      labels: data.labels,
+      datasets: data.datasets,
+    },
+    options: {
+      responsive: true,
+      legend: {
+        position: 'top'
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            callback: function (value, index, values) {
+              return formatCurrency(value, 0);
+            }//end callback
+          }//end ticks
+        }], //end yAxes
+      },//end scales
+      tooltips: {
+        callbacks: {
+          label: (tooltipItem, data) => {
+            let dataset = data.datasets[tooltipItem.datasetIndex];
+            let label = dataset.label || '';
+            let currentValue = dataset.data[tooltipItem.index]
+
+            if (label) {
+              label += ': ';
+            }
+
+            label += formatCurrency(currentValue, 0);
+            return label;
+          }, //end label
+        },//end callbacks
+      },//end tooltips
+    }
+  });
+}
+
 document.addEventListener('livewire:load', () => {
   Livewire.on('stored', (transactionType) => {
     let title = "Venta registrada!"
@@ -35,7 +83,7 @@ document.addEventListener('livewire:load', () => {
     functions.notifications(body, title, type);
   });
 
-  Livewire.on('reset', ()=>{
+  Livewire.on('reset', () => {
     document.getElementById('saleAmount').value = '';
   })
 
@@ -48,14 +96,14 @@ document.addEventListener('livewire:load', () => {
     document.getElementById('saleAmount').value = formatCurrency(amount, 0);
   })
 
-  Livewire.on('updated', ()=>{
+  Livewire.on('updated', () => {
     let title = "¡Datos actualizados!"
     let body = '';
     let type = 'success';
     functions.notifications(body, title, type);
   })
 
-  Livewire.on('serverError', ()=>{
+  Livewire.on('serverError', () => {
     let title = `¡Oops, algo salio mal!`;
     let body = 'Algo en el servidor no funcionó correctamente';
     let type = 'error';

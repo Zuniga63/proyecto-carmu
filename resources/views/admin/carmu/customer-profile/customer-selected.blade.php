@@ -210,10 +210,12 @@
                     type="text" 
                     name="transactionAmount" 
                     id="transactionAmount" 
-                    class="form-control text-right {{$errors->has('transactionAmount') ? 'is-invalid' : ''}}" 
+                    class="form-control text-right text-bold {{$errors->has('transactionAmount') ? 'is-invalid' : ''}}" 
                     placeholder="$ 0.00" 
                     x-on:input="formatInput($event.target)" 
                     x-on:change="$wire.transactionAmount = deleteCurrencyFormat($event.target.value)"
+                    style="font-size: 1.5em;letter-spacing: 2px;"
+                    autocomplete="off"
                   >
                   @error('transactionAmount')
                   <div class="invalid-feedback" role="alert">

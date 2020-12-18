@@ -283,7 +283,7 @@ class CustomerProfileComponent extends Component
 
         $this->loadCustomerData($this->customerId);
         $this->emit('transactionIsOk', $this->transactionType);
-        $this->reset('transactionType', 'transactionMoment', 'transactionDate', 'description', 'transactionAmount', 'paymentType');
+        $this->reset('transactionMoment', 'transactionDate', 'description', 'transactionAmount', 'paymentType');
       }
 
       DB::commit();
