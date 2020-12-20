@@ -16,7 +16,7 @@
     </div>
   </div>
 </div>
-<div class="row overflow-auto border rounded p-2" style="max-height: 65vh">
+<div class="row overflow-auto border rounded p-2 p-xl-4" style="max-height: 65vh">
   {{-- @dump($this->customers) --}}
   @foreach ($this->customersList as $item)
     @include('admin.carmu.customer-profile.basic-profile', compact('item'))
