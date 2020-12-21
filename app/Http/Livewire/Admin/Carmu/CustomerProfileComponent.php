@@ -84,14 +84,14 @@ class CustomerProfileComponent extends Component
             "after_or_equal:$this->minDate",
             "before_or_equal:$this->maxDate"
           ],
-          'transactionAmount' => 'required|numeric|min:1' . "|max:$balance",
+          'transactionAmount' => 'required|numeric|min:1' . "|max:$this->balance",
           'paymentType' => ['required', 'string', Rule::in(['cash', 'transfer'])]
         ];
       } else {
         return [
           'transactionType' => ['required', 'string', Rule::in(['credit', 'payment'])],
           'transactionMoment' => ['required', 'string', Rule::in(['now', 'other'])],
-          'transactionAmount' => 'required|numeric|min:1' . "|max:$balance",
+          'transactionAmount' => 'required|numeric|min:1' . "|max:$this->balance",
           'paymentType' => ['required', 'string', Rule::in(['cash', 'transfer'])]
         ];
       }
