@@ -84,14 +84,14 @@ class CustomerProfileComponent extends Component
             "after_or_equal:$this->minDate",
             "before_or_equal:$this->maxDate"
           ],
-          'transactionAmount' => 'required|numeric|min:1' . "|max:$this->balance",
+          'transactionAmount' => 'required|numeric|min:1' . "|max:" . $this->getBalanceTwo(),
           'paymentType' => ['required', 'string', Rule::in(['cash', 'transfer'])]
         ];
       } else {
         return [
           'transactionType' => ['required', 'string', Rule::in(['credit', 'payment'])],
           'transactionMoment' => ['required', 'string', Rule::in(['now', 'other'])],
-          'transactionAmount' => 'required|numeric|min:1' . "|max:$this->balance",
+          'transactionAmount' => 'required|numeric|min:1' . "|max:" . $this->getBalanceTwo(),
           'paymentType' => ['required', 'string', Rule::in(['cash', 'transfer'])]
         ];
       }
@@ -100,6 +100,37 @@ class CustomerProfileComponent extends Component
     return [
       'transactionType' => ['required', 'string', Rule::in(['credit', 'payment'])],
     ];
+  }
+
+  public function getTransactionsProperty()
+  {
+    $result = [];
+    $customer = Customer::find($this->customerId);
+    if($customer){
+      if($this->transactionType === 'credit'){
+        $data = $customer->credits()->get();
+        foreach($data as $record){
+          $result[] = [
+            'id' => $record->customer_credit_id,
+            'date' => Carbon::createFromFormat('Y-m-d H:i:s', $record->credit_date)->format('d-m-Y'),
+            'description' => $record->description,
+            'amount' => floatval($record->amount)
+          ];
+        }
+      }else if($this->transactionType === 'payment'){
+        $data = $customer->payments()->get();
+        foreach($data as $record){
+          $result[] = [
+            'id' => $record->customer_payment_id,
+            'date' => Carbon::createFromFormat('Y-m-d H:i:s', $record->payment_date)->format('d-m-Y'),
+            'description' => $record->cash ? 'Pago en efectivo' : 'Transferencia',
+            'amount' => floatval($record->amount)
+          ];
+        }
+      }
+    }
+
+    return $result;
   }
 
 
@@ -291,15 +322,27 @@ class CustomerProfileComponent extends Component
       DB::rollBack();
       $this->emit('storeError');
     }
-    // dd([
-    //   'type' => $this->transactionType,
-    //   'moment' => $this->transactionMoment,
-    //   'date' => $this->transactionDate,
-    //   'description' => $this->description,
-    //   'amount' => $this->transactionAmount,
-    //   'paymentType' => $this->paymentType
-    // ]);
-    // $this->transactionDate = "2020-12-01";
+  }
+
+  public function destroyTransaction($id)
+  {
+    $customer = Customer::find($this->customerId);
+    if($customer){
+      if(auth()->user()->roles()->first()->id === 1){
+        if($this->transactionType === 'credit'){
+          $customer->credits()->where('customer_credit_id', $id)->delete();
+        }else if($this->transactionType === 'payment'){
+          $customer->payments()->where('customer_payment_id', $id)->delete();
+        }
+        $this->emit('transactionIsDeleted', $this->transactionType);
+        $this->loadCustomerData($this->customerId);
+      }else{
+        $this->emit('storeError');
+      }
+
+    }else{
+      $this->emit('customerNotFound');
+    }
   }
   //------------------------------------------------------------------------------------
   // SISTEMA DE RENDERIZACIÓN
@@ -445,6 +488,17 @@ class CustomerProfileComponent extends Component
   {
     $history = $customer->history;
     return $history->count() > 0 ? $history->last()->debt : 0;
+  }
+
+  protected function getBalanceTwo()
+  {
+    $data = Customer::find($this->customerId);
+    
+    if($data){
+      return floatval($data->credits()->sum('amount')) - floatval($data->payments()->sum('amount'));
+    }
+
+    return 0;
   }
 
   protected function getBalanceColor($customer)
