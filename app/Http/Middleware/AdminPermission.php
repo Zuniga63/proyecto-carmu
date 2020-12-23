@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class AdminPermission
 {
@@ -25,6 +27,12 @@ class AdminPermission
 
   private function Permission()
   {
+    if(!session()->get('role_name')){
+      $userId = auth()->user()->id;
+      $role_name = User::find($userId)->roles()->orderBy('id')->first()->name;
+      Session::put('role_name', $role_name);
+    }
+
     return session()->get('role_name')=== 'Administrador';
   }
 }
