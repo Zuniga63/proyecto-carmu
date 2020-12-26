@@ -5,12 +5,12 @@
         <div class="card" x-data="monthlyReportsModel()">
           <div class="card-header mb-2">
             <ul class="nav nav-tabs card-header-tabs">
-              <div class="nav-item">
-                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
-              </div>
-              <div class="nav-item">
-                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
-              </div>
+              <li class="nav-item">
+                <span  class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</span>
+              </li>
+              <li class="nav-item">
+                <span href="#" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</span>
+              </li>
             </ul>
           </div>
           <h3 class="text-center mb-2">Ventas, Creditos y Abonos [{{$now->format('Y')}}]</h3>
@@ -88,14 +88,18 @@
           <div class="card-header mb-2">
             <ul class="nav nav-tabs card-header-tabs">
               <div class="nav-item">
-                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
+                <li class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</li>
               </div>
               <div class="nav-item">
-                <a href="#" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
+                <li class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</li>
               </div>
             </ul>
           </div>
           <h3 class="text-center mb-2">Deuda de los Clientes [{{$now->format('Y')}}]</h3>
+
+          <div class="card-body" x-show.transition="tab === 'graph'">
+            <canvas id="customersDebts"></canvas>
+          </div>
 
           <div class="card-body table-responsive p-0" style="height: 60vh" x-show.transition="tab === 'table'">
             <table class="table table-head-fixed table-hover text-nowrap">
@@ -130,10 +134,6 @@
               </tbody>
             </table>
           </div>
-
-          <div class="card-body" x-show.transition="tab === 'graph'">
-            <canvas id="customersDebts"></canvas>
-          </div>
         </div>
       </div>
     </div>
@@ -141,12 +141,12 @@
       <div class="card" x-data="{tab:'table'}">
         <div class="card-header mb-2">
           <ul class="nav nav-tabs card-header-tabs">
-            <div class="nav-item">
-              <a href="#ventasPorCategoría-tabla" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
-            </div>
-            <div class="nav-item">
-              <a href="#ventas-por-categoria-grafica" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
-            </div>
+            <li class="nav-item">
+              <span href="#ventasPorCategoría-tabla" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</span>
+            </li>
+            <li class="nav-item">
+              <span href="#ventas-por-categoria-grafica" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</span>
+            </li>
           </ul>
         </div>
         <h3 class="text-center mb-2">Ventas mensuales por categoría [{{$now->format('Y')}}]</h3>

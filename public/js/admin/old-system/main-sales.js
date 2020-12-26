@@ -30,7 +30,7 @@ window.formatInput = (target) => {
 window.updateGraph = data => {
   document.getElementById('salesChart').remove();
   const canvas = document.createElement("canvas");
-  canvas.id="salesChart";
+  canvas.id = "salesChart";
   document.getElementById('graphContainer').appendChild(canvas);
 
   let ctx = document.getElementById('salesChart');
@@ -124,3 +124,93 @@ document.addEventListener('livewire:load', () => {
   //   functions.notifications(body, title, type);
   // })
 })
+
+window.invoiceData = () => {
+  return {
+    customerName: '',
+    itemName: '',
+    categoryId: ' ',
+    quantity: 0,
+    unitValue: 0,
+    unitDiscount: 0,
+    items: [],
+    subtotal: 0,
+    discount: 0,
+    totalAmount: 0,
+    totalItems: 0,
+    showInvoice:false,
+    validate() {
+      return this.itemName.trim() !== ''
+        && this.categoryId.trim() !== ''
+        && this.quantity > 0
+        && this.unitValue > 0
+    },
+    add() {
+      if (this.validate()) {
+        let itemName = this.itemName;
+        let categoryId = this.categoryId;
+        let quantity = this.quantity;
+        let unitValue = this.unitValue;
+        let unitDiscount = this.unitDiscount;
+        let subTotal = quantity * unitValue;
+        let discount = unitDiscount * quantity;
+        let amount = subTotal - discount;
+
+        this.subtotal += subTotal;
+        this.discount += discount;
+        this.totalAmount += amount;
+        this.totalItems += quantity;
+
+        this.items.push({
+          itemName,
+          categoryId,
+          quantity,
+          unitValue,
+          unitDiscount,
+          subTotal,
+          discount,
+          amount
+        })
+
+        this.resetField();
+        functions.notifications('', 'Item registrado', 'success');
+      } else {
+        functions.notifications('', 'Faltan datos', 'warning');
+      }
+    },
+    resetField() {
+      this.itemName = '';
+      this.categoryId = ' ';
+      this.quantity = 0;
+      this.unitValue = 0;
+      this.unitDiscount = 0;
+      document.getElementById('discount').value = '';
+      document.getElementById('vlrUnt').value = '';
+    },
+    resetInvoice(){
+      this.customerName = '';
+      this.items = [];
+      this.resetField();
+    },
+    printInvoice() {
+      this.showInvoice = true;
+      let invoiceCard = document.getElementById('invoice');
+      console.log(invoiceCard);
+      let ventImp = window.open(' ', 'popimpr');
+      ventImp.document.write('<html><head><title>' + document.title + '</title>');
+      ventImp.document.write('<link rel="stylesheet" href="http://tiendacarmu.test/assets/lte/dist/css/adminlte.min.css">');
+      ventImp.document.write('<script src="http://tiendacarmu.test/assets/lte/plugins/jquery/jquery.min.js"></script>');
+      ventImp.document.write('<script src="http://tiendacarmu.test/assets/lte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>');
+      ventImp.document.write('</head><body>');
+      ventImp.document.write(invoiceCard.innerHTML);
+      ventImp.document.write('</body>');
+      ventImp.document.close();
+      ventImp.focus();
+      ventImp.onload = ()=>{
+        ventImp.print();
+        ventImp.close();
+      }
+      this.showInvoice = false;
+    }
+  }
+}
