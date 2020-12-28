@@ -14,7 +14,7 @@ class AddBarcodeColumnInProduct extends Migration
   public function up()
   {
     Schema::table('product', function (Blueprint $table) {
-      $table->string('barcode', 100)
+      $table->string('barcode')
         ->nullable()
         ->unique()
         ->after('ref');
