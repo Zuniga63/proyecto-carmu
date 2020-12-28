@@ -198,9 +198,9 @@ window.invoiceData = () => {
       console.log(invoiceCard);
       let ventImp = window.open(' ', 'popimpr');
       ventImp.document.write('<html><head><title>' + document.title + '</title>');
-      ventImp.document.write('<link rel="stylesheet" href="http://tiendacarmu.test/assets/lte/dist/css/adminlte.min.css">');
-      ventImp.document.write('<script src="http://tiendacarmu.test/assets/lte/plugins/jquery/jquery.min.js"></script>');
-      ventImp.document.write('<script src="http://tiendacarmu.test/assets/lte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>');
+      ventImp.document.write('<link rel="stylesheet" href="../../assets/lte/dist/css/adminlte.min.css">');
+      ventImp.document.write('<script src="../../assets/lte/plugins/jquery/jquery.min.js"></script>');
+      ventImp.document.write('<script src="../../assets/lte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>');
       ventImp.document.write('</head><body>');
       ventImp.document.write(invoiceCard.innerHTML);
       ventImp.document.write('</body>');
