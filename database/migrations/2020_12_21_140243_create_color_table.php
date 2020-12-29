@@ -15,8 +15,8 @@ class CreateColorTable extends Migration
   {
     Schema::create('color', function (Blueprint $table) {
       $table->id();
-      $table->string('name', 20);
-      $table->string('hex', 8);
+      $table->string('name', 20)->unique();
+      $table->string('hex', 8)->unique();
       $table->timestamps();
       $table->charset = 'utf8mb4';
       $table->collation = 'utf8mb4_spanish_ci';
