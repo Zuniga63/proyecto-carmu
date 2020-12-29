@@ -10,6 +10,54 @@
   </div><!--./end header -->
 
   <div class="card-body">
+    {{-- Contenedor para administrar la imagen --}}
+    <div class="container mb-3">
+      <div class="row justify-content-around align-items-center mb-2">
+        {{-- Imagen actual en el servidor --}}
+        @if($view === 'edit')
+          @if ($actualImage)
+            <img src="{{asset("storage/$actualImage")}}" alt="" class="img-thumbnail mx-auto col-5">
+          @else            
+            <img src="{{asset('storage/img/products/no-image-available.png')}}" alt="" class="img-thumbnail mx-auto col-5">            
+          @endif
+        @endif
+        {{-- Imagen a relacionar --}}
+        @if ($image)
+          @if ($view === 'edit')
+            <i class="fas fa-angle-double-right col-1"></i>
+          @endif
+          <img src="{{$this->path}}" alt="" class="img-thumbnail d-block mx-auto col-5">
+        @else
+          @if($view !== 'edit')
+            <img src="{{asset('storage/img/products/no-image-available.png')}}" alt="" class="img-thumbnail d-block mx-auto col-5">
+          @endif
+        @endif
+      </div>
+
+      <div class="row justify-content-center">
+        <progress x-show.transition="isUploading" max="100" x-bind:value="progress" class="col-6"></progress>
+        @error('image')
+        <div class="text-danger border border-danger rounded px-2 mb-2" role="alert">
+          {{$message}}
+        </div>
+        @enderror
+      </div>
+
+      <div class="row justify-content-around">
+        <label class="btn btn-primary mb-0">
+          <i class="fas fa-cloud-upload-alt"></i> Subir imagen
+          <input type="file" accept="image/*" wire:model="image" class="d-none">
+        </label>
+
+        @if ($image || ($view === 'edit' && $actualImage))
+        <button class="btn btn-danger">
+          <i class="fas fa-trash"></i>
+          Eliminar
+        </button>
+        @endif
+      </div>
+    </div>
+
     <div class="form-group">
       <label for="productName" class="required">Nombre</label>
       <input 
@@ -28,8 +76,8 @@
       @enderror
     </div>
     
-    <div class="form-group">
-      <label for="productSlug" class="required">Slug</label>
+    <div class="form-group d-none">
+      <label for="productSlug" class="required" title="">Slug</label>
       <input 
         id="productSlug" 
         type="text" 
@@ -68,6 +116,23 @@
       </template>
     </div>
 
+    <div class="form-group">
+      <label for="productPrice" class="required">Precio de venta: <span x-text="formatCurrencyLite(price, 0)"></span></label>
+      <input 
+        type="text" 
+        name="productPrice" 
+        id="productPrice" 
+        class="form-control {{$errors->has('price') ? 'is-invalid' : ''}}" 
+        placeholder="Pj: 30000"
+        x-model.number="price"
+      >
+      @error('price')
+      <div class="invalid-feedback" role="alert">
+        {{$message}}
+      </div>
+      @enderror
+    </div>
+
     <div class="form_group mb-4">
       <label for="productCategory">Categoría Principal</label>
       <select name="categoryId" id="productCategory" class="form-control" x-model.number="categoryId">
@@ -77,62 +142,6 @@
         @endforeach
       </select>
     </div>
-
-    <div class="custom-file mb-2">
-      <input 
-        type="file" 
-        class="custom-file-input {{$errors->has('image') ? 'is-invalid' : ''}}" 
-        id="customFile"
-        accept="image/*" 
-        wire:model="image"
-      >
-      <label class="custom-file-label" for="customFile">Elige la imagen</label>
-      @error('image')
-      <div class="invalid-feedback" role="alert">
-        {{$message}}
-      </div>
-      @enderror
-    </div>
-    {{-- <div wire:loading wire:target="image">Cargando imagen...</div> --}}
-    <div x-show="isUploading">
-      <progress max="100" x-bind:value="progress"></progress>
-    </div>
-
-    @if ($view==="edit")
-      <div class="container">
-        @if ($image)
-          <div class="row">
-            <div class="col-lg-6">
-              <div class="card">
-                <h5 class="card-header">Actual</h5>
-              </div>
-              <div class="card-body">
-                <img src="{{url($actualImage ? "storage/$actualImage" : 'storage/img/no-image-available.png')}}" alt="{{$name}}" class="img-thumbnail mx-auto">
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="card">
-                <h5 class="card-header">Nueva</h5>
-              </div>
-              <div class="card-body">
-                <img src="{{$this->path}}" alt="{{$name}}" class="img-thumbnail mx-auto">
-              </div>
-            </div>
-          </div>
-        @else
-          <div class="contaier">
-            <img src="{{url($actualImage ? "storage/$actualImage" : 'storage/img/no-image-available.png')}}" alt="{{$name}}" class="img-thumbnail mx-auto">
-          </div>
-        @endif
-      </div>
-    @else
-      @if ($image)
-      <div class="contaier">
-        <img src="{{$this->path}}" alt="" class="img-thumbnail mx-auto">
-      </div>
-      @endif
-    @endif
-
 
   </div><!-- ./end body -->
 
