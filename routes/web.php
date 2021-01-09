@@ -9,6 +9,7 @@ use App\Http\Livewire\Admin\Carmu\CustomersComponent;
 use App\Http\Livewire\Admin\Carmu\SalesComponent;
 use App\Http\Livewire\Admin\DashboardComponent;
 use App\Http\Livewire\Admin\Shop\ColorComponent;
+use App\Http\Livewire\Admin\Shop\ProductComponent;
 use App\Http\Livewire\Admin\Shop\SizeComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -92,7 +93,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('tienda/tallas', SizeComponent::class)->name('shop_size');
     // Route::view('tienda/colores', 'admin.shop.colors.index')->name('shop_colors');
     Route::get('tienda/colores', ColorComponent::class)->name('shop_colors');
-    Route::view('tienda/productos', 'admin.shop.product.index')->name('shop_products');
+    // Route::view('tienda/productos', 'admin.shop.product.index')->name('shop_products');
+    Route::get('tienda/productos', ProductComponent::class)->name('shop_products');
     //-----------------------------------------------------------
     // RUTAS PARA EL MANEJO DE LOS DATOS DE CARMÚ
     //-----------------------------------------------------------

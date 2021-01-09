@@ -3,7 +3,7 @@
     <h3 class="card-title">Listado de productos</h3>
   </div>
   <!-- /.card-header -->
-  <div class="card-body table-responsive p-0" style="height: 60vh;">
+  <div class="card-body table-responsive p-0" style="height: 100vh;">
     <table class="table table-head-fixed table-hover table-striped text-nowrap">
       <thead>
         <tr>
@@ -22,7 +22,7 @@
               width="100px" lazy>
           </td>
           <td>{{$item->name}}</td>
-          <td x-text="formatCurrencyLite({{$item->price}}, 0)" class="text-right"></td>
+          <td x-text="formatCurrency({{$item->price}}, 0)" class="text-right"></td>
           <td>
             <div class="form-group">
               <div class="custom-control custom-switch">
@@ -49,11 +49,11 @@
           </td>
           <td>
             <div class="btn-group-vertical">
-              <a href="#" class="btn btn-info block" data-toggle="tooltip" data-placement="top" title="Editar este registro"
+              <a href="javascript:;" class="btn btn-info block" data-toggle="tooltip" data-placement="top" title="Editar este registro"
                 wire:ignore wire:click="edit({{$item->id}})">
                 <i class="fas fa-pencil-alt"></i>
               </a>
-              <a href="#" class="btn btn-danger" title="Eliminar producto" data-toggle="tooltip" data-placement="top"
+              <a href="javascript:;" class="btn btn-danger" title="Eliminar producto" data-toggle="tooltip" data-placement="top"
                 x-on:click="showDeleteAlert(id, name)" wire:ignore>
                 <i class="fas fa-trash"></i>
               </a>

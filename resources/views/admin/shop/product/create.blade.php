@@ -5,7 +5,7 @@
   <form wire:submit.prevent="store">
     <div class="card-body">
       @include('admin.shop.product.form-general')
-      @include('admin.shop.product.form-published')
+      {{-- @include('admin.shop.product.form-published') --}}
     </div>
     <div class="card-footer">
       <button class="btn btn-primary">Registrar</button>
