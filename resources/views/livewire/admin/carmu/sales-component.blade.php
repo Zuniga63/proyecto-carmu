@@ -13,7 +13,7 @@
 @push('scripts')
   <script src="{{asset("assets/$theme/plugins/chart.js/Chart.min.js")}}"></script>
   {{-- <script src="{{asset('js/admin/old-system/main-sales.js') . uniqid('?v=')}}"></script> --}}
-  <script src="{{asset('js/admin/old-system/main-sales.js') . '?v=1.2'}}"></script>
+  <script src="{{asset('js/admin/old-system/main-sales.js') . '?v=2.0'}}"></script>
 
   <script>
     window.formModel = () => {

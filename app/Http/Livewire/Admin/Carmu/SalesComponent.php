@@ -296,8 +296,24 @@ class SalesComponent extends Component
   public function graphData()
   {
     $dayOfWeek = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
-    $colors = ['rgba(255, 205, 86, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(54, 162, 235, 0.8)'];
-    $borderColors = ['rgba(255, 205, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)'];
+    $colors = [
+      'rgba(201, 203, 207, 0.8)', //gray
+      'rgba(255, 99, 132, 0.8)',  //Red
+      'rgba(255, 159, 64, 0.8)',  //Orange
+      'rgba(75, 192, 192, 0.8)',  //green
+      'rgba(54, 162, 235, 0.8)',  //blue
+      'rgba(153, 102, 255, 0.8)', //purple
+      'rgba(255, 205, 86, 0.8)',  //yellow
+    ];
+    $borderColors = [
+      'rgba(201, 203, 207, 1)', //gray
+      'rgba(255, 99, 132, 1)',  //Red
+      'rgba(255, 159, 64, 1)',  //Orange
+      'rgba(75, 192, 192, 1)',  //green
+      'rgba(54, 162, 235, 1)',  //blue
+      'rgba(153, 102, 255, 1)', //purple
+      'rgba(255, 205, 86, 1)',  //yellow
+    ];
     $months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     $now = Carbon::now()->timezone($this->timezome);
     $data = [];
@@ -311,7 +327,7 @@ class SalesComponent extends Component
         break;
       case 'monthly':
         $labels = [];
-        $date = $now->copy()->subMonths(2)->startOfMonth()->startOfDay();
+        $date = $now->copy()->subMonths(5)->startOfMonth()->startOfDay();
         $end = $now->copy()->endOfDay();
         $count = 0;
 
@@ -408,11 +424,11 @@ class SalesComponent extends Component
   {
     $now = Carbon::now()->timezone($this->timezome);
     $labels = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
-    $date = $now->copy()->subWeeks(2)->startOfWeek()->startOfDay();
+    $date = $now->copy()->subWeeks(3)->startOfWeek()->startOfDay();
     $end = $now->copy()->endOfWeek()->endOfDay();
     $datasets = [];
     $week = 0;
-    $weekNames = ['Antepasada', 'Pasada', 'Actual'];
+    $weekNames = ['Hace 3 sem', 'Hace 2 sem', 'Hace 1 sem', 'Actual'];
 
     while ($date->lessThanOrEqualTo($end)) {
       $label = $weekNames[$week] . " ($date->isoWeek)";

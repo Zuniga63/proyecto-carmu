@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin\Carmu;
 
 use App\Models\OldSystem\Customer;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -84,14 +85,14 @@ class CustomerProfileComponent extends Component
             "after_or_equal:$this->minDate",
             "before_or_equal:$this->maxDate"
           ],
-          'transactionAmount' => 'required|numeric|min:1' . "|max:$balance",
+          'transactionAmount' => 'required|numeric|min:1' . "|max:" . $this->getBalanceTwo(),
           'paymentType' => ['required', 'string', Rule::in(['cash', 'transfer'])]
         ];
       } else {
         return [
           'transactionType' => ['required', 'string', Rule::in(['credit', 'payment'])],
           'transactionMoment' => ['required', 'string', Rule::in(['now', 'other'])],
-          'transactionAmount' => 'required|numeric|min:1' . "|max:$balance",
+          'transactionAmount' => 'required|numeric|min:1' . "|max:" . $this->getBalanceTwo(),
           'paymentType' => ['required', 'string', Rule::in(['cash', 'transfer'])]
         ];
       }
@@ -100,6 +101,37 @@ class CustomerProfileComponent extends Component
     return [
       'transactionType' => ['required', 'string', Rule::in(['credit', 'payment'])],
     ];
+  }
+
+  public function getTransactionsProperty()
+  {
+    $result = [];
+    $customer = Customer::find($this->customerId);
+    if ($customer) {
+      if ($this->transactionType === 'credit') {
+        $data = $customer->credits()->get();
+        foreach ($data as $record) {
+          $result[] = [
+            'id' => $record->customer_credit_id,
+            'date' => Carbon::createFromFormat('Y-m-d H:i:s', $record->credit_date)->format('d-m-Y'),
+            'description' => $record->description,
+            'amount' => floatval($record->amount)
+          ];
+        }
+      } else if ($this->transactionType === 'payment') {
+        $data = $customer->payments()->get();
+        foreach ($data as $record) {
+          $result[] = [
+            'id' => $record->customer_payment_id,
+            'date' => Carbon::createFromFormat('Y-m-d H:i:s', $record->payment_date)->format('d-m-Y'),
+            'description' => $record->cash ? 'Pago en efectivo' : 'Transferencia',
+            'amount' => floatval($record->amount)
+          ];
+        }
+      }
+    }
+
+    return $result;
   }
 
 
@@ -291,15 +323,41 @@ class CustomerProfileComponent extends Component
       DB::rollBack();
       $this->emit('storeError');
     }
-    // dd([
-    //   'type' => $this->transactionType,
-    //   'moment' => $this->transactionMoment,
-    //   'date' => $this->transactionDate,
-    //   'description' => $this->description,
-    //   'amount' => $this->transactionAmount,
-    //   'paymentType' => $this->paymentType
-    // ]);
-    // $this->transactionDate = "2020-12-01";
+  }
+
+  /**
+   * Este metodo utilizado por el administrador elimina los datos de un
+   * credito o de un abono. 
+   */
+  public function destroyTransaction($id)
+  {
+    try {
+      $customer = Customer::find($this->customerId);
+      $userRol = User::find(auth()->user()->id)->roles()->orderBy('id')->first()->id;
+      if ($customer && $userRol === 1) {
+        $isOk = false;
+
+        if ($this->transactionType === 'credit') {
+          $customer->credits()->where('customer_credit_id', $id)->delete();
+          $isOk = true;
+        } else if ($this->transactionType === 'payment') {
+          $customer->payments()->where('customer_payment_id', $id)->delete();
+          $isOk = true;
+        }
+        
+        if($isOk){
+          $this->emit('transactionIsDeleted', $this->transactionType);
+          $this->loadCustomerData($this->customerId);          
+        }else{
+          $this->emit('storeError');
+        }
+      } else {
+        $this->emit('storeError');
+        $this->emit('customerNotFound');
+      }
+    } catch (\Throwable $th) {
+      $this->emit('storeError');
+    }
   }
   //------------------------------------------------------------------------------------
   // SISTEMA DE RENDERIZACIÓN
@@ -349,12 +407,9 @@ class CustomerProfileComponent extends Component
     $credits = $data->credits()->orderBy('credit_date')->get();
     $payments = $data->payments()->orderBy('payment_date')->get();
 
-    $statistics = $this->getStateTwo($credits, $payments);
-    // $customer->balance = $this->getBalance($customer);
+    $statistics = $this->getState($credits, $payments);
     $customer->balance = $statistics->balance;
-    // $customer->balanceColor = $this->getBalanceColor($customer);
     $customer->balanceColor = $statistics->balanceState;
-    // $customer->state = $this->getState($customer);
     $customer->state = $statistics->state;
     $customer->paymentStatistics = $this->getPaymentStatistics($customer);
     $customer->paymentStatisticsByTimeOfLive = $this->getPaymentStatisticsByTimeOfLive($customer);
@@ -413,7 +468,7 @@ class CustomerProfileComponent extends Component
       $credits = $record->credits()->orderBy('credit_date')->get();
       $payments = $record->payments()->orderBy('payment_date')->get();
 
-      $statistics = $this->getStateTwo($credits, $payments);
+      $statistics = $this->getState($credits, $payments);
 
       $customer->balance = $statistics->balance;
       $customer->state = $statistics->state;
@@ -447,60 +502,22 @@ class CustomerProfileComponent extends Component
     return $history->count() > 0 ? $history->last()->debt : 0;
   }
 
-  protected function getBalanceColor($customer)
+  protected function getBalanceTwo()
   {
-    if ($customer->balance > 0) {
-      if ($customer->lastPayment) {
-        $date = Carbon::createFromFormat('Y-m-d H:i:s', $customer->lastPayment->date);
-      } else {
-        $date = Carbon::createFromFormat('Y-m-d H:i:s', $customer->pendingCredits->first()->date);
-      }
+    $data = Customer::find($this->customerId);
 
-      $now = Carbon::now();
-      $diff = $now->diffInDays($date);
-
-      if ($diff <= 20) {
-        return 'text-primary';
-      } else if ($diff <= 30) {
-        return 'text-warning';
-      } else {
-        return 'text-danger';
-      }
+    if ($data) {
+      return floatval($data->credits()->sum('amount')) - floatval($data->payments()->sum('amount'));
     }
-  }
 
-  protected function getState($customer)
-  {
-    Carbon::setLocale('es_DO');
-    if ($customer->balance > 0) {
-      if ($customer->lastPayment) {
-        $date = Carbon::createFromFormat('Y-m-d H:i:s', $customer->lastPayment->date);
-        // $diff = $date->diffForHumans(Carbon::now());
-        $diff = $date->longRelativeToNowDiffForHumans();
-        return "Ultimo abono $diff";
-      } else {
-        $date = Carbon::createFromFormat('Y-m-d H:i:s', $customer->pendingCredits->first()->date);
-        // $diff = $date->diffForHumans(Carbon::now());
-        $diff = $date->longRelativeToNowDiffForHumans();
-        return "Pendiente $diff";
-      }
-    } else {
-      if ($customer->lastPayment) {
-        $date = Carbon::createFromFormat('Y-m-d H:i:s', $customer->lastPayment->date);
-        // $diff = $date->diffForHumans(Carbon::now());
-        $diff = $date->longRelativeToNowDiffForHumans();
-        return "Ultimo abono $diff";
-      }
-
-      return "No tiene transacciones";
-    }
+    return 0;
   }
 
   /**
    * Este metodo se basa en la amortisacion de los creditos del cliente
    * para poder establecer el estado del mismo, el saldo y el estado del saldo
    */
-  protected function getStateTwo($dataCredits, $dataPayments)
+  protected function getState($dataCredits, $dataPayments)
   {
     $credits = new Collection();          //Guarda los registro de los creditos pendientes
     $creditsPaid = new Collection();      //Guarda los registros de los creditos pagados

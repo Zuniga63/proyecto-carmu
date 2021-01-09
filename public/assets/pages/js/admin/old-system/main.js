@@ -38,6 +38,15 @@ document.addEventListener('livewire:load', () => {
     functions.notifications(body, title, type);
     document.getElementById('transactionAmount').value = '';
   });
+  Livewire.on('transactionIsDeleted', (transactionType) => {
+    let title = transactionType === 'credit' 
+              ? `¡Crédito eliminado!` 
+              : '¡Abono eliminado!';
+    let body = '';
+    let type = 'success';
+    functions.notifications(body, title, type);
+    document.getElementById('transactionAmount').value = '';
+  });
 
   Livewire.on('storeError', ()=>{
     let title = `¡Oops, algo salio mal!`;

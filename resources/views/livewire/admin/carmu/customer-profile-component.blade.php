@@ -1,4 +1,4 @@
-<div class="container pb-5">
+<div class="container-fluid pb-5">
   @if ($customerId)
   @include('admin.carmu.customer-profile.customer-selected')
   @else

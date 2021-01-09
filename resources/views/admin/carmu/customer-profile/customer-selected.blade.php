@@ -35,8 +35,8 @@
   </div>
 </div>
 
-<div class="row">
-  <div class="card col-12" x-data="{tab: 'historyAndCredits'}">
+<div class="row justify-content-center">
+  <div class="card col-12 col-xl-10" x-data="{tab: 'historyAndCredits'}">
     <div class="card-header mb-2">
       <div class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
@@ -101,8 +101,8 @@
 
     {{-- FORMULARIO DE TRANSACCIONES --}}
     <div class="card-body px-0 px-sm-4" x-show.transition="tab === 'transactions'">
-      <div class="row">
-        <div class="col-lg-6">
+      <div class="row justify-content-between">
+        <div class="col-lg-4">
           <div class="card card-primary" x-data="formData()">
             {{-- HEADER --}}
             <div class="card-header">
@@ -235,6 +235,46 @@
 
           </div>
         </div>
+
+        <div class=" d-none d-lg-block col-lg-7 table-responsive p-0" style="height: 50vh;">
+          <table class="table table-head-fixed table-hover text-nowrap">
+            <thead>
+              <tr class="text-center">
+                <th>ID</th>
+                <th>Fecha</th>
+                <th class="text-left">Descripción</th>
+                <th>Importe</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach ($this->transactions as $record)
+              <tr>
+                <td class="text-center">{{$record['id']}}</td>
+                <td class="text-center">{{$record['date']}}</td>
+                <td>{{$record['description']}}</td>
+                <td class="text-center">$ {{number_format($record['amount'], 0, ',', '.')}}</td>
+                <td class="pr-0">
+                  @if (auth()->user()->roles()->first()->id === 1)
+                  <div class="btn-group p-0">
+                    <button 
+                      class="btn btn-danger" 
+                      title="Eliminar" 
+                      data-placement="top" 
+                      data-toggle="modal"
+                      data-target="#deleteModal" 
+                      wire:click="destroyTransaction({{$record['id']}})"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                  @endif
+                </td>
+              </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -245,7 +285,7 @@
 
 
 @push('scripts')
-<script src="{{asset('assets/pages/js/admin/old-system/main.js') . '?v=1.0'}}"></script>
+<script src="{{asset('assets/pages/js/admin/old-system/main.js') . '?v=2.0'}}"></script>
 {{-- <script src="{{asset('assets/pages/js/admin/old-system/main.js') . uniqid('?v=')}}"></script> --}}
 <script>
   let data1 = @json($customer['paymentStatistics']);
