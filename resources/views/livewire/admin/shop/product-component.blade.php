@@ -187,6 +187,7 @@
     })
 
     Livewire.on('reset', ()=>{
+      $('.select2').select2()
       $('#productTags').val('').trigger('change');
       document.getElementById('productPrice').value = "";
     })
@@ -220,6 +221,43 @@
       let message = `El estado ha sido actualizado`;
       functions.notifications('', message, 'success');
     })
+
+    Livewire.on('barcodeDoesNotExist', (barcode)=>{
+      Swal.fire({
+        title: "¡Producto no encontrado!",
+        html: 'El código de barras que se busca no se encuentra asignado a ningún producto almacenado en la base de datos. <b>¿Desea asignar este código de barras al formulario actual?</b>',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--success)',
+        cancelButtonColor: 'var(--primary)',
+        confirmButtonText: '¡Asignar!',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if(result.value){
+          console.log(barcode);
+          @this.barcode=barcode;
+        }//end if
+      })//
+    })
+
+    Livewire.on('barcodeExist', (id, name, barcode)=>{
+      Swal.fire({
+        title: "¡Producto encontrado!",
+        html: `El código de barras <span class="text-bold">${barcode}</span> se encuentra asignado al producto <span class="text-bold">"${name}"</span><br> ¿Desea editar este producto?`,
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--success)',
+        cancelButtonColor: 'var(--primary)',
+        confirmButtonText: '¡Editar!',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if(result.value){
+          @this.edit(id);
+          document.getElementById('productName').focus();
+        }//end if
+      })//
+    })
+
   });
 
   window.showDeleteAlert = (id, name) => {

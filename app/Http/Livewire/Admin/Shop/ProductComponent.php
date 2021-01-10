@@ -26,7 +26,7 @@ class ProductComponent extends Component
    */
   public $view = "create";
   public $productId = null;
-  
+
   //-------------------------------------------
   //  COLECCIÓN DE DATOS
   //-------------------------------------------
@@ -148,27 +148,27 @@ class ProductComponent extends Component
       'outstanding' => 'boolean',
       'isNew' => 'boolean',
       'published' => 'boolean',
-      'tags' => ['array', function($attribute, $value, $fail){
-        foreach($value as $tagId){
-          if(Tag::where('id', $tagId)->doesntExist()){
+      'tags' => ['array', function ($attribute, $value, $fail) {
+        foreach ($value as $tagId) {
+          if (Tag::where('id', $tagId)->doesntExist()) {
             $fail('Existe una etiqueta invalida!');
             break;
           }
         }
       }],
-      'categoryRoute' => ['array', function($attribute, $value, $fail){
-        if(count($value) > 0){
-          foreach($value as $category){
+      'categoryRoute' => ['array', function ($attribute, $value, $fail) {
+        if (count($value) > 0) {
+          foreach ($value as $category) {
             $exist = Category::where('id', $category['id'])
               ->where('father_id', $category['fatherId'])
               ->exists();
-            if(!$exist){
+            if (!$exist) {
               $categoryName = $category['name'];
               $fail("La categoría $categoryName no existe!");
               break;
             }
           }
-        }else{
+        } else {
           $fail('Se debe elegir una categoría principal');
         }
       }],
@@ -199,7 +199,7 @@ class ProductComponent extends Component
   {
     $products = Product::where('name', 'like', '%' . $this->name . '%')
       ->orderBy('id')
-      ->get(['id', 'name', 'img', 'price', 'is_new', 'outstanding', 'published']);
+      ->get(['id', 'name', 'img', 'barcode', 'price', 'is_new', 'outstanding', 'published']);
 
     return view('livewire.admin.shop.product-component', compact('products'))
       ->layout('admin.shop.product.index');
@@ -240,7 +240,7 @@ class ProductComponent extends Component
        * categorias es seguro utilizar un mapeado de los mismos para porder
        * recuperar los ids y luego relacionar con el producto recien creado.
        */
-      $product->categories()->attach(array_map(fn($category) => $category['id'], $this->categoryRoute));
+      $product->categories()->attach(array_map(fn ($category) => $category['id'], $this->categoryRoute));
 
       /**
        * Se crea la relación entre el producto y sus etiquetas
@@ -293,37 +293,37 @@ class ProductComponent extends Component
       /**
        * Se recupera el codigo de color del producto seleccionado
        */
-      if(!empty($this->colorId)){
+      if (!empty($this->colorId)) {
         $colorId = intval($this->colorId);
-        $key = array_key_first(array_filter($this->allColors, fn($color) => intval($color['id']) == $colorId));
+        $key = array_key_first(array_filter($this->allColors, fn ($color) => intval($color['id']) == $colorId));
         $this->colorHex = $this->allColors[$key]['hex'];
       }
 
       /**
        * Se recuperan los Ids de las etiquetas asociadas a este producto
        */
-      if(count($product->tags) > 0){
+      if (count($product->tags) > 0) {
         $temporal = "";
-        foreach($product->tags as $tag){
+        foreach ($product->tags as $tag) {
           $temporal .= "\"" . $tag->name . "\" ";
         }
 
         $this->temporalTags = $temporal;
-      }else{
+      } else {
         $this->temporalTags = "No tiene etiquetas";
       }
 
       /**
        * Ahora se recuperan las categorías del producto
        */
-      if(count($product->categories) > 0){
+      if (count($product->categories) > 0) {
         $temporal = "";
-        foreach($product->categories as $data){
+        foreach ($product->categories as $data) {
           $temporal .= "\"" . $data->name . "\" ";
         }
         $this->temporalCategories = $temporal;
-      }else{
-        $this->temporalCategories ="No tiene categorías";
+      } else {
+        $this->temporalCategories = "No tiene categorías";
       }
 
       $this->emit('edit');
@@ -366,7 +366,7 @@ class ProductComponent extends Component
 
         //Reasigno las categorías
         $product->categories()->detach();
-        $product->categories()->attach(array_map(fn($category) => $category['id'], $this->categoryRoute));
+        $product->categories()->attach(array_map(fn ($category) => $category['id'], $this->categoryRoute));
 
         //Ahora Reasigno las etiquetas
         $product->tags()->detach();
@@ -413,6 +413,21 @@ class ProductComponent extends Component
     }
   }
 
+  public function searchBarcode($code)
+  {
+    try {
+      $product = Product::where('barcode', $code)
+        ->first(['id', 'name']);
+      if ($product) {
+        $this->emit('barcodeExist', $product->id, $product->name, $code);
+      } else {
+        $this->emit('barcodeDoesNotExist', $code);
+      }
+    } catch (\Throwable $th) {
+      $this->emit('error');
+    }
+  }
+
   //---------------------------------------------------
   //  UTILIDADES
   //---------------------------------------------------
@@ -429,7 +444,7 @@ class ProductComponent extends Component
     if ($columns) {
       $result = Product::with(['categories', 'tags'])
         ->find($id, $columns);
-      } else {
+    } else {
       $result = Product::with(['categories', 'tags'])
         ->find($id);
     }
