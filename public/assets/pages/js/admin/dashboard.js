@@ -125,7 +125,7 @@ const monthlyDatasets = (basicPeriod, specificPeriod) => {
 }
 
 const customersDebtsDatasets = () =>{
-  let labels = ['2019'];
+  let labels = ['2020'];
   let data = [customersDebts.inititalBalance];
   let reports = customersDebts.reports;
 
@@ -314,8 +314,8 @@ const customersDebtsBuild = () => {
         }, //end label
       },//end callbacks
     },//end tooltips
-    maintainAspectRatio: false,
-    spanGaps:false,
+    maintainAspectRatio: true,
+    spanGaps:true,
     elements: {
       line:{
         tension:0.000001
