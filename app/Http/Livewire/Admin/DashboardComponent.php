@@ -161,7 +161,29 @@ class DashboardComponent extends Component
         ->sum('amount')
     );
 
-    $initialBalance = $initialCredits - $initialPayments;
+    $initialArchivedCredits = floatval(
+      DB::connection('carmu')
+        ->table('customer as t1')
+        ->where('t1.archived', 1)
+        ->join('customer_credit as t2', 't1.customer_id', '=', 't2.customer_id')
+        ->select('t2.*')
+        ->where('credit_date', '<', $from->format('Y-m-d H:i:s'))
+        ->sum('amount')
+    );
+
+    $initialArchivedPayments = floatval(
+      DB::connection('carmu')
+        ->table('customer as t1')
+        ->where('t1.archived', 1)
+        ->join('customer_payment as t2', 't1.customer_id', '=', 't2.customer_id')
+        ->select('t2.*')
+        ->where('payment_date', '<', $from->format('Y-m-d H:i:s'))
+        ->sum('amount')
+    );
+
+    // dd($initialArchivedCredits - $initialArchivedPayments);
+
+    $initialBalance = $initialCredits - $initialPayments - ($initialArchivedCredits - $initialArchivedPayments);
     $balance = $initialBalance;
 
     for ($index=0; $index < 12; $index++) { 
