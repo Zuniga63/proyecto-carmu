@@ -5,7 +5,8 @@
     name="permission-name" 
     class="form-control"
     placeholder="Escribelo aquí"
-    wire:model.trim.lazy="name"
+    x-model.trim="name"
+    x-on:input="slug = name.toLowerCase().replace(/\s/gi, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '')"
     autocomplete="off"
     autofocus="autofocus"
   >
@@ -23,7 +24,7 @@
     name="permission-name" 
     class="form-control" 
     placeholder="Escribelo aquí"
-    wire:model.lazy="slug"
+    x-model.trim="slug"
     autocomplete="off"
   >
   @error('slug')
