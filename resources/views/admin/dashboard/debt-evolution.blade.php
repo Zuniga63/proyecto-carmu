@@ -12,7 +12,7 @@
   <h3 class="text-center mb-2">Deuda de los Clientes [{{$now->format('Y')}}]</h3>
 
   <div class="card-body" x-show.transition="tab === 'graph'">
-    <canvas id="customersDebts"></canvas>
+    <canvas id="customersDebts" wire:ignore></canvas>
   </div>
 
   <div class="card-body table-responsive p-0" style="height: 60vh" x-show.transition="tab === 'table'">

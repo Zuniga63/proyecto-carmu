@@ -39,6 +39,6 @@
     </table>
   </div>
   <div class="card-body" x-show.transition="tab === 'graph'" style="max-width: 1080px;">
-    <canvas id="salesByCategories"></canvas>
+    <canvas id="salesByCategories" wire:ignore></canvas>
   </div>
 </div>
