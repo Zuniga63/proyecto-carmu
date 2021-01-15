@@ -15,7 +15,7 @@
       <thead>
         <tr class="text-center">
           <th>Mes</th>
-          @foreach ($categories as $id => $category)
+          @foreach ($data['salesByCategories'] as $id => $category)
           <th>{{$category['name']}}</th>
           @endforeach
         </tr>
@@ -23,7 +23,7 @@
       <tbody>
         @for ($index = 0; $index < 12; $index++) <tr>
           <td>{{$months[$index]}}</td>
-          @foreach ($categories as $id => $category)
+          @foreach ($data['salesByCategories'] as $id => $category)
           <td class="text-right {{$category['sales'][$index] < $category['average'] ? 'text-danger' : ''}}">$
             {{number_format($category['sales'][$index], 0, ',', '.')}}</td>
           @endforeach
@@ -31,7 +31,7 @@
           @endfor
           <tr class="text-bold">
             <td>Total:</td>
-            @foreach ($categories as $id => $category)
+            @foreach ($data['salesByCategories'] as $id => $category)
             <td class="text-right">$ {{number_format($category['amount'], 0, ',', '.')}}</td>
             @endforeach
           </tr>

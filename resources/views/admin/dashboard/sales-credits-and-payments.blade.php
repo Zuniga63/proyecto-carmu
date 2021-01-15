@@ -3,16 +3,16 @@
   <div class="card-header mb-2">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item">
-        <a  href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'sales'}" x-on:click="tab = 'sales'">Ventas</a>
+        <a  href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'sales'}" x-on:click="changeTab('sales')">Ventas</a>
       </li>
       <li class="nav-item">
-        <a href="javascript:;" class="nav-link disabled" x-bind:class="{'active' : tab === 'payments'}" x-on:click="tab = 'payments'">Abonos</a>
+        <a href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'payments'}" x-on:click="changeTab('payments')">Abonos</a>
       </li>
       <li class="nav-item">
-        <a  href="javascript:;" class="nav-link disabled" x-bind:class="{'active' : tab === 'credits'}" x-on:click="tab = 'credits'">Créditos</a>
+        <a  href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'credits'}" x-on:click="changeTab('credits')">Créditos</a>
       </li>
       <li class="nav-item">
-        <a href="javascript:;" class="nav-link disabled" x-bind:class="{'active' : tab === 'mixed'}" x-on:click="tab = 'mixed'">Combinado</a>
+        <a href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'mixed'}" x-on:click="changeTab('mixed')">Combinado</a>
       </li>
     </ul>
   </div>
@@ -81,11 +81,21 @@
       </div>
       
     </div>
-    <div class="form-check ml-4">
-      <input class="form-check-input" type="checkbox" value="" id="accumualated" x-model="accumulated" x-on:change="updateChart">
-      <label class="form-check-label" for="accumualated">
-        Acumulado
-      </label>
+
+    <div class="row justify-conten-left">
+      <div class="form-check ml-4">
+        <input class="form-check-input" type="checkbox" id="accumualated" x-model="accumulated" x-on:change="updateChart">
+        <label class="form-check-label" for="accumualated">
+          Acumulado
+        </label>
+      </div>
+      <div class="form-check ml-4" x-show.transition="tab === 'mixed'">
+        <input class="form-check-input" type="checkbox" id="showLastYear" x-model="showLastYear" x-on:change="updateChart">
+        <label class="form-check-label" for="showLastYear">
+          Mostrar <span x-text="data.year-1"></span>
+        </label>
+      </div>
+
     </div>
   </div>
 
@@ -130,7 +140,7 @@
 
 </div>
 
-@push('scripts')
+{{-- @push('scripts')
 <script>
 
   window.salesPaymentsAndCreditsModel = () => {
@@ -233,4 +243,4 @@
     }
   }
 </script>
-@endpush
+@endpush --}}

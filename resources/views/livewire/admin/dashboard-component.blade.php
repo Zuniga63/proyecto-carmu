@@ -1,13 +1,3 @@
-@push('scripts')
-<script>
-  window.data = @json($data);
-  window.customersDebts = @json($creditEvolutions);
-  window.salesByCategories = @json($categories);
-</script>  
-<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=3.0"></script>  
-{{-- <script src="{{asset('assets/pages/js/admin/dashboard.js') . uniqid('?v=')}}"></script>   --}}
-@endpush
-
 <div>
   <div class="container-fluid">
     <div class="row">
@@ -27,3 +17,10 @@
   <!--./container-fluid -->
 </div>
 
+@push('scripts')
+<script>
+  window.data = @json($data);
+</script>  
+<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=3.1"></script>  
+{{-- <script src="{{asset('assets/pages/js/admin/dashboard.js') . uniqid('?v=')}}"></script>   --}}
+@endpush

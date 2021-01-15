@@ -11,6 +11,7 @@ window.monthlyReportsModel = () => {
     tremester: 0,
     semester: 0,
     accumulated: true,
+    showLastYear: false,
     initChart() {
       this.periodName = 'monthly';
       this.month = data.month;
@@ -18,37 +19,11 @@ window.monthlyReportsModel = () => {
       this.semester = data.semester;
       this.updateChart();
     },//end initChart
-    setPeriod() {
-      let data = monthlyDatasets(this.basicPeriod, this.specificPeriod);
-      console.log(data);
-      let barChartData = {
-        labels: data.labels,
-        datasets: [
-          {
-            label: 'Ventas',
-            backgroundColor: 'rgba(75, 192, 63, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-            data: data.sales
-          },
-          {
-            label: 'Abonos',
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            data: data.payments
-          },
-          {
-            label: 'Creditos',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1,
-            data: data.credits
-          },
-        ]
+    changeTab(tab) {
+      if (this.tab != tab) {
+        this.tab = tab;
+        this.updateChart();
       }
-      monthlyReportsChart.data = barChartData;
-      monthlyReportsChart.update();
     },
     changePeriodName() {
       this.accumulated = false;
@@ -91,7 +66,12 @@ window.monthlyReportsModel = () => {
       switch (this.tab) {
         case 'sales':
           return this.getSaleDatasets();
-          break;
+        case 'payments':
+          return this.getPaymentDatasets();
+        case 'credits':
+          return this.getCreditDatasets();
+        case 'mixed':
+          return this.getMixedDatasets();
       }//end switch
     },
     getSaleDatasets() {
@@ -165,7 +145,7 @@ window.monthlyReportsModel = () => {
                 accumulateValue += x.partial;
                 return accumulateValue;
               })
-            }else{
+            } else {
               sales = monthlySales.map(x => x.partial);
             }
 
@@ -183,7 +163,7 @@ window.monthlyReportsModel = () => {
               data: sales,
             }
 
-            if(this.accumulated){
+            if (this.accumulated) {
               dataset.fill = false;
             }
 
@@ -305,8 +285,490 @@ window.monthlyReportsModel = () => {
 
       return { labels, datasets };
     },
-    getMonthly() {
+    getPaymentDatasets() {
+      let labels = [];
+      let datasets = [];
+      let lastYear = true;
 
+      switch (this.periodName) {
+        case 'monthly':
+          let maxDays = 0;
+          let monthIndex = this.month - 1;
+
+          /**
+           * Se recorren los pagos anuales
+           */
+          data.payments.forEach(annualPayment => {
+            let payments = [];
+            let dailyPayments = annualPayment.monthlyPayments[monthIndex].dailyPayments;
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+
+            /**
+             * Se recuperan los abonos parciales o acumulados
+             */
+            if (this.accumulated) {
+              payments = dailyPayments.map(p => p.accumulated);
+            } else {
+              payments = dailyPayments.map(p => p.partial);
+            }
+
+            /**
+             * Ahora se define los días de las etiquetas
+             */
+            maxDays = maxDays >= payments.length ? maxDays : payments.length;
+
+            /**
+             * Finalmente se crea el dataset
+             */
+            let dataset = {
+              label: annualPayment.year,
+              backgroundColor: bgColor,
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: payments,
+              fill: false
+            }
+
+            if (lastYear) {
+              dataset.borderDash = [5, 5];
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          }); //end forEach
+
+          /**
+           * Se crean las etiquetas
+           */
+          for (let i = 1; i <= maxDays; i++) {
+            labels.push(i);
+          }//end for
+          break;
+        case 'quarterly': {
+          let tremester = this.tremester;
+
+          /**
+           * Recupero los datos anuales para 
+           * crear los datasets
+           */
+          data.payments.forEach(annualPayment => {
+            let payments = [];
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+            /**
+             * Se recupera los meses que corresponden 
+             * al trimestre actual
+             */
+            let monthlyPayments = annualPayment.monthlyPayments.filter(p => {
+              let realTremester = p.month / 3.0;
+              return realTremester > tremester - 1 && realTremester <= tremester;
+            })
+
+            /**
+             * Se recuperan los pagos del trimestre
+             */
+            if (this.accumulated) {
+              let accumulated = 0;
+              payments = monthlyPayments.map(mp => {
+                accumulated += mp.partial;
+                return accumulated;
+              })
+            } else {
+              payments = monthlyPayments.map(mp => mp.partial);
+            }
+
+            /**
+             * Se crea el dataset
+             */
+            let dataset = {
+              label: annualPayment.year,
+              backgroundColor: window.color(bgColor).alpha(0.8).rgbString(),
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: payments,
+            }
+
+            if (this.accumulated) {
+              dataset.fill = false;
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          })//end forEach
+
+          data.months.forEach((monthName, index) => {
+            let realTremester = (index + 1) / 3;
+            let min = tremester - 1;
+            if (min < realTremester && realTremester <= tremester) {
+              labels.push(monthName);
+            }
+          })// end forEach
+        } break;
+        case 'biannual': {
+          let semester = this.semester;
+
+          /**
+           * Recupero los datos anuales para 
+           * crear los datasets
+           */
+          data.payments.forEach(annualPayment => {
+            let payments = [];
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+            /**
+             * Se recupera los meses que corresponden 
+             * al trimestre actual
+             */
+            let monthlyPayments = annualPayment.monthlyPayments.filter(p => {
+              let realSemester = p.month / 6.0;
+              return realSemester > semester - 1 && realSemester <= semester;
+            })
+
+            /**
+             * Se recuperan los pagos del trimestre
+             */
+            if (this.accumulated) {
+              let accumulated = 0;
+              payments = monthlyPayments.map(mp => {
+                accumulated += mp.partial;
+                return accumulated;
+              })
+            } else {
+              payments = monthlyPayments.map(mp => mp.partial);
+            }
+
+            /**
+             * Se crea el dataset
+             */
+            let dataset = {
+              label: annualPayment.year,
+              backgroundColor: window.color(bgColor).alpha(0.7).rgbString(),
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: payments,
+              fill: false,
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          })//end forEach
+
+          data.months.forEach((monthName, index) => {
+            let realSemester = (index + 1) / 6.0;
+            let min = semester - 1;
+            if (min < realSemester && realSemester <= semester) {
+              labels.push(monthName);
+            }
+          })// end forEach
+        } break;
+        case 'annual': {
+          /**
+           * Recupero los datos anuales para 
+           * crear los datasets
+           */
+          data.payments.forEach(annualPayment => {
+            let payments = [];
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+            /**
+             * Se recupera los meses que corresponden 
+             * al trimestre actual
+             */
+            let monthlyPayments = annualPayment.monthlyPayments;
+
+            /**
+             * Se recuperan los pagos del trimestre
+             */
+            if (this.accumulated) {
+              payments = monthlyPayments.map(mp => mp.accumulated)
+            } else {
+              payments = monthlyPayments.map(mp => mp.partial);
+            }
+
+            /**
+             * Se crea el dataset
+             */
+            let dataset = {
+              label: annualPayment.year,
+              backgroundColor: window.color(bgColor).alpha(0.7).rgbString(),
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: payments,
+              fill: false,
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          })//end forEach
+
+          labels = data.months;
+        } break;
+      }//end switch
+
+      return { labels, datasets };
+    },//end getPaymentDataset
+    getCreditDatasets() {
+      let labels = [];
+      let datasets = [];
+      let lastYear = true;
+
+      switch (this.periodName) {
+        case 'monthly':
+          let maxDays = 0;
+          let monthIndex = this.month - 1;
+
+          /**
+           * Se recorren los pagos anuales
+           */
+          data.credits.forEach(annualCredit => {
+            let credits = [];
+            let dailyCredits = annualCredit.monthlyCredits[monthIndex].dailyCredits;
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+
+            /**
+             * Se recuperan los abonos parciales o acumulados
+             */
+            if (this.accumulated) {
+              credits = dailyCredits.map(c => c.accumulated);
+            } else {
+              credits = dailyCredits.map(c => c.partial);
+            }
+
+            /**
+             * Ahora se define los días de las etiquetas
+             */
+            maxDays = maxDays >= credits.length ? maxDays : credits.length;
+
+            /**
+             * Finalmente se crea el dataset
+             */
+            let dataset = {
+              label: annualCredit.year,
+              backgroundColor: bgColor,
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: credits,
+              fill: false
+            }
+
+            if (lastYear) {
+              dataset.borderDash = [5, 5];
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          }); //end forEach
+
+          /**
+           * Se crean las etiquetas
+           */
+          for (let i = 1; i <= maxDays; i++) {
+            labels.push(i);
+          }//end for
+          break;
+        case 'quarterly': {
+          let tremester = this.tremester;
+
+          /**
+           * Recupero los datos anuales para 
+           * crear los datasets
+           */
+          data.credits.forEach(annualCredit => {
+            let credits = [];
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+            /**
+             * Se recupera los meses que corresponden 
+             * al trimestre actual
+             */
+            let monthlyCredits = annualCredit.monthlyCredits.filter(p => {
+              let realTremester = p.month / 3.0;
+              return realTremester > tremester - 1 && realTremester <= tremester;
+            })
+
+            /**
+             * Se recuperan los pagos del trimestre
+             */
+            if (this.accumulated) {
+              let accumulated = 0;
+              credits = monthlyCredits.map(mp => {
+                accumulated += mp.partial;
+                return accumulated;
+              })
+            } else {
+              credits = monthlyCredits.map(mp => mp.partial);
+            }
+
+            /**
+             * Se crea el dataset
+             */
+            let dataset = {
+              label: annualCredit.year,
+              backgroundColor: window.color(bgColor).alpha(0.8).rgbString(),
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: credits,
+            }
+
+            if (this.accumulated) {
+              dataset.fill = false;
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          })//end forEach
+
+          data.months.forEach((monthName, index) => {
+            let realTremester = (index + 1) / 3;
+            let min = tremester - 1;
+            if (min < realTremester && realTremester <= tremester) {
+              labels.push(monthName);
+            }
+          })// end forEach
+        } break;
+        case 'biannual': {
+          let semester = this.semester;
+
+          /**
+           * Recupero los datos anuales para 
+           * crear los datasets
+           */
+          data.credits.forEach(annualCredits => {
+            let credits = [];
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+            /**
+             * Se recupera los meses que corresponden 
+             * al trimestre actual
+             */
+            let monthlyCredits = annualCredits.monthlyCredits.filter(p => {
+              let realSemester = p.month / 6.0;
+              return realSemester > semester - 1 && realSemester <= semester;
+            })
+
+            /**
+             * Se recuperan los pagos del trimestre
+             */
+            if (this.accumulated) {
+              let accumulated = 0;
+              credits = monthlyCredits.map(mp => {
+                accumulated += mp.partial;
+                return accumulated;
+              })
+            } else {
+              credits = monthlyCredits.map(mp => mp.partial);
+            }
+
+            /**
+             * Se crea el dataset
+             */
+            let dataset = {
+              label: annualCredits.year,
+              backgroundColor: window.color(bgColor).alpha(0.7).rgbString(),
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: credits,
+              fill: false,
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          })//end forEach
+
+          data.months.forEach((monthName, index) => {
+            let realSemester = (index + 1) / 6.0;
+            let min = semester - 1;
+            if (min < realSemester && realSemester <= semester) {
+              labels.push(monthName);
+            }
+          })// end forEach
+        } break;
+        case 'annual': {
+          /**
+           * Recupero los datos anuales para 
+           * crear los datasets
+           */
+          data.credits.forEach(annualCredits => {
+            let credits = [];
+            let bgColor = lastYear ? window.chartColors.red : window.chartColors.blue;
+            /**
+             * Se recupera los meses que corresponden 
+             * al trimestre actual
+             */
+            let monthlyCredits = annualCredits.monthlyCredits;
+
+            /**
+             * Se recuperan los pagos del trimestre
+             */
+            if (this.accumulated) {
+              credits = monthlyCredits.map(mp => mp.accumulated)
+            } else {
+              credits = monthlyCredits.map(mp => mp.partial);
+            }
+
+            /**
+             * Se crea el dataset
+             */
+            let dataset = {
+              label: annualCredits.year,
+              backgroundColor: window.color(bgColor).alpha(0.7).rgbString(),
+              borderColor: bgColor,
+              borderWidth: 1,
+              data: credits,
+              fill: false,
+            }
+
+            datasets.push(dataset);
+            lastYear = false;
+          })//end forEach
+
+          labels = data.months;
+        } break;
+      }//end switch
+
+      return { labels, datasets };
+    },//end getCreditDataset
+    getMixedDatasets() {
+      let labels = [];
+      let datasets = [];
+
+      let sales = this.getSaleDatasets();
+      let credits = this.getCreditDatasets();
+      let payments = this.getPaymentDatasets();
+
+      labels = sales.labels;
+
+      let salesDataset = this.showLastYear ? sales.datasets[0] : sales.datasets[1];
+      let creditsDataset = this.showLastYear ? credits.datasets[0] : credits.datasets[1];
+      let paymentsDataset = this.showLastYear ? payments.datasets[0] : payments.datasets[1];
+
+      let saleColor = window.chartColors.green;
+      let paymentColor = window.chartColors.blue;
+      let creditColor = window.chartColors.red;
+
+      salesDataset.label = "Ventas";
+      creditsDataset.label = "Creditos";
+      paymentsDataset.label = "Abonos";
+      salesDataset.borderColor = saleColor;
+      creditsDataset.borderColor = creditColor;
+      paymentsDataset.borderColor = paymentColor;
+
+      switch (this.periodName) {
+        case 'monthly':
+          salesDataset.backgroundColor = saleColor;
+          creditsDataset.backgroundColor = creditColor;
+          paymentsDataset.backgroundColor = paymentColor;
+          break;
+        case 'quarterly':
+        case 'biannual':
+        case 'annual':
+          salesDataset.backgroundColor = window.color(saleColor).alpha(0.7).rgbString();
+          creditsDataset.backgroundColor = window.color(creditColor).alpha(0.7).rgbString();
+          paymentsDataset.backgroundColor = window.color(paymentColor).alpha(0.7).rgbString();
+          break;
+      }
+
+      datasets = [salesDataset, paymentsDataset, creditsDataset];
+
+      return {
+        labels,
+        datasets
+      };
     },
     getChartOptions() {
       return {
@@ -345,91 +807,11 @@ window.monthlyReportsModel = () => {
   }
 }
 
-const monthlyDatasets = (basicPeriod, specificPeriod) => {
-  let labels = [];
-  let sales = [];
-  let credits = [];
-  let payments = [];
-  let reports = monthlyReports.reports;
-
-  switch (basicPeriod) {
-    case 'annual': {
-      reports.forEach(report => {
-        labels.push(report.month);
-        sales.push(parseFloat(report.sales));
-        credits.push(parseFloat(report.credits));
-        payments.push(parseFloat(report.payments));
-      });
-    } break;
-    //end case annual
-    case 'biannual': {
-      switch (specificPeriod) {
-        case 1: {
-          for (let index = 0; index < reports.length && index < 6; index++) {
-            const report = reports[index];
-            labels.push(report.month);
-            sales.push(parseFloat(report.sales));
-            credits.push(parseFloat(report.credits));
-            payments.push(parseFloat(report.payments));
-          }
-        } break;
-        case 2: {
-          for (let index = 6; index < reports.length; index++) {
-            const report = reports[index];
-            labels.push(report.month);
-            sales.push(parseFloat(report.sales));
-            credits.push(parseFloat(report.credits));
-            payments.push(parseFloat(report.payments));
-          }
-        } break;
-      }
-    } break;
-    //end of case biannual
-    case 'quarterly': {
-      let from = undefined;
-      let to = undefined;
-      switch (specificPeriod) {
-        case 1: {
-          from = 0;
-        } break;
-        case 2:
-          from = 3;
-          break;
-        case 3:
-          from = 6;
-          break;
-        case 4:
-          from = 9;
-          break;
-        default:
-          from = 12
-          break;
-      }
-      to = from + 3;
-
-      for (let index = from; index < reports.length && index < to; index++) {
-        const report = reports[index];
-        labels.push(report.month);
-        sales.push(parseFloat(report.sales));
-        credits.push(parseFloat(report.credits));
-        payments.push(parseFloat(report.payments));
-      }
-    } break;
-  }
-
-
-  return {
-    labels,
-    sales,
-    credits,
-    payments
-  }
-}
 
 const customersDebtsDatasets = () => {
   let labels = ['2020'];
-  let data = [customersDebts.inititalBalance];
-  let reports = customersDebts.reports;
+  let data = [window.data.customersDebts.inititalBalance];
+  let reports = window.data.customersDebts.reports;
 
   reports.forEach(report => {
     labels.push(report.month);
@@ -456,7 +838,7 @@ const salesByCategoriesDatasets = () => {
   ];
   let indexColor = 0;
 
-  salesByCategories.forEach(category => {
+  window.data.salesByCategories.forEach(category => {
     let color = colors[indexColor];
     indexColor++;
 
@@ -521,77 +903,6 @@ const salesByCategoriesBuild = () => {
       },//end tooltips
     }
   })
-}
-/**
- * Se encarga de contruir la estructura de la grafica que
- * organiza los datos de las ventas, los creditos y los abonos
- */
-const monthlyReportsBuild = () => {
-  let ctx = document.getElementById('monthlyReports');
-  let data = monthlyDatasets('annual', undefined);
-  let barChartData = {
-    labels: data.labels,
-    datasets: [
-      {
-        label: 'Ventas',
-        backgroundColor: 'rgba(75, 192, 63, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-        data: data.sales
-      },
-      {
-        label: 'Abonos',
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-        data: data.payments
-      },
-      {
-        label: 'Creditos',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-        data: data.credits
-      },
-    ]
-  }
-
-  window.monthlyReportsChart = new Chart(ctx, {
-    type: 'bar',
-    data: barChartData,
-    options: {
-      responsive: true,
-      legend: {
-        position: 'top'
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true,
-            callback: function (value, index, values) {
-              return formatCurrency(value, 0);
-            }//end callback
-          }//end ticks
-        }], //end yAxes
-      },//end scales
-      tooltips: {
-        callbacks: {
-          label: (tooltipItem, data) => {
-            let dataset = data.datasets[tooltipItem.datasetIndex];
-            let label = dataset.label || '';
-            let currentValue = dataset.data[tooltipItem.index]
-
-            if (label) {
-              label += ': ';
-            }
-
-            label += formatCurrency(currentValue, 0);
-            return label;
-          }, //end label
-        },//end callbacks
-      },//end tooltips
-    }
-  });
 }
 
 const customersDebtsBuild = () => {
@@ -705,7 +1016,6 @@ window.destroyCanvas = id => {
 
 
 document.addEventListener('livewire:load', () => {
-  // monthlyReportsBuild();
   customersDebtsBuild();
   salesByCategoriesBuild();
 })

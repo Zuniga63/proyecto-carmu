@@ -30,9 +30,9 @@
           <td>{{intval($now->format('Y')) - 1}}</td>
           <td></td>
           <td></td>
-          <td class="text-right">$ {{number_format($creditEvolutions['inititalBalance'], 0, ',', '.')}}</td>
+          <td class="text-right">$ {{number_format($data['customersDebts']['inititalBalance'], 0, ',', '.')}}</td>
         </tr>
-        @foreach ($creditEvolutions['reports'] as $report)
+        @foreach ($data['customersDebts']['reports'] as $report)
         <tr>
           <td>{{$report['month']}}</td>
           <td class="text-right">$ {{number_format($report['credits'], 0, ',', '.')}}</td>
