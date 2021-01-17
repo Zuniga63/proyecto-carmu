@@ -21,6 +21,6 @@
 <script>
   window.data = @json($data);
 </script>  
-<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=3.1"></script>  
+<script src="{{asset('assets/pages/js/admin/dashboard.js')}}?v=3.2"></script>  
 {{-- <script src="{{asset('assets/pages/js/admin/dashboard.js') . uniqid('?v=')}}"></script>   --}}
 @endpush

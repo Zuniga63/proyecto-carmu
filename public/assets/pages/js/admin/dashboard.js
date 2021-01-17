@@ -1,11 +1,12 @@
 window.monthlyReportsChart = undefined;
-window.customersDebtsChart = undefined;
+window.debtEvolutionChart = undefined;
 //-----------------------------------------------------------------------------
 //  SE ESTABLECE EL MODELO PARA LOS DATOS DE VENTA, CREDITOS Y PAGO
 //-----------------------------------------------------------------------------
 window.monthlyReportsModel = () => {
   return {
     tab: 'sales',
+    title: '',
     periodName: 'monthly',
     month: 0,
     tremester: 0,
@@ -13,6 +14,7 @@ window.monthlyReportsModel = () => {
     accumulated: true,
     showLastYear: false,
     initChart() {
+      this.tab = 'sales'
       this.periodName = 'monthly';
       this.month = data.month;
       this.tremester = data.tremester;
@@ -23,6 +25,28 @@ window.monthlyReportsModel = () => {
       if (this.tab != tab) {
         this.tab = tab;
         this.updateChart();
+      }
+    },
+    updateTitle() {
+      let period = `[${data.year - 1} - ${data.year}]`
+      switch (this.tab) {
+        case 'sales':
+          this.title = `Ventas ${period}`
+          break;
+        case 'payments':
+          this.title = `Abonos ${period}`
+          break;
+        case 'credits':
+          this.title = `Creditos ${period}`
+          break;
+        case 'mixed':
+          if (this.showLastYear) {
+            this.title = `Ventas, Creditos y Abonos [${data.year - 1}]`
+          } else {
+            this.title = `Ventas, Creditos y Abonos [${data.year}]`
+          }
+          break;
+
       }
     },
     changePeriodName() {
@@ -47,6 +71,7 @@ window.monthlyReportsModel = () => {
       }
     },
     updateChart() {
+      this.updateTitle();
       let type = 'line';
       switch (this.periodName) {
         case 'quarterly':
@@ -807,22 +832,153 @@ window.monthlyReportsModel = () => {
   }
 }
 
-
-const customersDebtsDatasets = () => {
-  let labels = ['2020'];
-  let data = [window.data.customersDebts.inititalBalance];
-  let reports = window.data.customersDebts.reports;
-
-  reports.forEach(report => {
-    labels.push(report.month);
-    data.push(report.balance);
-  })
-
+window.debtEvolutionModel = () => {
   return {
-    labels,
-    data
-  }
-}
+    tab: 'graph',
+    periodName: 'monthly',
+    year: 0,
+    month: 0,
+    title: '',
+    init() {
+      this.tab = 'graph';
+      this.periodName = "monthly";
+      this.month = data.month;
+      this.year = data.year;
+      this.title = `Evolucion de la deuda [${this.year}]`;
+      this.updateChart();
+    },
+    changePeriodName() {
+      if(this.periodName === 'monthly'){
+        this.month = data.month;
+      }
+
+      this.updateChart();
+    },
+    updateChart() {
+      let type = 'line';
+      window.destroyCanvas('debtEvolution');
+      let ctx = document.getElementById('debtEvolution');
+      window.debtEvolutionChart = new Chart(ctx, {
+        type,
+        data: this.getDatasets(),
+        options: this.getChartOptions(),
+      })
+    },
+    getDatasets() {
+      let labels = [0];
+      let datasets = [];
+
+      switch (this.periodName) {
+        case 'monthly': {
+          let monthIndex = this.month - 1;
+
+          /**
+           * Se recupera la evoucion de la deuda en
+           * el mes seleccionado
+           */
+          let monthlyEvolution = data.debtEvolution.monthlyEvolution[monthIndex]
+          let dailyEvolution = monthlyEvolution.dailyEvolution;
+
+          /**
+           * Se crea el conjunto de datos a mostrar
+           */
+          let debts = [monthlyEvolution.initialDebt];
+          debts.push(...dailyEvolution.map(x => x.accumulated));
+
+          /**
+           * Ahora se crea las etiquetas
+           */
+          for (let i = 1; i <= dailyEvolution.length; i++) {
+            labels.push(i);
+          }
+
+          /**
+           * Se crea el dataset
+           */
+          datasets.push({
+            label: data.months[monthIndex],
+            backgroundColor: window.color(window.chartColors.blue).alpha(0.2).rgbString(),
+            borderColor: window.chartColors.blue,
+            borderWidth: 1,
+            data: debts,
+            fill: 'start'
+          })
+        } break;
+        case 'annual': {
+          let months = window.data.debtEvolution.monthlyEvolution.map(x => x.accumulated);
+          let data = [window.data.debtEvolution.efectiveBalance, ...months];
+          labels.push(...window.data.months);
+          datasets.push({
+            label: this.year,
+            backgroundColor: window.color(window.chartColors.green).alpha(0.2).rgbString(),
+            borderColor: window.chartColors.green,
+            borderWidth: 1,
+            data: data,
+            fill: 'start'
+          });
+        } break;
+      }
+
+      return {
+        labels,
+        datasets
+      }
+    },
+    getChartOptions() {
+      return {
+        resposive:true,
+        legend: {
+          position: 'top'
+        },//end legend
+        tooltips: {
+          callbacks: {
+            label: (tooltipItem, data) => {
+              let dataset = data.datasets[tooltipItem.datasetIndex];
+              let label = dataset.label || '';
+              let currentValue = dataset.data[tooltipItem.index]
+
+              if (label) {
+                label += ': ';
+              }
+
+              label += formatCurrency(currentValue, 0);
+              return label;
+            }, //end label
+          },//end callbacks
+        },//end tooltips
+        maintainAspectRatio: true,
+        spanGaps: true,
+        elements: {
+          line: {
+            tension: 0.1
+          }, //end line
+        },//end elements
+        plugins: {
+          filler: {
+            propagate: false
+          }
+        },//end plugins
+        scales: {
+          xAxes: [{
+            ticks: {
+              autoSkip: false,
+              maxRotation: 0
+            }
+          }],//end xAxes
+          yAxes: [{
+            ticks: {
+              beginAtZero: false,
+              callback: function (value, index, values) {
+                return formatCurrency(value, 0);
+              }//end callback
+            }//end ticks
+          }], //end yAxes
+        },//end scales
+      }//end options
+    }
+  };
+}//end debtEvolution
+
 
 const salesByCategoriesDatasets = () => {
   let labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -905,78 +1061,6 @@ const salesByCategoriesBuild = () => {
   })
 }
 
-const customersDebtsBuild = () => {
-  let ctx = document.getElementById('customersDebts');
-  let data = customersDebtsDatasets();
-
-  console.log(data);
-  let options = {
-    tooltips: {
-      callbacks: {
-        label: (tooltipItem, data) => {
-          let dataset = data.datasets[tooltipItem.datasetIndex];
-          let label = dataset.label || '';
-          let currentValue = dataset.data[tooltipItem.index]
-
-          if (label) {
-            label += ': ';
-          }
-
-          label += formatCurrency(currentValue, 0);
-          return label;
-        }, //end label
-      },//end callbacks
-    },//end tooltips
-    maintainAspectRatio: true,
-    spanGaps: true,
-    elements: {
-      line: {
-        tension: 0.000001
-      }, //end line
-    },//end elements
-    plugins: {
-      filler: {
-        propagate: false
-      }
-    },//end plugins
-    scales: {
-      xAxes: [{
-        ticks: {
-          autoSkip: false,
-          maxRotation: 0
-        }
-      }],//end xAxes
-      yAxes: [{
-        ticks: {
-          beginAtZero: false,
-          callback: function (value, index, values) {
-            return formatCurrency(value, 0);
-          }//end callback
-        }//end ticks
-      }], //end yAxes
-    },//end scales
-  }//end options
-
-  lineChartData = {
-    labels: data.labels,
-    datasets: [
-      {
-        label: 'Deuda',
-        backgroundColor: 'rgba(75, 192, 63, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-        data: data.data,
-        fill: 'start'
-      }
-    ]
-  }
-
-  window.customersDebtsChart = new Chart(ctx, {
-    type: 'line',
-    data: lineChartData,
-    options: options,
-  });
-}
 //-----------------------------------------------------------------------------
 //  UTILIDADES
 //-----------------------------------------------------------------------------
@@ -1016,6 +1100,6 @@ window.destroyCanvas = id => {
 
 
 document.addEventListener('livewire:load', () => {
-  customersDebtsBuild();
+  // customersDebtsBuild();
   salesByCategoriesBuild();
 })

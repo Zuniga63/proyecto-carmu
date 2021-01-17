@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin;
 
 use Carbon\Carbon;
+use Doctrine\DBAL\Schema\Index;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use PhpParser\Node\Stmt\Break_;
@@ -12,12 +13,7 @@ use function PHPUnit\Framework\returnSelf;
 class DashboardComponent extends Component
 {
   public Carbon $now;
-  public $year;
-  public $month;
-  public $tremester;
-  public $semester;
   public $months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  public $sales = [];
 
   public function mount()
   {
@@ -27,22 +23,22 @@ class DashboardComponent extends Component
 
   public function render()
   {
-    // dd($this->getSales());
     $data = $this->getData();
-    // $montlyReports = $this->getMontlyReports();
-    // $categories = $this->getMontlyReportsByCategories();
     $months = $this->months;
-    // $creditEvolutions = $this->creditEvolution();
     return view('livewire.admin.dashboard-component', compact('months', 'data'))
       ->layout("admin.dashboard.index");
   }
 
+  /**
+   * Retorna un arreglo con todos los datos requeridos
+   * por el componente para que pueda ser consumido por el
+   * frontend
+   */
   public function getData()
   {
     $now = $this->now->copy();
     $year = $now->year;
     $month = $now->month;
-    // $month = 7;
     $tremester = ceil($month / 3.0);
     $semester = ceil($month / 6.0);
 
@@ -50,7 +46,8 @@ class DashboardComponent extends Component
       // 'monthlyReports' => $this->getMontlyReports(),
       'salesByCategories' => $this->getMontlyReportsByCategories(),
       'months' => $this->months,
-      'customersDebts' => $this->creditEvolution(),
+      // 'customersDebts' => $this->creditEvolution(),
+      'debtEvolution' => $this->getDebtEvolution(),
       'sales' => $this->getAnnualRecords('sales'),
       'payments' => $this->getAnnualRecords('payments'),
       'credits' => $this->getAnnualRecords('credits'),
@@ -63,6 +60,9 @@ class DashboardComponent extends Component
     return $data;
   }
 
+  /**
+   * METODO DEPRECADO
+   */
   public function getMontlyReports()
   {
     $result = [];
@@ -260,6 +260,7 @@ class DashboardComponent extends Component
   /**
    * Este metodo se encarga de recuperar los registros diarios,
    * mensuales y anaules de los ultimos dos años almacenados en la base de datos
+   * @param string $type Tipo de movimiento, credito, abono o venta
    */
   public function getAnnualRecords(string $type)
   {
@@ -295,7 +296,7 @@ class DashboardComponent extends Component
    * de los ultimos dos años, clasificandolos por meses y
    * luego por días
    */
-  
+
 
   public function getSaleOfYear(Carbon $startDate)
   {
@@ -503,5 +504,163 @@ class DashboardComponent extends Component
       'annualCredit' => $annualCredit,
       'monthlyCredits' => $monthlyCredits
     ];
+  }
+
+  /**
+   * Retorna un arreglo con la evolucion de la deuda de
+   * los clientes a lo largo de todo el año en curso
+   */
+  public function getDebtEvolution()
+  {
+    $formatDate = 'Y-m-d H:i:s';
+    $date = $this->now->copy()->startOfYear();
+
+    /**
+     * Se calcula el saldo efectivo de la deuda con el que se inicia 
+     * el año en curso
+     */
+    $initialBalance = $this->getInitialCustomersDebts($date->format($formatDate));
+    $initialArchivedBalance = $this->getInitialCustomersArchivedDebts($date->format($formatDate));
+    $efectiveInitialBalance = $initialBalance - $initialArchivedBalance;
+    $actualBalance = $efectiveInitialBalance;
+
+    $monthlyEvolution = [];
+
+    /**
+     * Se calcula la evolucion de la deuda a lo largo
+     * de todo el año
+     */
+    for ($index = 0; $index < 12; $index++) {
+      $month = $date->month;
+      $monthName = $this->months[$index];
+      $baseDebt = $actualBalance;
+      $monthDebt = 0;
+      $monthlyGrow = 0;
+      $dailyDebts = [];
+      $startMonth = $date->copy()->startOfMonth();
+      $endMonth = $startMonth->copy()->endOfMonth();
+
+      while ($date->greaterThanOrEqualTo($startMonth) && $date->lessThanOrEqualTo($endMonth)) {
+        $creditsAmount = 0;
+        $paymentsAmount = 0;
+        $dailyGrow = 0;
+        $startDay = $date->copy()->startOfDay()->format($formatDate);
+        $endDay = $date->copy()->endOfDay()->format($formatDate);
+
+        if ($date->lessThanOrEqualTo($this->now)) {
+          $creditsAmount = floatval(DB::connection('carmu')
+            ->table('customer_credit')
+            ->where('credit_date', '>=', $startDay)
+            ->where('credit_date', '<=', $endDay)
+            ->sum('amount'));
+          
+          $paymentsAmount = floatval(DB::connection('carmu')
+          ->table('customer_payment')
+          ->where('payment_date', '>=', $startDay)
+          ->where('payment_date', '<=', $endDay)
+          ->sum('amount'));
+        }
+
+        /**
+         * Se hacen los calculos
+         */
+        $dailyDebt = $creditsAmount - $paymentsAmount;
+        $dailyGrow = $actualBalance > 0 ? ($dailyDebt) / $actualBalance : 0;
+        $monthDebt += $dailyDebt;
+        $actualBalance += $dailyDebt;
+        
+        /**
+         * Se crea el registro diario
+         */
+        $dailyDebts [] = [
+          'partial' => $dailyDebt,
+          'accumulated' => $actualBalance,
+          'grow' => $dailyGrow,
+        ];
+
+        /**
+         * Se incrementa la fecha 
+         */
+        $date->addDay();
+      } //End while     
+      
+      /**
+       * Se calcula la tasa de crecimiento del mes
+       */
+      $monthlyGrow = ($actualBalance - $baseDebt) / $actualBalance;
+
+      $monthlyEvolution [] = [
+        'month' => $month,
+        'name' => $monthName,
+        'initialDebt' => $baseDebt,
+        'partial' => $monthDebt,
+        'grow' => $monthlyGrow,
+        'accumulated' => $actualBalance,
+        'dailyEvolution' => $dailyDebts
+      ];
+    }
+
+    return [
+      'realBalance' => $initialBalance,
+      'archivedBalance' => $initialArchivedBalance,
+      'efectiveBalance' => $efectiveInitialBalance,
+      'actualBalance' => $actualBalance,
+      'monthlyEvolution' => $monthlyEvolution
+    ];
+  }
+
+  /**
+   * Calcula el valor de la deuda de los
+   * clientes al iniciar el año
+   * @param string $date Fecha del primero de enero del año en curso en formato Y-m-d H:i:s
+   * @return float El Valor de la deuda de todos los clientes
+   */
+  protected function getInitialCustomersDebts(string $date)
+  {
+    $credits = floatval(
+      DB::connection('carmu')
+        ->table('customer_credit')
+        ->where('credit_date', '<', $date)
+        ->sum('amount')
+    );
+
+    $payments = floatval(
+      DB::connection('carmu')
+        ->table('customer_payment')
+        ->where('payment_date', '<', $date)
+        ->sum('amount')
+    );
+
+    return $credits - $payments;
+  }
+
+  /**
+   * Calcual el saldo de los clientes que han sido archivados
+   * @param string $date Fecha del primero de enero del año en curso en formato Y-m-d H:i:s
+   * @return float El saldo de los clientes archivados
+   */
+  protected function getInitialCustomersArchivedDebts(string $date)
+  {
+    $credits = floatval(
+      DB::connection('carmu')
+        ->table('customer as t1')
+        ->where('t1.archived', 1)
+        ->join('customer_credit as t2', 't1.customer_id', '=', 't2.customer_id')
+        ->select('t2.*')
+        ->where('credit_date', '<', $date)
+        ->sum('amount')
+    );
+
+    $payments = floatval(
+      DB::connection('carmu')
+        ->table('customer as t1')
+        ->where('t1.archived', 1)
+        ->join('customer_payment as t2', 't1.customer_id', '=', 't2.customer_id')
+        ->select('t2.*')
+        ->where('payment_date', '<', $date)
+        ->sum('amount')
+    );
+
+    return $credits - $payments;
   }
 }

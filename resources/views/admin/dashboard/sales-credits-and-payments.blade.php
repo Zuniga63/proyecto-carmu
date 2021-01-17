@@ -17,7 +17,7 @@
     </ul>
   </div>
   {{-- TITULO DE LA GRAFICA --}}
-  <h3 class="text-center mb-2">Ventas, Creditos y Abonos [ <span x-text="data.year"></span> ]</h3>
+  <h3 class="text-center mb-3 mt-2" x-text="title"></h3>
 
   {{-- SELECTORES DEL PERIODO --}}
   <div class="container">
@@ -29,8 +29,8 @@
           <option value="quarterly">Trimestral</option>
           <option value="biannual">Semestral</option>
           <option value="annual">Anual</option>
-          <option value="annualTremestral">Anual-Trimestral</option>
-          <option value="annualSemestral">Anual-Semestral</option>
+          {{-- <option value="annualTremestral">Anual-Trimestral</option> --}}
+          {{-- <option value="annualSemestral">Anual-Semestral</option> --}}
         </select>
       </div>
 
