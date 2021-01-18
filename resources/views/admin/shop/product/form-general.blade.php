@@ -181,27 +181,53 @@
       </div>
     </div>
 
-    {{-- PRECIO D VENTA AL PUBLICO --}}
-    <div class="form-group">
-      <label for="productPrice" class="required">Precio de venta: </label>
-      <input 
-        type="text" 
-        name="productPrice" 
-        id="productPrice" 
-        class="form-control text-right text-bold {{$errors->has('price') ? 'is-invalid' : ''}}" 
-        style="font-size: 1.3rem;"
-        autocomplete="off"
-        placeholder="Escribe el precio aquí"
-        x-on:input="formatInput($event.target)"
-        x-on:change="$wire.price=price"
-        wire:ignore
-      >
-      <input type="text" class="{{$errors->has('price') ? 'is-invalid' : ''}} d-none">
-      @error('price')
-      <div class="invalid-feedback" role="alert">
-        {{$message}}
+    {{-- PRECIO D VENTA AL PUBLICO Y DESCUENTO --}}
+    <div class="row">
+      {{-- PRECIO DE VENTA --}}
+      <div class="form-group col-lg-6">
+        <label for="productPrice" class="required">Precio de venta: </label>
+        <input 
+          type="text" 
+          name="productPrice" 
+          id="productPrice" 
+          class="form-control text-right text-bold {{$errors->has('price') ? 'is-invalid' : ''}}" 
+          style="font-size: 1.3rem;"
+          autocomplete="off"
+          placeholder="Escribe el precio aquí"
+          x-on:input="formatInput($event.target)"
+          x-on:change="$wire.price=price"
+          wire:ignore
+        >
+        <input type="text" class="{{$errors->has('price') ? 'is-invalid' : ''}} d-none">
+        @error('price')
+        <div class="invalid-feedback" role="alert">
+          {{$message}}
+        </div>
+        @enderror
       </div>
-      @enderror
+      {{-- DESCUENTO MAXIMO POR MOSTRADOR --}}
+      <div class="form-group col-lg-6">
+        <label for="maxDiscount" class="required" title="Es el descuento maximo que se puede hacer por mostrador, este valor es en pesos" wire:ignore>Descuento maximo: </label>
+        <input 
+          type="text" 
+          name="productPrice" 
+          id="maxDiscount" 
+          class="form-control text-right text-bold {{$errors->has('maxDiscount') ? 'is-invalid' : ''}}" 
+          {{-- style="font-size: 1.1rem;" --}}
+          autocomplete="off"
+          placeholder="Valor del descuento [COP]"
+          x-on:input="formatInput($event.target)"
+          {{-- x-on:change="$wire.price=price" --}}
+          wire:ignore
+        >
+        <input type="text" class="{{$errors->has('maxDiscount') ? 'is-invalid' : ''}} d-none">
+        @error('maxDiscount')
+        <div class="invalid-feedback" role="alert">
+          {{$message}}
+        </div>
+        @enderror
+      </div>
+
     </div>
 
   </div><!-- ./end body -->
