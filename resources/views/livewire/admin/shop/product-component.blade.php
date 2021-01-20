@@ -40,6 +40,8 @@
       sizeId: @entangle('sizeId'),
       colorId: @entangle('colorId'),
       colorHex: @entangle('colorHex'),
+      updateRelations: @entangle('updateRelations'),
+      editingProduct: @entangle('editingProduct'),
       actualCategory: @entangle('actualCategory'),
       categoryRoute: @entangle('categoryRoute'),
       mainCategoryId: @entangle('mainCategoryId'),

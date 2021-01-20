@@ -347,130 +347,138 @@
   </div><!--./end header -->
 
   <div class="card-body">
-    @if ($view === "edit")
-    <div class="border border-warning rounded p-2 bg-light"  style="font-size: 0.85rem">
-      <p class="mb-2">Por problemas técnicos, las <span class="text-bold">etiquetas</span> y <aspan class="text-bold">categorías</aspan> no pueden ser asignadas automaticamente al tratar de editar el producto, por lo que se deben asignar de forma manual nuevamente.</p>
-      <p class="mb-1">Etiquetas: <span class="text-bold">{{$temporalTags}}</span></p>
-      <p class="mb-1">Categorías: <span class="text-bold">{{$temporalCategories}}</span></p>
+    <div class="form-group" x-show="editingProduct">
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" id="updateRelations" x-model="updateRelations">
+        <label for="updateRelations" class="custom-control-label">Actualizar Categorías y Etiquetas</label>
+      </div>
     </div>
-    @endif
-    {{-- ETIQUETAS --}}
-    <div class="form-group">
-      <label for="productTags">Etiquetas</label>
-      <div class="select2-blue" wire:ignore>
-        <select class="select2" multiple="multiple" data-placeholder="Selecciona o escribelas!" data-dropdown-css-class="select2-blue" style="width: 100%;" id="productTags" >
-          @foreach ($allTags as $tag)
-          <option value="{{$tag['id']}}">{{$tag['name']}}</option>
-          @endforeach
+    <div x-show.transition="!editingProduct || updateRelations">
+      @if ($view === "edit")
+      <div class="border border-warning rounded p-2 bg-light"  style="font-size: 0.85rem">
+        <p class="mb-2">Por problemas técnicos, las <span class="text-bold">etiquetas</span> y <aspan class="text-bold">categorías</aspan> no pueden ser asignadas automaticamente al tratar de editar el producto, por lo que se deben asignar de forma manual nuevamente.</p>
+        <p class="mb-1">Etiquetas: <span class="text-bold">{{$temporalTags}}</span></p>
+        <p class="mb-1">Categorías: <span class="text-bold">{{$temporalCategories}}</span></p>
+      </div>
+      @endif
+      {{-- ETIQUETAS --}}
+      <div class="form-group">
+        <label for="productTags">Etiquetas</label>
+        <div class="select2-blue" wire:ignore>
+          <select class="select2" multiple="multiple" data-placeholder="Selecciona o escribelas!" data-dropdown-css-class="select2-blue" style="width: 100%;" id="productTags" >
+            @foreach ($allTags as $tag)
+            <option value="{{$tag['id']}}">{{$tag['name']}}</option>
+            @endforeach
+          </select>
+        </div>
+        @error('tags')
+        <div class="text-danger" role="alert">
+          {{$message}}
+        </div>
+        @enderror
+      </div>
+      {{-- CATEGORÍA PRINCIPAL --}}
+      <div class="form_group mb-4">
+        <label for="mainCategory" class="required">Categoría Principal</label>
+        <select 
+          name="categoryId" 
+          id="mainCategory" 
+          class="form-control" 
+          x-model.number="mainCategoryId" 
+          x-on:change="changeMainCategory"
+        >
+          <option value="0" disabled>Selecciona una Categoría</option>
+          <template x-for="(category, index) in allCategories" :key="index">
+            <option x-bind:value="category.id" x-text="category.name"></option>
+          </template>
         </select>
       </div>
-      @error('tags')
+    
+      <template x-if="actualCategory" wire:ignore>
+        <div x-show.transition.duration.500ms="actualCategory">
+          <div class="form_group mb-4" x-show.transition.duration.500ms="actualCategory.subcategories.length > 0">
+            <label for="subcategoryId">Asignar subcategoría de &quot;<span x-text="actualCategory.name"></span>&quot;</label>
+            <select name="subcategoryId" id="subcategoryId" class="form-control" x-model.number="subcategoryId" x-on:change="subcategorySelected">
+              <option value="0" disabled selected>Selecciona una subcategoría</option>
+              <template x-for="(category, index) in actualCategory.subcategories" :key="index">
+                <option x-bind:value="category.id" x-text="category.name"></option>
+              </template>
+            </select>
+          </div>
+  
+          {{-- Ruta de categorías --}}
+          {{-- <div class="container-fluid" x-show.transition="categoryRoute.length > 0">
+            <div class="row justify-content-center">
+              <h2 class="h5">Ruta de categorías</h2>
+            </div>
+            <div class="row justify-content-between align-items-center">
+              <div class="row col-10 border rounded p-2">
+                @foreach ($categoryRoute as $category)
+                  @if($loop->first)
+                    <p class="border border-primary rounded px-2 mr-2 mb-1">{{$category['name']}}</p>
+                    @if(!$loop->last)
+                      <i class="fas fa-arrow-circle-right p-1 mr-2 mb-1 text-primary"></i>
+                    @endif
+                  @elseif($loop->last)
+                    <p class="border border-success rounded px-2 mr-2 mb-1">{{$category['name']}}</p>
+                  @else
+                    <p class="border border-info rounded px-2 mr-2 mb-1">{{$category['name']}}</p>
+                    <i class="fas fa-arrow-circle-right p-1 mr-2 mb-1 text-info"></i>
+                  @endif
+                @endforeach
+              </div>
+              <button class="btn btn-danger rounded-circle col-1 p-1">
+                <i class="fas fa-trash"></i>
+              </button>
+              
+            </div>
+          </div> --}}
+          <div class="container-fluid" x-show.transition="categoryRoute.length > 0">
+            <div class="row justify-content-center">
+              <h2 class="h5">Ruta de categorías</h2>
+            </div>
+            <div class="row justify-content-between align-items-center">
+              <div class="row col-11 border rounded p-2">
+                <template x-for="(category, index) in categoryRoute" :key="index">
+                  <div class="d-flex">
+                    <p 
+                      class="border rounded px-2 mr-2 mb-1"
+                      x-bind:class="{
+                        'border-primary':category.first && !category.last,
+                        'border-success': (category.first && category.last) || category.last,
+                        'border-secundary': !category.first && !category.last
+                      }"
+                      x-text="category.name"
+                    >
+                    </p>
+                    <i 
+                      class="mr-2 mb-1 text-primary text-bold"
+                      x-show="!category.last"
+                    >|</i>
+                  </div>
+                </template>            
+              </div>
+  
+              <button 
+                type="button"
+                class="btn btn-danger rounded-circle col-1 p-1" 
+                x-bind:class="{'disabled':categoryRoute.length <= 1}"
+                x-bind:disabled="categoryRoute.length <= 1"
+                x-on:click="removeSubcategory"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+  
+          </div>
+        </div>
+      </template>
+      @error('categoryRoute')
       <div class="text-danger" role="alert">
         {{$message}}
       </div>
       @enderror
     </div>
-    {{-- CATEGORÍA PRINCIPAL --}}
-    <div class="form_group mb-4">
-      <label for="mainCategory" class="required">Categoría Principal</label>
-      <select 
-        name="categoryId" 
-        id="mainCategory" 
-        class="form-control" 
-        x-model.number="mainCategoryId" 
-        x-on:change="changeMainCategory"
-      >
-        <option value="0" disabled>Selecciona una Categoría</option>
-        <template x-for="(category, index) in allCategories" :key="index">
-          <option x-bind:value="category.id" x-text="category.name"></option>
-        </template>
-      </select>
-    </div>
-  
-    <template x-if="actualCategory" wire:ignore>
-      <div x-show.transition.duration.500ms="actualCategory">
-        <div class="form_group mb-4" x-show.transition.duration.500ms="actualCategory.subcategories.length > 0">
-          <label for="subcategoryId">Asignar subcategoría de &quot;<span x-text="actualCategory.name"></span>&quot;</label>
-          <select name="subcategoryId" id="subcategoryId" class="form-control" x-model.number="subcategoryId" x-on:change="subcategorySelected">
-            <option value="0" disabled selected>Selecciona una subcategoría</option>
-            <template x-for="(category, index) in actualCategory.subcategories" :key="index">
-              <option x-bind:value="category.id" x-text="category.name"></option>
-            </template>
-          </select>
-        </div>
-
-        {{-- Ruta de categorías --}}
-        {{-- <div class="container-fluid" x-show.transition="categoryRoute.length > 0">
-          <div class="row justify-content-center">
-            <h2 class="h5">Ruta de categorías</h2>
-          </div>
-          <div class="row justify-content-between align-items-center">
-            <div class="row col-10 border rounded p-2">
-              @foreach ($categoryRoute as $category)
-                @if($loop->first)
-                  <p class="border border-primary rounded px-2 mr-2 mb-1">{{$category['name']}}</p>
-                  @if(!$loop->last)
-                    <i class="fas fa-arrow-circle-right p-1 mr-2 mb-1 text-primary"></i>
-                  @endif
-                @elseif($loop->last)
-                  <p class="border border-success rounded px-2 mr-2 mb-1">{{$category['name']}}</p>
-                @else
-                  <p class="border border-info rounded px-2 mr-2 mb-1">{{$category['name']}}</p>
-                  <i class="fas fa-arrow-circle-right p-1 mr-2 mb-1 text-info"></i>
-                @endif
-              @endforeach
-            </div>
-            <button class="btn btn-danger rounded-circle col-1 p-1">
-              <i class="fas fa-trash"></i>
-            </button>
-            
-          </div>
-        </div> --}}
-        <div class="container-fluid" x-show.transition="categoryRoute.length > 0">
-          <div class="row justify-content-center">
-            <h2 class="h5">Ruta de categorías</h2>
-          </div>
-          <div class="row justify-content-between align-items-center">
-            <div class="row col-11 border rounded p-2">
-              <template x-for="(category, index) in categoryRoute" :key="index">
-                <div class="d-flex">
-                  <p 
-                    class="border rounded px-2 mr-2 mb-1"
-                    x-bind:class="{
-                      'border-primary':category.first && !category.last,
-                      'border-success': (category.first && category.last) || category.last,
-                      'border-secundary': !category.first && !category.last
-                    }"
-                    x-text="category.name"
-                  >
-                  </p>
-                  <i 
-                    class="mr-2 mb-1 text-primary text-bold"
-                    x-show="!category.last"
-                  >|</i>
-                </div>
-              </template>            
-            </div>
-
-            <button 
-              type="button"
-              class="btn btn-danger rounded-circle col-1 p-1" 
-              x-bind:class="{'disabled':categoryRoute.length <= 1}"
-              x-bind:disabled="categoryRoute.length <= 1"
-              x-on:click="removeSubcategory"
-            >
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </template>
-    @error('categoryRoute')
-    <div class="text-danger" role="alert">
-      {{$message}}
-    </div>
-    @enderror
 
   </div><!-- ./end body -->
 

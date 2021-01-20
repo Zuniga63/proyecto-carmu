@@ -110,7 +110,8 @@ class ProductComponent extends Component
   //-------------------------------------------
   // CATEGORIES AND TAGS
   //-------------------------------------------
-
+  public bool $updateRelations = false;
+  public bool $editingProduct = false;
   /**
    * Es el arreglo de id's de las etiquetas asociadas al producto
    * que se desea crear o editar
@@ -132,7 +133,7 @@ class ProductComponent extends Component
   protected function rules()
   {
     $maxCalculateDiscount = $this->price ? floor($this->price * 0.1) : 0;
-    return [
+    $rules = [
       'image' => 'image|max:1024|nullable',
       'name' => 'required|max:50',
       'slug' => 'required|max:50',
@@ -148,31 +149,40 @@ class ProductComponent extends Component
       'outstanding' => 'boolean',
       'isNew' => 'boolean',
       'published' => 'boolean',
-      'tags' => ['array', function ($attribute, $value, $fail) {
-        foreach ($value as $tagId) {
-          if (Tag::where('id', $tagId)->doesntExist()) {
-            $fail('Existe una etiqueta invalida!');
-            break;
-          }
-        }
-      }],
-      'categoryRoute' => ['array', function ($attribute, $value, $fail) {
-        if (count($value) > 0) {
-          foreach ($value as $category) {
-            $exist = Category::where('id', $category['id'])
-              ->where('father_id', $category['fatherId'])
-              ->exists();
-            if (!$exist) {
-              $categoryName = $category['name'];
-              $fail("La categoría $categoryName no existe!");
+    ];
+
+    if ($this->updateRelations || $this->view !== 'edit') {
+      $optional = [
+        'tags' => ['array', function ($attribute, $value, $fail) {
+          foreach ($value as $tagId) {
+            if (Tag::where('id', $tagId)->doesntExist()) {
+              $fail('Existe una etiqueta invalida!');
               break;
             }
           }
-        } else {
-          $fail('Se debe elegir una categoría principal');
-        }
-      }],
-    ];
+        }],
+        'categoryRoute' => ['array', function ($attribute, $value, $fail) {
+          if (count($value) > 0) {
+            foreach ($value as $category) {
+              $exist = Category::where('id', $category['id'])
+                ->where('father_id', $category['fatherId'])
+                ->exists();
+              if (!$exist) {
+                $categoryName = $category['name'];
+                $fail("La categoría $categoryName no existe!");
+                break;
+              }
+            }
+          } else {
+            $fail('Se debe elegir una categoría principal');
+          }
+        }],
+      ];
+
+      $rules = array_merge($rules, $optional);
+    }
+
+    return $rules;
   }
 
   protected $attributes = [
@@ -272,6 +282,7 @@ class ProductComponent extends Component
   public function edit($id)
   {
     $product = $this->findProduct($id);
+    $this->resetErrorBag();
     // dd($product->categories);
     if ($product) {
       $this->resetFields();
@@ -329,6 +340,7 @@ class ProductComponent extends Component
         $this->temporalCategories = "No tiene categorías";
       }
 
+      $this->editingProduct = true;
       $this->emit('edit');
     }
   }
@@ -336,7 +348,7 @@ class ProductComponent extends Component
   public function update()
   {
     $this->validate($this->rules(), [], $this->attributes);
-    
+
     $imagePath  = null;
     $product    = $this->findProduct($this->productId);
 
@@ -360,16 +372,18 @@ class ProductComponent extends Component
           'outstanding' => $this->outstanding,
           'is_new' => $this->isNew,
           'published' => $this->published,
-          ]);
+        ]);
 
-        
-        //Reasigno las categorías
-        $product->categories()->detach();
-        $product->categories()->attach(array_map(fn ($category) => $category['id'], $this->categoryRoute));
 
-        //Ahora Reasigno las etiquetas
-        $product->tags()->detach();
-        $product->tags()->attach($this->tags);
+        if ($this->updateRelations) {
+          //Reasigno las categorías
+          $product->categories()->detach();
+          $product->categories()->attach(array_map(fn ($category) => $category['id'], $this->categoryRoute));
+
+          //Ahora Reasigno las etiquetas
+          $product->tags()->detach();
+          $product->tags()->attach($this->tags);
+        }
 
         //Procedo a eliminar la imagen antigua
         if (($imagePath && $this->actualImage) || $this->deleteActualProductImage) {
@@ -436,7 +450,7 @@ class ProductComponent extends Component
   //---------------------------------------------------
   public function resetFields()
   {
-    $this->reset('view', 'productId', 'brandId', 'sizeId', 'colorId', 'colorHex', 'image', 'actualImage', 'deleteActualProductImage', 'name', 'slug', 'description', 'ref', 'barcode',  'price', 'maxDiscount', 'stock', 'outstanding', 'isNew', 'published', 'categoryRoute', 'actualCategory', 'mainCategoryId', 'subcategoryId', 'tags');
+    $this->reset('view', 'productId', 'brandId', 'sizeId', 'colorId', 'colorHex', 'image', 'actualImage', 'deleteActualProductImage', 'name', 'slug', 'description', 'ref', 'barcode',  'price', 'maxDiscount', 'stock', 'outstanding', 'isNew', 'published', 'updateRelations', 'editingProduct', 'categoryRoute', 'actualCategory', 'mainCategoryId', 'subcategoryId', 'tags');
     $this->emit('reset');
   }
 
