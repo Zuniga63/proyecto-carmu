@@ -372,7 +372,10 @@ class ProductComponent extends Component
         $product->tags()->attach($this->tags);
 
         //Procedo a eliminar la imagen antigua
-        if ($imagePath && $this->actualImage || $this->deleteActualProductImage) {
+        if (($imagePath && $this->actualImage) || $this->deleteActualProductImage) {
+          $product->update([
+            'img' => null
+          ]);
           $this->deleteImage($this->actualImage);
         }
 
@@ -433,7 +436,7 @@ class ProductComponent extends Component
   //---------------------------------------------------
   public function resetFields()
   {
-    $this->reset('view', 'productId', 'brandId', 'sizeId', 'colorId', 'colorHex', 'image', 'actualImage', 'name', 'slug', 'description', 'ref', 'barcode',  'price', 'maxDiscount', 'stock', 'outstanding', 'isNew', 'published', 'categoryRoute', 'actualCategory', 'mainCategoryId', 'subcategoryId', 'tags');
+    $this->reset('view', 'productId', 'brandId', 'sizeId', 'colorId', 'colorHex', 'image', 'actualImage', 'deleteActualProductImage', 'name', 'slug', 'description', 'ref', 'barcode',  'price', 'maxDiscount', 'stock', 'outstanding', 'isNew', 'published', 'categoryRoute', 'actualCategory', 'mainCategoryId', 'subcategoryId', 'tags');
     $this->emit('reset');
   }
 
