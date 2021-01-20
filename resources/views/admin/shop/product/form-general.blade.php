@@ -191,11 +191,10 @@
           name="productPrice" 
           id="productPrice" 
           class="form-control text-right text-bold {{$errors->has('price') ? 'is-invalid' : ''}}" 
-          style="font-size: 1.3rem;"
           autocomplete="off"
-          placeholder="Escribe el precio aquí"
-          x-on:input="formatInput($event.target)"
-          x-on:change="$wire.price=price"
+          placeholder="Precio del producto en [COP]"
+          x-on:input="formatInput($event.target, 'price')"
+          {{-- x-on:change="$wire.price=price" --}}
           wire:ignore
         >
         <input type="text" class="{{$errors->has('price') ? 'is-invalid' : ''}} d-none">
@@ -210,14 +209,13 @@
         <label for="maxDiscount" class="required" title="Es el descuento maximo que se puede hacer por mostrador, este valor es en pesos" wire:ignore>Descuento maximo: </label>
         <input 
           type="text" 
-          name="productPrice" 
+          name="maxDiscount" 
           id="maxDiscount" 
           class="form-control text-right text-bold {{$errors->has('maxDiscount') ? 'is-invalid' : ''}}" 
-          {{-- style="font-size: 1.1rem;" --}}
           autocomplete="off"
           placeholder="Valor del descuento [COP]"
-          x-on:input="formatInput($event.target)"
-          {{-- x-on:change="$wire.price=price" --}}
+          x-on:input="formatInput($event.target, 'maxDiscount')"
+          {{-- x-on:change="$wire.maxDiscount=maxDiscount" --}}
           wire:ignore
         >
         <input type="text" class="{{$errors->has('maxDiscount') ? 'is-invalid' : ''}} d-none">

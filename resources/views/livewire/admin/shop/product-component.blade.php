@@ -35,6 +35,7 @@
       barcode: @entangle('barcode').defer,
       stock: 0,
       price: @entangle('price'),
+      maxDiscount:@entangle('maxDiscount'),
       brandId: @entangle('brandId'),
       sizeId: @entangle('sizeId'),
       colorId: @entangle('colorId'),
@@ -48,11 +49,19 @@
       published: @entangle('published'),
       isUploading: false,
       progress:0,
-      formatInput(target){
+      formatInput(target, type){
         let value = target.value;
         value = deleteCurrencyFormat(value);
-        this.price = value;
-        target.value = formatCurrency(value, 0);
+        switch(type){
+          case 'price': 
+            this.price = value > 0 ? value : null;
+            break;
+          case 'maxDiscount':
+            this.maxDiscount = value;
+            break;
+        }
+
+        target.value = value > 0 ? formatCurrency(value, 0) : '';
       },
       changeMainCategory(){
         if(this.mainCategoryId > 0){
@@ -166,17 +175,12 @@
   }
 
   document.addEventListener("livewire:load", () => {
-    // $(function () {
-    //   $('[data-toggle="tooltip"]').tooltip()
-    //   console.log("funcionando")
-    // })
-
-    //Initialize Select2 Elements
     $('.select2').select2()
 
     Livewire.on('edit', ()=>{
       $('.select2').select2()
       document.getElementById('productPrice').value = formatCurrency(@this.price, 0);
+      document.getElementById('maxDiscount').value = formatCurrency(@this.maxDiscount, 0);
     })
 
     // Se actualiza los indices de las etiquetas a relacionar
@@ -190,6 +194,7 @@
       $('.select2').select2()
       $('#productTags').val('').trigger('change');
       document.getElementById('productPrice').value = "";
+      document.getElementById('maxDiscount').value = "";
     })
 
     Livewire.on('stored', ()=> {

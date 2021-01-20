@@ -8,13 +8,10 @@ use App\Models\Shop\Color;
 use App\Models\Shop\Product;
 use App\Models\Shop\Size;
 use App\Models\Shop\Tag;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-
-use function PHPUnit\Framework\isNull;
 
 class ProductComponent extends Component
 {
@@ -96,6 +93,7 @@ class ProductComponent extends Component
   public $ref = null;
   public $barcode = null;
   public $price = null;
+  public $maxDiscount = 0;
   //-------------------------------------------
   // FEATURE PROPERTIES
   //-------------------------------------------
@@ -133,6 +131,7 @@ class ProductComponent extends Component
   //---------------------------------------------------
   protected function rules()
   {
+    $maxCalculateDiscount = $this->price ? floor($this->price * 0.1) : 0;
     return [
       'image' => 'image|max:1024|nullable',
       'name' => 'required|max:50',
@@ -140,7 +139,8 @@ class ProductComponent extends Component
       'description' => 'required',
       'ref' => 'nullable|max:50',
       'barcode' => 'nullable|max:255|unique:product,barcode,' . $this->productId,
-      'price' => 'required|numeric',
+      'price' => 'required|numeric|min:1000',
+      'maxDiscount' => 'required|numeric|min:0|max:' . $maxCalculateDiscount,
       'brandId' => 'nullable|numeric|min:1|exists:brand,id',
       'sizeId' => 'nullable|numeric|min:1|exists:size,id',
       'colorId' => 'nullable|numeric|min:1|exists:color,id',
@@ -179,6 +179,7 @@ class ProductComponent extends Component
     'name' => 'nombre',
     'description' => 'descripción',
     'price' => 'precio',
+    'maxDiscount' => 'Descuento por mostrador',
     'image' => 'imagen',
   ];
 
@@ -229,6 +230,7 @@ class ProductComponent extends Component
         'ref' => empty($this->ref) ? null : $this->ref,
         'barcode' => empty($this->barcode) ? null : $this->barcode,
         'price' => $this->price,
+        'max_discount' => $this->maxDiscount,
         'stock' => $this->stock,
         'outstanding' => $this->outstanding,
         'is_new' => $this->isNew,
@@ -281,7 +283,8 @@ class ProductComponent extends Component
       $this->description  = $product->description;
       $this->ref          = $product->ref;
       $this->barcode      = $product->barcode;
-      $this->price        = $product->price;
+      $this->price        = floatval($product->price);
+      $this->maxDiscount   = floatval($product->max_discount);
       $this->brandId      = $product->brand_id ? $product->brand_id : '';
       $this->sizeId       = $product->size_id ? $product->size_id : '';
       $this->colorId      = $product->color_id ? $product->color_id : '';
@@ -327,18 +330,13 @@ class ProductComponent extends Component
       }
 
       $this->emit('edit');
-
-      // /**
-      //  * Codigo temporal para recuperar la categoría
-      //  */
-      // $data =  DB::table('category_has_product')->where('product_id', $id)->first(['category_id']);
-      // $this->categoryId = $data ? $data->category_id : '';
     }
   }
 
   public function update()
   {
     $this->validate($this->rules(), [], $this->attributes);
+    
     $imagePath  = null;
     $product    = $this->findProduct($this->productId);
 
@@ -346,7 +344,6 @@ class ProductComponent extends Component
       DB::beginTransaction();
       try {
         $imagePath = $this->storeImage();
-
         $product->update([
           'brand_id' => $this->brandId ? $this->brandId : null,
           'color_id' => $this->colorId ? $this->colorId : null,
@@ -358,12 +355,14 @@ class ProductComponent extends Component
           'ref' => empty($this->ref) ? null : $this->ref,
           'barcode' => empty($this->barcode) ? null : $this->barcode,
           'price' => $this->price,
+          'max_discount' => $this->maxDiscount,
           'stock' => $this->stock,
           'outstanding' => $this->outstanding,
           'is_new' => $this->isNew,
           'published' => $this->published,
-        ]);
+          ]);
 
+        
         //Reasigno las categorías
         $product->categories()->detach();
         $product->categories()->attach(array_map(fn ($category) => $category['id'], $this->categoryRoute));
@@ -373,7 +372,7 @@ class ProductComponent extends Component
         $product->tags()->attach($this->tags);
 
         //Procedo a eliminar la imagen antigua
-        if ($imagePath && $this->actualImage) {
+        if ($imagePath && $this->actualImage || $this->deleteActualProductImage) {
           $this->deleteImage($this->actualImage);
         }
 
@@ -382,6 +381,7 @@ class ProductComponent extends Component
         DB::commit();
       } catch (\Exception $ex) {
         $this->deleteImage($imagePath);
+        // dd($ex);
         DB::rollBack();
       } //end try-catch
     } //End if
@@ -433,7 +433,7 @@ class ProductComponent extends Component
   //---------------------------------------------------
   public function resetFields()
   {
-    $this->reset('view', 'productId', 'brandId', 'sizeId', 'colorId', 'colorHex', 'image', 'actualImage', 'name', 'slug', 'description', 'ref', 'barcode',  'price', 'stock', 'outstanding', 'isNew', 'published', 'categoryRoute', 'actualCategory', 'mainCategoryId', 'subcategoryId', 'tags');
+    $this->reset('view', 'productId', 'brandId', 'sizeId', 'colorId', 'colorHex', 'image', 'actualImage', 'name', 'slug', 'description', 'ref', 'barcode',  'price', 'maxDiscount', 'stock', 'outstanding', 'isNew', 'published', 'categoryRoute', 'actualCategory', 'mainCategoryId', 'subcategoryId', 'tags');
     $this->emit('reset');
   }
 
