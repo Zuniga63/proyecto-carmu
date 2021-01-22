@@ -24,6 +24,12 @@
 {{-- -------------------------------------------------- --}}
 @yield('scriptPlugins')
 
+<script>
+  window.addEventListener('load', () => {
+    document.getElementById('preload').classList.remove('show');  
+  })
+</script>
+
 <script src="{{asset("assets/js/functions.js")}}"></script>
 {{-- <script src="{{asset("assets/js/scripts.js")}}"></script> --}}
 
