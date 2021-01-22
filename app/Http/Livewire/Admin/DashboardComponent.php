@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Admin;
 
 use Carbon\Carbon;
 use Doctrine\DBAL\Schema\Index;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use PhpParser\Node\Stmt\Break_;
@@ -34,8 +35,9 @@ class DashboardComponent extends Component
    * por el componente para que pueda ser consumido por el
    * frontend
    */
-  public function getData()
+  protected function getData()
   {
+    $start = Carbon::now();
     $now = $this->now->copy();
     $year = $now->year;
     $month = $now->month;
@@ -43,19 +45,22 @@ class DashboardComponent extends Component
     $semester = ceil($month / 6.0);
 
     $data = [
-      // 'monthlyReports' => $this->getMontlyReports(),
-      'salesByCategories' => $this->getMontlyReportsByCategories(),
-      'months' => $this->months,
-      // 'customersDebts' => $this->creditEvolution(),
-      'debtEvolution' => $this->getDebtEvolution(),
-      'sales' => $this->getAnnualRecords('sales'),
-      'payments' => $this->getAnnualRecords('payments'),
-      'credits' => $this->getAnnualRecords('credits'),
       'month' => $month,
       'tremester' => $tremester,
       'semester' => $semester,
-      'year' => $year
+      'year' => $year,
+      'months' => $this->months,
+      'url' => route('admin.carmu_profile'),
+      'sales' => $this->getAnnualRecords('sales'),
+      'payments' => $this->getAnnualRecords('payments'),
+      'credits' => $this->getAnnualRecords('credits'),
+      'salesByCategories' => $this->getMontlyReportsByCategories(),
+      'debtEvolution' => $this->getDebtEvolution(),
+      'history' => $this->getCustomersHistory(),
     ];
+
+    $end = Carbon::now();
+    $data['time'] = $end->diffInMilliseconds($start);
 
     return $data;
   }
@@ -63,7 +68,7 @@ class DashboardComponent extends Component
   /**
    * METODO DEPRECADO
    */
-  public function getMontlyReports()
+  protected function getMontlyReports()
   {
     $result = [];
     $reports = [];
@@ -118,7 +123,7 @@ class DashboardComponent extends Component
       ->pluck('name', 'category_id');
   }
 
-  public function getMontlyReportsByCategories()
+  protected function getMontlyReportsByCategories()
   {
     $categories = $this->getCategories();
     $initialReports = [];
@@ -143,12 +148,12 @@ class DashboardComponent extends Component
     return $initialReports;
   }
 
-  public function sortByAmount($a, $b)
+  protected function sortByAmount($a, $b)
   {
     return $a['amount'] - $b['amount'];
   }
 
-  public function getMontlyReportsByCategory($id = 4)
+  protected function getMontlyReportsByCategory($id = 4)
   {
     $sales = [];
     $amount = 0;
@@ -177,7 +182,7 @@ class DashboardComponent extends Component
     ];
   }
 
-  public function creditEvolution()
+  protected function creditEvolution()
   {
 
     $montlyReports = [];
@@ -262,7 +267,7 @@ class DashboardComponent extends Component
    * mensuales y anaules de los ultimos dos años almacenados en la base de datos
    * @param string $type Tipo de movimiento, credito, abono o venta
    */
-  public function getAnnualRecords(string $type)
+  protected function getAnnualRecords(string $type)
   {
     $thisYear = $this->now->copy()->startOfYear();
     $lastYear = $thisYear->copy()->subYear()->startOfYear();
@@ -298,7 +303,7 @@ class DashboardComponent extends Component
    */
 
 
-  public function getSaleOfYear(Carbon $startDate)
+  protected function getSaleOfYear(Carbon $startDate)
   {
     $formatDate = 'Y-m-d H:i:s';
     $year = $startDate->year;
@@ -362,7 +367,7 @@ class DashboardComponent extends Component
     ];
   }
 
-  public function getCustomerPaymentsOfYear(Carbon $startDate)
+  protected function getCustomerPaymentsOfYear(Carbon $startDate)
   {
     $formatDate = 'Y-m-d H:i:s';
     $year = $startDate->year;
@@ -434,7 +439,7 @@ class DashboardComponent extends Component
     ];
   } //end method
 
-  public function getCustomerCreditsOfYear(Carbon $startDate)
+  protected function getCustomerCreditsOfYear(Carbon $startDate)
   {
     $formatDate = 'Y-m-d H:i:s';
     $year = $startDate->year;
@@ -510,7 +515,7 @@ class DashboardComponent extends Component
    * Retorna un arreglo con la evolucion de la deuda de
    * los clientes a lo largo de todo el año en curso
    */
-  public function getDebtEvolution()
+  protected function getDebtEvolution()
   {
     $formatDate = 'Y-m-d H:i:s';
     $date = $this->now->copy()->startOfYear();
@@ -553,12 +558,12 @@ class DashboardComponent extends Component
             ->where('credit_date', '>=', $startDay)
             ->where('credit_date', '<=', $endDay)
             ->sum('amount'));
-          
+
           $paymentsAmount = floatval(DB::connection('carmu')
-          ->table('customer_payment')
-          ->where('payment_date', '>=', $startDay)
-          ->where('payment_date', '<=', $endDay)
-          ->sum('amount'));
+            ->table('customer_payment')
+            ->where('payment_date', '>=', $startDay)
+            ->where('payment_date', '<=', $endDay)
+            ->sum('amount'));
         }
 
         /**
@@ -568,11 +573,11 @@ class DashboardComponent extends Component
         $dailyGrow = $actualBalance > 0 ? ($dailyDebt) / $actualBalance : 0;
         $monthDebt += $dailyDebt;
         $actualBalance += $dailyDebt;
-        
+
         /**
          * Se crea el registro diario
          */
-        $dailyDebts [] = [
+        $dailyDebts[] = [
           'partial' => $dailyDebt,
           'accumulated' => $actualBalance,
           'grow' => $dailyGrow,
@@ -583,13 +588,13 @@ class DashboardComponent extends Component
          */
         $date->addDay();
       } //End while     
-      
+
       /**
        * Se calcula la tasa de crecimiento del mes
        */
       $monthlyGrow = ($actualBalance - $baseDebt) / $actualBalance;
 
-      $monthlyEvolution [] = [
+      $monthlyEvolution[] = [
         'month' => $month,
         'name' => $monthName,
         'initialDebt' => $baseDebt,
@@ -662,5 +667,76 @@ class DashboardComponent extends Component
     );
 
     return $credits - $payments;
+  }
+
+  protected function getCustomersHistory()
+  {
+    $result = new Collection();
+    $startDate = $this->now->copy()->subDays(30)->startOfDay();
+    $format = 'Y-m-d H:i:s';
+    try {
+      $creditHistory = DB::connection('carmu')
+        ->table('customer as t1')
+        ->join('customer_credit as t2', 't2.customer_id', '=', 't1.customer_id')
+        ->where('t2.credit_date', '>=', $startDate->format($format))
+        ->select('t1.customer_id as id', 't1.first_name', 't1.last_name', 't2.credit_date as date', 't2.description', 't2.amount')
+        ->orderBy('date')
+        ->get();
+
+      $paymentHistory = DB::connection('carmu')
+        ->table('customer as t1')
+        ->join('customer_payment as t2', 't2.customer_id', '=', 't1.customer_id')
+        ->where('t2.payment_date', '>=', $startDate->format($format))
+        ->select('t1.customer_id as id', 't1.first_name', 't1.last_name', 't2.payment_date as date', 't2.amount', 't2.cash')
+        ->orderBy('date')
+        ->get();
+
+      /**
+       * Se agregan los creditos al resultado
+       */
+      foreach ($creditHistory as $credit) {
+        $result->push([
+          'id' => $credit->id,
+          'firstName' => $credit->first_name,
+          'lastName' => $credit->last_name,
+          'date' => $credit->date,
+          'description' => $credit->description,
+          'amount' => floatval($credit->amount),
+          'isCredit' => true
+        ]);
+      }
+
+      /**
+       * Se agregan los pagos al resultado
+       */
+      foreach ($paymentHistory as $payment) {
+        $description = $payment->cash ? 'Abono en efectivo' : 'Abono por transferencia';
+        $result->push([
+          'id' => $payment->id,
+          'firstName' => $payment->first_name,
+          'lastName' => $payment->last_name,
+          'date' => $payment->date,
+          'description' => $description,
+          'amount' => floatval($payment->amount),
+          'isCredit' => false
+        ]);
+      }
+
+      $result = $result->sortByDesc('date');
+      // dd($result[0]['date']);
+      $result = $result->map(function($x) {
+        $x['date'] = Carbon::createFromFormat('Y-m-d H:i:s', $x['date'])->format('d-m-Y');
+        $x['lastName'] = $x['lastName'] ? $x['lastName'] : '';
+        $fullName = $x['firstName'] . ' ' . $x['lastName'];
+        trim($fullName);
+
+        return array_merge($x, ['fullName' => $fullName]);
+      });
+      $result = $result->values()->all();
+    } catch (\Throwable $th) {
+      // dd($th);
+    }
+
+    return $result;
   }
 }

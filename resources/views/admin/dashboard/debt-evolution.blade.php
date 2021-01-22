@@ -5,14 +5,14 @@
         <a href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'graph'}" x-on:click="tab = 'graph'">Grafico</a>
       </div>
       <div class="nav-item">
-        <a href="javascript:;" class="nav-link disabled" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Tabla</a>
+        <a href="javascript:;" class="nav-link" x-bind:class="{'active' : tab === 'table'}" x-on:click="tab = 'table'">Historial</a>
       </div>
     </ul>
   </div>
   <h3 class="text-center mb-3 mt-2" x-text="title"></h3>
 
   {{-- SELECTORES DEL PERIODO --}}
-  <div class="container">
+  <div class="container" x-show.transition.duration.300ms="tab === 'graph'">
     <div class="row justify-content-center">
       <div class="form-group row col-md-6">
         <label for="" class="col-5 col-form-label">Periodo</label>
@@ -55,41 +55,30 @@
     </div>
   </div>
 
-  <div class="card-body" x-show.transition="tab === 'graph'" id="debtEvolutionCanvasContainer">
+  <div class="card-body" x-show.transition.in.duration.500ms="tab === 'graph'" id="debtEvolutionCanvasContainer">
     <canvas id="debtEvolution"></canvas>
   </div>
 
-  {{-- <div class="card-body table-responsive p-0" style="height: 60vh" x-show.transition="tab === 'table'">
+  <div class="card-body table-responsive pt-0" style="height: 60vh" x-show.transition.in.duration.500ms="tab === 'table'">
     <table class="table table-head-fixed table-hover text-nowrap">
       <thead>
         <tr class="text-center">
-          <th>Mes</th>
-          <th>Creditos</th>
-          <th>Abonos</th>
-          <th>Saldo</th>
+          <th>Fecha</th>
+          <th class="text-left">Cliente</th>
+          <th>Valor</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>{{intval($now->format('Y')) - 1}}</td>
-          <td></td>
-          <td></td>
-          <td class="text-right">$ {{number_format($data['customersDebts']['inititalBalance'], 0, ',', '.')}}</td>
-        </tr>
-        @foreach ($data['customersDebts']['reports'] as $report)
-        <tr>
-          <td>{{$report['month']}}</td>
-          <td class="text-right">$ {{number_format($report['credits'], 0, ',', '.')}}</td>
-          <td class="text-right">$ {{number_format($report['payments'], 0, ',', '.')}}</td>
-          <td class="text-right">
-            $ {{number_format($report['balance'], 0, ',', '.')}}
-            <span class="text-small {{$report['grow'] <= 0 ? 'text-success' : 'text-danger'}}">
-              ({{number_format(abs($report['grow'] * 100), 1)}}%)
-            </span>
+        @foreach ($data['history'] as $record)
+        <tr class="{{$record['isCredit'] ? 'text-danger' : 'text-success'}} text-bold" title="{{$record['description']}}">
+          <td class="text-center">{{$record['date']}}</td>
+          <td>
+            <a href="{{route('admin.carmu_profile', ['id' => $record['id']])}}" class="{{$record['isCredit'] ? 'text-danger' : 'text-success'}} target="_blank"><u>{{$record['fullName']}}</u></a>
           </td>
+          <td class="text-right" x-text="formatCurrency({{$record['amount']}},0)"></td>
         </tr>
         @endforeach
       </tbody>
     </table>
-  </div> --}}
+  </div>
 </div>

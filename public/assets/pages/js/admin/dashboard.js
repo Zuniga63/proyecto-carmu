@@ -975,6 +975,9 @@ window.debtEvolutionModel = () => {
           }], //end yAxes
         },//end scales
       }//end options
+    },
+    createUrl(id){
+      return `${data.url}/${id}`;
     }
   };
 }//end debtEvolution
