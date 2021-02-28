@@ -11,6 +11,7 @@ use App\Http\Livewire\Admin\DashboardComponent;
 use App\Http\Livewire\Admin\Shop\ColorComponent;
 use App\Http\Livewire\Admin\Shop\ProductComponent;
 use App\Http\Livewire\Admin\Shop\SizeComponent;
+use App\Http\Livewire\CashControl\ShowBoxs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -43,11 +44,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
   // ---------------------------------------------------
   // Rutas para la adminstracion
   // ---------------------------------------------------
-  
+
   Route::name('admin.')->prefix('admin')->group(function () {
     Route::redirect('/', 'admin/dashboard', 301)->name('admin');
     Route::get('dashboard', DashboardComponent::class)->name('dashboard');
-    Route::middleware(['superadmin'])->group(function(){
+    Route::middleware(['superadmin'])->group(function () {
       // ---------------------------------------------------
       // Rutas para la gestion de los menus
       // ---------------------------------------------------
@@ -102,5 +103,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('carmu/clientes/{id?}', CustomersComponent::class)->name('carmu_customers')->where('id', '[0-9]+');
     Route::get('carmu/clientes/perfiles/{id?}', CustomerProfileComponent::class)->name('carmu_profile');
     Route::get('carmu/ventas', SalesComponent::class)->name('carmu_sales');
+    //-----------------------------------------------------------
+      //  ADMINISTRACIÓN DE CAJAS
+      //-----------------------------------------------------------
+      Route::get('cajas-actuales/{id?}', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
   });
 });
