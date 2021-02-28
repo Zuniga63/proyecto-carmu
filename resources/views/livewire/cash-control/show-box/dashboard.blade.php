@@ -1,6 +1,13 @@
 @foreach ($this->boxs as $box)
 <div class="col-lg-4">
+  @if ($box['business'] == 'Tienda Carmú')
+  <div class="card card-success">
+  @elseif($box['business'] == 'Son de Cuatro')
   <div class="card card-primary">
+  @else
+  <div class="card card-seconday"> 
+  @endif
+  {{-- <div class="card card-primary"> --}}
     <div class="card-header text-center">
       <h5 class="text-bold mb-0">{{$box['name']}}</h5>
       <p class="m-0" style="font-size: 0.8em">({{$box['business']}})</p>
