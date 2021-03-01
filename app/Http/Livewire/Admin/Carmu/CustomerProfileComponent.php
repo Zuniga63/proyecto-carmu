@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admin\Carmu;
 
+use App\Models\CashControl\Box;
 use App\Models\OldSystem\Customer;
 use App\Models\User;
 use Carbon\Carbon;
@@ -224,13 +225,21 @@ class CustomerProfileComponent extends Component
     $this->validate($this->rules(), [], $this->attributes);
 
     //Se procede a actualizar la base de datos
-    DB::beginTransaction();
     try {
+      DB::connection('carmu')->beginTransaction();
+      DB::beginTransaction();
       //En primer lugar se recupera al cliente
       $customer = Customer::find($this->customerId);
       $processOk = false;
 
-      if ($customer) {
+      //Se recuperan las cajas de carmú
+      /** @var Box */
+      $localBox = Box::where('business_id', 1)->where('main', 1)->first();
+      /** @var Box */
+      $majorBox = Box::where('business_id', 1)->where('main', 0)->first();
+
+      if ($customer && $localBox && $majorBox) {
+        $customerName = trim("$customer->first_name $customer->last_name");
         switch ($this->transactionType) {
           case 'credit':
             switch ($this->transactionMoment) {
@@ -239,6 +248,19 @@ class CustomerProfileComponent extends Component
                   'description' => $this->description,
                   'amount' => $this->transactionAmount,
                 ]);
+                //Se guarda el registro en la caja del local
+                $localBox->transactions()->create([
+                  'description' => "Credito al cliente $customerName",
+                  'type'        => 'credit',
+                  'amount'      => $this->transactionAmount * -1,
+                ]);
+
+                $localBox->transactions()->create([
+                  'description' => "Venta a credito $customerName",
+                  'type'        => 'sales',
+                  'amount'      => $this->transactionAmount,
+                ]);
+
                 $processOk = true;
                 break;
               case 'other':
@@ -246,6 +268,24 @@ class CustomerProfileComponent extends Component
                   'credit_date' => $this->transactionDate,
                   'description' => $this->description,
                   'amount' => $this->transactionAmount,
+                ]);
+
+                $date = Carbon::createFromFormat('Y-m-d', $this->transactionDate)
+                  ->endOfDay()
+                  ->format('Y-m-d H:i:s');
+
+                $localBox->transactions()->create([
+                  'transaction_date' => $date,
+                  'description' => "Credito al cliente $customerName",
+                  'type'        => 'credit',
+                  'amount'      => $this->transactionAmount * -1,
+                ]);
+
+                $localBox->transactions()->create([
+                  'transaction_date' => $date,
+                  'description' => "Venta a credito $customerName",
+                  'type'        => 'sale',
+                  'amount'      => $this->transactionAmount,
                 ]);
                 $processOk = true;
                 break;
@@ -262,6 +302,20 @@ class CustomerProfileComponent extends Component
                   'cash' => $this->paymentType === 'cash' ? 1 : 0,
                   'amount' => $this->transactionAmount
                 ]);
+
+                if ($this->paymentType === 'cash') {
+                  $localBox->transactions()->create([
+                    'description' => "Abono del cliente $customerName",
+                    'type'        => 'payment',
+                    'amount'      => $this->transactionAmount,
+                  ]);
+                } else {
+                  $majorBox->transactions()->create([
+                    'description' => "Abono del cliente $customerName",
+                    'type'        => 'payment',
+                    'amount'      => $this->transactionAmount,
+                  ]);
+                }
                 $processOk = true;
                 break;
 
@@ -271,6 +325,27 @@ class CustomerProfileComponent extends Component
                   'payment_date' => $this->transactionDate,
                   'amount' => $this->transactionAmount
                 ]);
+
+                $date = Carbon::createFromFormat('Y-m-d', $this->transactionDate)
+                  ->endOfDay()
+                  ->format('Y-m-d H:i:s');
+
+                if ($this->paymentType === 'cash') {
+                  $localBox->transactions()->create([
+                    'transaction_date'  => $date,
+                    'description'       => "Abono del cliente $customerName",
+                    'type'              => 'payment',
+                    'amount'            => $this->transactionAmount,
+                  ]);
+                } else {
+                  $majorBox->transactions()->create([
+                    'transaction_date'  => $date,
+                    'description'       => "Abono del cliente $customerName",
+                    'type'              => 'payment',
+                    'amount'            => $this->transactionAmount,
+                  ]);
+                }
+
                 $processOk = true;
               default:
                 $this->emit('transactionMomentError');
@@ -316,11 +391,12 @@ class CustomerProfileComponent extends Component
         $this->loadCustomerData($this->customerId);
         $this->emit('transactionIsOk', $this->transactionType);
         $this->reset('transactionMoment', 'transactionDate', 'description', 'transactionAmount', 'paymentType');
-      }
 
-      DB::commit();
+        DB::commit();
+        DB::connection('carmu')->commit();
+      }
     } catch (\Throwable $th) {
-      DB::rollBack();
+      // throw $th;
       $this->emit('storeError');
     }
   }
@@ -344,11 +420,11 @@ class CustomerProfileComponent extends Component
           $customer->payments()->where('customer_payment_id', $id)->delete();
           $isOk = true;
         }
-        
-        if($isOk){
+
+        if ($isOk) {
           $this->emit('transactionIsDeleted', $this->transactionType);
-          $this->loadCustomerData($this->customerId);          
-        }else{
+          $this->loadCustomerData($this->customerId);
+        } else {
           $this->emit('storeError');
         }
       } else {

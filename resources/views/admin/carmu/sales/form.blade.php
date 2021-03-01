@@ -6,6 +6,14 @@
   </select>
 </div>
 
+<div class="form-group">
+  <label for="saleType" class="required">Forma de pago</label>
+  <select name="saleType" id="transactionDate" class="form-control" x-model="type">
+    <option value="cash">En efectivo</option>
+    <option value="card">Con Tarjeta</option>
+  </select>
+</div>
+
 <div class="form-group" x-show.transition="moment=== 'other'">
   <label for="saleMoment">Selecciona una fecha</label>
   <div class="input-group mb-2">

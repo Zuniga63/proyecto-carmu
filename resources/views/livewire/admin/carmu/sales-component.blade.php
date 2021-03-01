@@ -19,6 +19,7 @@
     window.formModel = () => {
       return {
         moment:@entangle('moment'),
+        type: @entangle('saleType'),
         date: @entangle('date'),
         setTime: @entangle('setTime'),
         time: @entangle('time'),

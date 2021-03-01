@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admin\Carmu;
 
+use App\Models\CashControl\Box;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,7 @@ class SalesComponent extends Component
   //--------------------------------------------------------
   public $saleId = null;        //Para cuando se va a actualizar una venta
   public $moment = 'now';       //El momento en el que se realiza la venta
+  public $saleType = 'cash';    //Para actualizar el valor de la caja
   public $date = '';            //La fecha en formato Y-m-d
   public $setTime = false;      //Si se va a especificar la hora
   public $time = "";            //La hora en formato H:i
@@ -59,6 +61,7 @@ class SalesComponent extends Component
    */
   protected $attributes = [
     'moment' => 'Momento de la venta',
+    'saleType' => 'Forma de pago',
     'date' => 'Fecha',
     'time' => 'Hora',
     'categoryId' => 'Categoría',
@@ -74,6 +77,7 @@ class SalesComponent extends Component
   {
     $rules = [
       'moment' => ['required', 'string', Rule::in(['now', 'other'])],
+      'saleType' => ['required', 'string', Rule::in(['cash', 'card'])],
       'description' => 'required|max:255',
       'amount' => 'required|numeric|min:1000',
       'categoryId' => 'required|numeric|min:1|exists:carmu.sale_category,category_id'
@@ -485,8 +489,15 @@ class SalesComponent extends Component
     $this->validate($this->rules(), [], $this->attributes);
     $saleData = $this->buildData();
 
+    DB::connection('carmu')->beginTransaction();
     DB::beginTransaction();
     try {
+      /** @var Box */
+      $localBox = Box::where('business_id', 1)->where('main', 1)->first();
+      /** @var Box */
+      $majorBox = Box::where('business_id', 1)->where('main', 0)->first();
+      $date = null;
+
       //En primer lugar se crea el registro de venta
       $id = DB::connection('carmu')
         ->table('sale')
@@ -498,7 +509,49 @@ class SalesComponent extends Component
           'sale_id' => $id,
           'category_id' => $this->categoryId
         ]);
+
+      //Se actualiza la fecha
+      if($this->moment !== 'now'){
+        if($this->setTime){
+          $date = $this->date . ' ' . $this->time;
+        }else{
+          $date = Carbon::createFromFormat('Y-m-d', $this->date)->endOfDay()->format('Y-m-d H:i:s');
+        }
+      }
+      //Ahora se actualiza la caja
+      if($this->saleType === 'cash' && $localBox){
+        if($date){
+          $localBox->transactions()->create([
+            'description' => $this->description . " [Efectivo]",
+            'amount'      => $this->amount,
+            'type'        => 'sale',
+            'transaction_date' => $date
+          ]);
+        }else{
+          $localBox->transactions()->create([
+            'description' => $this->description . " [Efectivo]",
+            'amount'      => $this->amount,
+            'type'        => 'sale',
+          ]);
+        }  
+      }else{
+        if($date){
+          $majorBox->transactions()->create([
+            'description' => $this->description . " [Tarjeta]",
+            'amount'      => $this->amount,
+            'type'        => 'sale',
+            'transaction_date' => $date
+          ]);
+        }else{
+          $majorBox->transactions()->create([
+            'description' => $this->description . " [Tarjeta]",
+            'amount'      => $this->amount,
+            'type'        => 'sale',
+          ]);
+        }  
+      }
       //Se emite el evento de guardado
+      DB::connection('carmu')->commit();
       DB::commit();
       $this->resetFields();
       $this->emit('stored');
@@ -621,7 +674,7 @@ class SalesComponent extends Component
 
   public function resetFields()
   {
-    $this->reset('saleId', 'view', 'moment', 'description', 'amount', 'categoryId', 'setTime');
+    $this->reset('saleId', 'view', 'moment', 'saleType', 'description', 'amount', 'categoryId', 'setTime');
     $this->emit('reset');
   }
 }
