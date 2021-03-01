@@ -257,7 +257,7 @@ class CustomerProfileComponent extends Component
 
                 $localBox->transactions()->create([
                   'description' => "Venta a credito $customerName",
-                  'type'        => 'sales',
+                  'type'        => 'sale',
                   'amount'      => $this->transactionAmount,
                 ]);
 
@@ -396,7 +396,7 @@ class CustomerProfileComponent extends Component
         DB::connection('carmu')->commit();
       }
     } catch (\Throwable $th) {
-      // throw $th;
+      throw $th;
       $this->emit('storeError');
     }
   }

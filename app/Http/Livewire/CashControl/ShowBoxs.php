@@ -64,8 +64,8 @@ class ShowBoxs extends Component
     $sales = $transactionTypes['sale']['income'];
     $services = $transactionTypes['service']['income'];
     $payments = $transactionTypes['payment']['income'];
-    $otherExpenses = $transactionTypes['general']['income'];
-    $incomesAmount = $sales + $services + $payments + $otherExpenses;
+    $otherIncomes = $transactionTypes['general']['income'];
+    $incomesAmount = $sales + $services + $payments + $otherIncomes;
 
     $expenses =$transactionTypes['expense']['expense'];
     $purchase =$transactionTypes['purchase']['expense'];
