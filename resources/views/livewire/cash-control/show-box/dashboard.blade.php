@@ -1,6 +1,6 @@
 @foreach ($this->boxs as $box)
 <div class="col-lg-6" x-data>
-  <div class="card {{$box['business'] == 'Tienda Carmú' ? 'card-success' : ($box['business'] == 'Son de Cuatro' ? 'card-primary' : 'card-secondary')}}">
+  <div class="card {{$box['business'] == 'Tienda Carmú' ? 'card-success' : ($box['business'] == 'Son de Cuatro' ? 'card-primary' : 'card-dark')}}">
     <div class="card-header text-center">
       <h5 class="text-bold mb-0">{{$box['name']}}</h5>
       <p class="m-0" style="font-size: 0.8em">({{$box['business']}})</p>
@@ -90,7 +90,7 @@
     </div><!--/.end body -->
 
     <div class="card-footer row">
-      <button class="btn {{$box['business'] == 'Tienda Carmú' ? 'btn-success' : ($box['business'] == 'Son de Cuatro' ? 'btn-primary' : 'btn-secondary')}} col-12">Hacer Cierre</button>
+      <button class="btn {{$box['business'] == 'Tienda Carmú' ? 'btn-success' : ($box['business'] == 'Son de Cuatro' ? 'btn-primary' : 'btn-dark')}} col-12">Hacer Cierre</button>
     </div>
   </div><!--/.end card -->
 </div><!--/.end col -->
