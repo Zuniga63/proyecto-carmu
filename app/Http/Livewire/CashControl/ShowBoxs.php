@@ -11,23 +11,211 @@ use function PHPUnit\Framework\throwException;
 
 class ShowBoxs extends Component
 {
-  public ?int $boxId = null;
+  public ?array  $box           = null;
+  public string  $state         = "registering";
+  public string  $tab           = "info";
+  public bool    $closingBox    = false;
 
+  //--------------------------------------
+  // FORMULARIO DE NUEVA TRANSACCIÓN
+  //--------------------------------------
+  public string   $transactionType    = 'general';
+  public string   $moment             = 'now';
+  public string   $transactionDate    = '';
+  public bool     $setTime            = false;
+  public string   $transactionTime    = '';
+  public string   $description        = '';
+  public ?int     $transactionAmount  = 0;
+  public string   $amountType         = 'income';
 
+  //--------------------------------------
+  // FORMULARIO DE CIERRE DE CAJA
+  //--------------------------------------
+  public ?int     $newBase            = null;
+  public ?int     $destinationBox     = null;
+  public ?int     $registeredCash     = null;
+  public ?int     $missingCash        = null;
+  public ?int     $leftoverCash       = null;
+  public ?int     $cashReplenishment  = null;
+
+  //--------------------------------------
+  // REGLAS DE VALIDACIÓN
+  //--------------------------------------
+  protected function rules()
+  {
+    $rules = [];
+    if ($this->closingBox) {
+      //TODO: reglas para el cierre de caja
+    } else {
+      $rules = [
+        'transactionType'   => 'required|string|in:general,sale,expense,purchase,service,credit,payment',
+        'moment'            => 'required|string|in:now,other',
+        'description'       => 'required|string|min:8,max:255',
+        'transactionAmount' => 'required|integer|min:1000',
+        'setTime'           => 'nullable|boolean'
+      ];
+
+      if ($this->transactionType === 'general') {
+        $rules['amountType'] = 'required|string|in:income,expense';
+      }
+
+      if ($this->moment !== 'now') {
+        $rules['transactionDate'] = "required|string|date|after_or_equal:$this->minDate|before_or_equal:$this->maxDate";
+        if ($this->setTime) {
+          $rules['transactionTime'] = 'required|string|date_format:H:i';
+        }
+      }
+    }
+
+    return $rules;
+  }
+
+  //--------------------------------------
+  // PROPIEDADES COMPUTADAS
+  //--------------------------------------
+  /**
+   * Recupera los datos de todas las
+   * cajas de la base de datos y las guarda en
+   * cache
+   */
   public function getBoxsProperty()
   {
     $boxs = [];
-    if (empty($this->boxId)) {
+    if (empty($this->box)) {
       $boxData = Box::orderBy('id')->with(['business', 'cashier'])->get();
 
       foreach ($boxData as $data) {
-        $boxs [] = $this->getBoxInfo($data);
+        $boxs[] = $this->getBoxInfo($data);
       }
     }
 
     return $boxs;
   }
 
+  public function getMinDateProperty()
+  {
+    if ($this->box) {
+      return Carbon::createFromFormat('Y-m-d H:i:s', $this->box['closingDate'])->format('Y-m-d');
+    }
+
+    return '';
+  }
+
+  /**
+   * La fecha maxima que es un dia anterior al actual o
+   * en su defecto el día de hoy si el cierre es hoy
+   */
+  public function getMaxDateProperty()
+  {
+    return Carbon::now()->subDay()->format('Y-m-d');
+  }
+
+  public function getTransactionsProperty()
+  {
+    $transactions = [];
+    if ($this->box) {
+      $boxId       = $this->box['id'];
+      $closingDate = $this->box['closingDate'];
+      $balance = 0;
+      $isoFormat = 'MMM Do YYYY h:mm a';
+      $dateTimeFormat = 'Y-m-d H:i:s';
+      /** @var Box */
+      $box = Box::find($boxId);
+      $balance = round($box->transactions()->where('transaction_date', '<', $closingDate)->sum('amount'));
+
+      //Se registra la priemera transacción
+      $transactions[] = [
+        'id'          => 0,
+        'date'        => Carbon::createFromFormat($dateTimeFormat, $closingDate)->isoFormat($isoFormat),
+        'description' => "Saldo o base real",
+        'amount'      => $balance,
+        'balance'     => $balance
+      ];
+
+      //Ahora se recuperan todas las demas transacciones
+      $data = $box->transactions()
+        ->orderBy('created_at')
+        ->where('transaction_date', '>=', $closingDate)
+        ->get();
+
+      foreach ($data as $record) {
+        $date = Carbon::createFromFormat($dateTimeFormat, $record->transaction_date)->isoFormat($isoFormat);
+        $amount = round($record->amount);
+        $balance = $balance + $amount;
+
+        $transactions[] = [
+          'id'          => $record->id,
+          'date'        => $date,
+          'description' => $record->description,
+          'amount'      => $amount,
+          'balance'     => $balance,
+        ];
+      }
+    }
+    return $transactions;
+  }
+
+  //----------------------------------------------------------------
+  // RENDERIZACIÓN
+  //----------------------------------------------------------------
+  public function render()
+  {
+    // dd($this->transactions);
+    return view('livewire.cash-control.show-boxs')->layout('livewire.cash-control.show-box.index');
+  }
+
+  public function mount(?int $id = null)
+  {
+    if ($id) {
+      $box = Box::find($id);
+      if ($box) {
+        $this->boxId = $id;
+        $this->box   = $this->getBoxInfo($box);
+      } else {
+        $this->redirect(route('admin.showBox'));
+      }
+    }
+  }
+
+  //-----------------------------------------------------------------
+  // UTILIDADES GENERALES
+  //-----------------------------------------------------------------
+  protected function emitError($th)
+  {
+    $title = '¡Ups, Algo salió mal!';
+    $message = "Contacte con el administrador!";
+    $type = 'error';
+    $this->alert($title, $message, $type);
+    if (env('APP_DEBUG')) {
+      throw $th;
+    }
+  }
+
+  protected function alert(?string $title = null, ?string $type = 'warning', ?string $message = null)
+  {
+    $this->emit('alert', $title, $message, $type);
+  }
+
+  protected function doesNotPermission(string $action)
+  {
+    $title = "¡Acción denegada!";
+    $message = "No tiene el permiso para $action";
+    $type = 'error';
+    $this->alert($title, $type, $message);
+  }
+
+  public function resetFields()
+  {
+    $this->reset('state', 'closingBox', 'transactionType', 'moment', 'description', 'transactionAmount', 'amountType', 'newBase', 'destinationBox', 'registeredCash', 'missingCash', 'leftoverCash', 'cashReplenishment');
+    $this->emit('reset');
+  }
+
+  //-----------------------------------------------------------------
+  // UTILIDADES DEL COMPONENTE
+  //-----------------------------------------------------------------
+  /**
+   * Recupera la informacion de una caja
+   */
   protected function getBoxInfo(Box $box)
   {
     $transactionTypes = [
@@ -43,6 +231,7 @@ class ShowBoxs extends Component
     $business     = $box->business ? $box->business->name : 'Negocio no asignado';
     $cashier      = $box->cashier ? $box->cashier->name : 'Cajero no asignado';
     $closingDate  = $box->closing_date;
+    $originDate   = $closingDate;
     $base         = round($box->base);
     $sales = $services = $payments = $otherIncomes = $incomesAmount = 0;
     $expenses = $purchase = $credits = $otherExpenses = $expensesAmount = 0;
@@ -54,7 +243,7 @@ class ShowBoxs extends Component
 
     //Se consultan los ingresos por ventas
     foreach ($transactionTypes as $type => $result) {
-      if($transactionsCount > 0){
+      if ($transactionsCount > 0) {
         $result['income'] = $this->getBoxTypeAmount($type, $box, $transactionsCount);
         $result['expense'] = $this->getBoxTypeAmount($type, $box, $transactionsCount, false);
       }
@@ -67,20 +256,21 @@ class ShowBoxs extends Component
     $otherIncomes = $transactionTypes['general']['income'];
     $incomesAmount = $sales + $services + $payments + $otherIncomes;
 
-    $expenses =$transactionTypes['expense']['expense'];
-    $purchase =$transactionTypes['purchase']['expense'];
-    $credits=$transactionTypes['credit']['expense'];
-    $otherExpenses=$transactionTypes['general']['expense'];
-    $expensesAmount=$expenses + $purchase + $credits + $otherExpenses;
+    $expenses = $transactionTypes['expense']['expense'];
+    $purchase = $transactionTypes['purchase']['expense'];
+    $credits = $transactionTypes['credit']['expense'];
+    $otherExpenses = $transactionTypes['general']['expense'];
+    $expensesAmount = $expenses + $purchase + $credits + $otherExpenses;
 
     $calBalance += $incomesAmount + $expensesAmount;
-    $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate)
+    $isoClosingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate)
       ->isoFormat('MMMM Do YYYY, h:mm:ss a');
 
     return [
       'id'              => $box->id,
       'name'            => $box->name,
-      'closeDate'       => $closingDate,
+      'isoClosingDate'  => $isoClosingDate,
+      'closingDate'     => $closingDate,
       'base'            => $base,
       'business'        => $business,
       'cashier'         => $cashier,
@@ -95,7 +285,7 @@ class ShowBoxs extends Component
       'otherExpenses'   => $otherExpenses,
       'expensesAmount'  => $expensesAmount,
       'balance'         => $calBalance,
-    ];    
+    ];
   }
 
   /**
@@ -161,13 +351,122 @@ class ShowBoxs extends Component
     return $amount;
   }
 
-  public function render()
+  //-------------------------------------------
+  // MANIPULACIÓN DE DATOS
+  //-------------------------------------------
+  protected function storeTransaction()
   {
-    return view('livewire.cash-control.show-boxs')->layout('livewire.cash-control.show-box.index');
+    //Se inicializan las variables a utilizar
+    $moment       = $this->moment;
+    $dateIsOk     = true;                     //Una ultima validación de la fecha
+    $closingDate  = $this->box['closingDate'];
+    $date         = $this->transactionDate;
+    $setTime      = $this->setTime;
+    $time         = $this->transactionTime;
+    $description  = $this->description;
+    $type         = $this->transactionType;
+    $amount       = $this->transactionAmount;
+    $amountType   = $this->amountType;
+    $inputs       = [];                       //Para guardar los datos a ingresar
+
+    //Se inicializan las variables de la alerta
+    $alertTitle = null;
+    $alertType = 'error';
+    $alertMessage = null;
+
+    //Se recupera la instancia de la caja
+    /** @var Box */
+    $box = Box::find($this->box['id']);
+
+    if ($box) {
+      //Se guardan los campos obligatorios
+      $inputs['type'] = $type;
+      $inputs['description'] = $description;
+
+      //Se define el signo del importe
+      switch ($type) {
+        case 'general':
+          $amount = $amountType === 'income' ? $amount : $amount * -1;
+          break;
+        case 'expense':
+        case 'purchase':
+        case 'credit':
+          $amount = $amount * -1;
+          break;
+      }
+      //Se guarda el campo
+      $inputs['amount'] = $amount;
+
+      //Se establece la fecha
+      if ($moment !== 'now') {
+        if ($setTime) {
+          $date = "$date $time";
+          $date = Carbon::createFromFormat('Y-m-d H:i', $date);
+        } else {
+          $date = Carbon::createFromFormat('Y-m-d', $date)->endOfDay();
+        }
+
+        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate);
+        //Se valida que la fecha no sea menor que la fecha de cierre de caja
+        if ($closingDate->lessThan($date)) {
+          //Se agrega el campo
+          $inputs['transaction_date'] = $date->format('Y-m-d H:i:s');
+        } else {
+          $dateIsOk = false;
+          $alertTitle = "¡Fecha anterior al corte!";
+          $alertMessage = "La fecha de la transacción es ";
+          $alertMessage .= $date->longRelativeDiffForHumans($closingDate);
+        }
+      }
+
+      if ($dateIsOk) {
+        //Se procede a registrar la transacción
+        $box->transactions()->create($inputs);
+        $alertTitle = "Transacción Registrada";
+        $alertType = 'success';
+        $this->resetFields();
+        $this->box = $this->getBoxInfo($box);
+      }
+    } else {
+      $alertTitle = "¡Caja no encontrada!";
+      $alertMessage = "Es probable que esta caja no esté en la base de datos";
+      $alertType = 'warning';
+    }
+
+    $this->alert($alertTitle, $alertType, $alertMessage);
   }
 
-  public function mount($id = null)
+  protected function updateTransaction()
   {
     //TODO
+  }
+
+  protected function storeClosingBox()
+  {
+    //TODO
+  }
+
+  public function editTransaction($id)
+  {
+    //TODO
+  }
+
+  public function destroyTransaction($id)
+  {
+    //TODO
+  }
+
+  public function submit()
+  {
+    $this->validate($this->rules(), []);
+    try {
+      if ($this->closingBox) {
+        $this->storeClosingBox();
+      } else {
+        $this->storeTransaction();
+      }
+    } catch (\Throwable $th) {
+      $this->emitError($th);
+    }
   }
 }

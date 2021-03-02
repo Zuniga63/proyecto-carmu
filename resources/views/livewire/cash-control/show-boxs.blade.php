@@ -1,6 +1,13 @@
 <div class="container-fluid">
-  @if ($boxId)
-      
+  @if ($box)
+    <div class="row justify-content-center" x-data="model()">
+      <div class="col-lg-4 mb-4" x-show.transition.duration.500ms="tab === 'transactions' || closingBox">
+        @include('livewire.cash-control.show-box.form')
+      </div>
+      <div class="col-lg-8">
+        @include('livewire.cash-control.show-box.box-panel')
+      </div>
+    </div>
   @else
     <div class="row justify-content-around">
       @include('livewire.cash-control.show-box.dashboard')
@@ -10,6 +17,75 @@
 
 @push('scripts')
 <script>
+  window.model = () => {
+    return {
+      tab:                @entangle('tab').defer,
+      state:              @entangle('state'),
+      closingBox:         @entangle('closingBox'),
+      transactionType:    @entangle('transactionType').defer,
+      moment:             @entangle('moment').defer,
+      transactionDate:    @entangle('transactionDate').defer,
+      setTime:            @entangle('setTime').defer,
+      transactionTime:    @entangle('transactionTime').defer,
+      description:        @entangle('description').defer,
+      transactionAmount:  @entangle('transactionAmount').defer,
+      amountType:         @entangle('amountType').defer,
+      newBase:            @entangle('newBase'),
+      destinationBox:     @entangle('destinationBox'),
+      registeredCash:     @entangle('registeredCash'),
+      missingCash:        @entangle('missingCash'),
+      leftoverCash:       @entangle('leftoverCash'),
+      cashReplenishment:  @entangle('cashReplenishment'),
+      banknotes: {
+        thousand: {
+          count: 0,
+          value: 1000
+        },
+        twoThousand:{
+          count:0,
+          value: 2000,
+        },
+        fiveThousand:{
+          count:0,
+          value: 5000,
+        },
+        tenThousand:{
+          count:0,
+          value: 10000,
+        },
+        twentyThousand:{
+          count:0,
+          value: 20000,
+        },
+        fiftyThousand:{
+          count:0,
+          value: 50000,
+        },
+        hundredThousand:{
+          count:0,
+          value: 100000,
+        },
+      },
+      bankCoins:{
+        hundred: {
+          count: 0,
+          value: 100
+        },
+        twoHundred:{
+          count:0,
+          value: 200,
+        },
+        fiveHundred:{
+          count:0,
+          value: 500,
+        },
+        Thousand:{
+          count:0,
+          value: 1000,
+        },
+      }
+    }
+  }
 
   window.formatCurrency = (number, fractionDigits) => {
     var formatted = new Intl.NumberFormat('es-CO', {
@@ -42,5 +118,25 @@
     target.value = formatCurrency(value, 0);
   }
 
+  window.addEventListener('livewire:load', ()=>{
+
+    Livewire.on('alert', (title, message, type) => {
+      functions.notifications(message, title, type);
+      console.log(message);
+    })
+
+    Livewire.on('reset', () => {
+      document.getElementById('transactionAmount').value = '';
+    })
+
+    Livewire.on('viewRender', (data)=>{
+      let countLabel = `Meses: ${data.months}`;
+      document.getElementById('labelCount').setAttribute('data-original-title', countLabel);
+      document.getElementById('capital').value = formatCurrency(data.capital, 0);
+      document.getElementById('interests').value = formatCurrency(data.interests, 0);
+      document.getElementById('annuity').value = formatCurrency(data.annuity, 0);
+      document.getElementById('rest').value = formatCurrency(data.rest, 0);
+    })
+  });
 </script>
 @endpush
