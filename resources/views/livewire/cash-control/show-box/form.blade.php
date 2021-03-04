@@ -19,6 +19,6 @@
   <!-- footer -->
   <footer class="card-footer">
     <button type="submit" class="btn btn-dark">Registrar</button>
-    <button type="button" class="btn btn-link" wire:click="resetField">Cancelar</button>
+    <button type="button" class="btn btn-link" wire:click="resetFields">Cancelar</button>
   </footer><!--/.end footer -->
 </form>

@@ -1,6 +1,6 @@
 <div class="container-fluid">
   @if ($box)
-    <div class="row justify-content-center" x-data="model()">
+    <div class="row justify-content-center"  x-data="model()">
       <div class="col-lg-4 mb-4" x-show.transition.duration.500ms="tab === 'transactions' || closingBox">
         @include('livewire.cash-control.show-box.form')
       </div>
@@ -22,14 +22,14 @@
       tab:                @entangle('tab').defer,
       state:              @entangle('state'),
       closingBox:         @entangle('closingBox'),
-      transactionType:    @entangle('transactionType').defer,
-      moment:             @entangle('moment').defer,
-      transactionDate:    @entangle('transactionDate').defer,
-      setTime:            @entangle('setTime').defer,
-      transactionTime:    @entangle('transactionTime').defer,
-      description:        @entangle('description').defer,
-      transactionAmount:  @entangle('transactionAmount').defer,
-      amountType:         @entangle('amountType').defer,
+      transactionType:    @entangle('transactionType'),
+      moment:             @entangle('moment'),
+      transactionDate:    @entangle('transactionDate'),
+      setTime:            @entangle('setTime'),
+      transactionTime:    @entangle('transactionTime'),
+      description:        @entangle('description'),
+      transactionAmount:  @entangle('transactionAmount'),
+      amountType:         @entangle('amountType'),
       newBase:            @entangle('newBase'),
       destinationBox:     @entangle('destinationBox'),
       registeredCash:     @entangle('registeredCash'),

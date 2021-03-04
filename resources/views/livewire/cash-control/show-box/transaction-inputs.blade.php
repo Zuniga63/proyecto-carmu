@@ -33,8 +33,8 @@
 </div>
 
 {{-- FECHA DE LA TRANSACCIÓN --}}
-<div class="form-group" x-show.transition.duration.500ms="moment=== 'other'" title="Si no se establece la hora se registrá al final del día" wire:ignore.self>
-  <label for="transactionDate" class="required">Selecciona una fecha</label>
+<div class="form-group" x-show.transition.duration.500ms="moment=== 'other'">
+  <label for="transactionDate" class="required" title="Si no se establece la hora se registrá al final del día" wire:ignore.self>Selecciona una fecha</label>
   <div class="input-group mb-2">
     <div class="input-group-prepend">
       <span class="input-group-text">
