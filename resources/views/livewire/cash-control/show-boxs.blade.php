@@ -21,7 +21,7 @@
     return {
       tab:                @entangle('tab').defer,
       state:              @entangle('state'),
-      closingBox:         @entangle('closingBox'),
+      closingBox:         @entangle('closingBox').defer,
       transactionType:    @entangle('transactionType'),
       moment:             @entangle('moment'),
       transactionDate:    @entangle('transactionDate'),
@@ -33,56 +33,101 @@
       newBase:            @entangle('newBase'),
       destinationBox:     @entangle('destinationBox'),
       registeredCash:     @entangle('registeredCash'),
+      boxBalance:         @entangle('boxBalance'),
       missingCash:        @entangle('missingCash'),
       leftoverCash:       @entangle('leftoverCash'),
       cashReplenishment:  @entangle('cashReplenishment'),
       banknotes: {
         thousand: {
           count: 0,
-          value: 1000
+          value: 1000,
+          amount: 0,
         },
         twoThousand:{
           count:0,
           value: 2000,
+          amount: 0,
         },
         fiveThousand:{
           count:0,
           value: 5000,
+          amount: 0,
         },
         tenThousand:{
           count:0,
           value: 10000,
+          amount: 0,
         },
         twentyThousand:{
           count:0,
           value: 20000,
+          amount: 0,
         },
         fiftyThousand:{
           count:0,
           value: 50000,
+          amount: 0,
         },
         hundredThousand:{
           count:0,
           value: 100000,
+          amount: 0,
         },
       },
       bankCoins:{
         hundred: {
           count: 0,
-          value: 100
+          value: 100,
+          amount: 0
         },
         twoHundred:{
           count:0,
           value: 200,
+          amount: 0
         },
         fiveHundred:{
           count:0,
           value: 500,
+          amount: 0
         },
         Thousand:{
           count:0,
           value: 1000,
+          amount: 0
         },
+      },
+      banknotesAmount: 0,
+      bankCoinsAmount: 0,
+      updateAmounts(){
+        let banknotesAmount = 0;
+        let bankCoinsAmount = 0;
+
+        for(const [key, bill] of Object.entries(this.banknotes)){
+          bill.amount = parseInt(bill.count) * bill.value;
+          banknotesAmount += bill.amount;
+        }
+
+        for(const [key, coin] of Object.entries(this.bankCoins)){
+          coin.amount = parseInt(coin.count) * coin.value;
+          bankCoinsAmount += coin.amount;
+        }
+
+        this.banknotesAmount = banknotesAmount;
+        this.bankCoinsAmount = bankCoinsAmount;
+        this.registeredCash = bankCoinsAmount + banknotesAmount;
+        let boxBalance = parseInt(this.boxBalance);
+        if(boxBalance != this.registeredCash){
+          if(this.boxBalance > this.registeredCash){
+            this.missingCash = this.boxBalance - this.registeredCash;
+            this.leftoverCash = 0;
+          }else{
+            this.leftoverCash = this.registeredCash - this.boxBalance;
+            this.missingCash = 0;
+          }
+        }else{
+          this.missingCash = 0;
+          this.leftoverCash = 0;
+        }
       }
     }
   }

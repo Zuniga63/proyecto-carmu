@@ -33,12 +33,13 @@ class ShowBoxs extends Component
   //--------------------------------------
   // FORMULARIO DE CIERRE DE CAJA
   //--------------------------------------
-  public ?int     $newBase            = null;
-  public ?int     $destinationBox     = null;
-  public ?int     $registeredCash     = null;
-  public ?int     $missingCash        = null;
-  public ?int     $leftoverCash       = null;
-  public ?int     $cashReplenishment  = null;
+  public ?int     $boxBalance         = 0;
+  public ?int     $newBase            = 0;
+  public ?int     $destinationBox     = 0;
+  public ?int     $registeredCash     = 0;
+  public ?int     $missingCash        = 0;
+  public ?int     $leftoverCash       = 0;
+  public ?int     $cashReplenishment  = 0;
 
   //--------------------------------------
   // REGLAS DE VALIDACIÓN
@@ -262,6 +263,7 @@ class ShowBoxs extends Component
     $isoClosingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate)
       ->isoFormat('MMMM Do YYYY, h:mm:ss a');
 
+    $this->boxBalance = $calBalance;
     return [
       'id'              => $box->id,
       'name'            => $box->name,

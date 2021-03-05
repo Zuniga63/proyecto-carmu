@@ -79,3 +79,8 @@
 <div class="row">
   <p class=" col-12 text-bold text-center mb-0 mt-2" style="font-size: 2em;opacity: 0.8;" x-text="formatCurrency({{$box['balance']}}, 0)"></p>
 </div>
+
+<div class="form-check">
+  <input type="checkbox" name="closingBox" id="closingBox" class="form-check-input" x-model="closingBox">
+  <label for="setTime" class="form-check-label">Herramienta de cierra</label>
+</div>
