@@ -42,6 +42,7 @@
             <th>Fecha</th>
             <th class="text-left">Descripción</th>
             <th>Importe</th>
+            <th>Saldo</th>
             <th></th>
           </tr>
         </thead>
@@ -51,6 +52,7 @@
             <td class="text-center">{{$record['date']}}</td>
             <td class="text-left">{{$record['description']}}</td>
             <td class="text-right" x-text="formatCurrency({{$record['amount']}},0)"></td>
+            <td class="text-right" x-text="formatCurrency({{$record['balance']}},0)"></td>
             <td>
               <a href="javascript:;" class="btn-tools">
                 <i class="fas fa-edit"></i>

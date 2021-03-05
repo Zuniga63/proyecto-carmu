@@ -117,20 +117,11 @@ class ShowBoxs extends Component
       $boxId       = $this->box['id'];
       $closingDate = $this->box['closingDate'];
       $balance = 0;
-      $isoFormat = 'MMM Do YYYY h:mm a';
+      $isoFormat = 'DD-MM-YYYY';
       $dateTimeFormat = 'Y-m-d H:i:s';
       /** @var Box */
       $box = Box::find($boxId);
       $balance = round($box->transactions()->where('transaction_date', '<', $closingDate)->sum('amount'));
-
-      //Se registra la priemera transacción
-      $transactions[] = [
-        'id'          => 0,
-        'date'        => Carbon::createFromFormat($dateTimeFormat, $closingDate)->isoFormat($isoFormat),
-        'description' => "Saldo o base real",
-        'amount'      => $balance,
-        'balance'     => $balance
-      ];
 
       //Ahora se recuperan todas las demas transacciones
       $data = $box->transactions()
