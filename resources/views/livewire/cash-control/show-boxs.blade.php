@@ -129,6 +129,10 @@
       document.getElementById('transactionAmount').value = '';
     })
 
+    Livewire.on('updateAmount', amount => {
+      document.getElementById('transactionAmount').value = formatCurrency(amount, 0);
+    })
+
     Livewire.on('viewRender', (data)=>{
       let countLabel = `Meses: ${data.months}`;
       document.getElementById('labelCount').setAttribute('data-original-title', countLabel);

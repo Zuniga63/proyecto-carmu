@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\CashControl;
 
 use App\Models\CashControl\Box;
+use App\Models\CashControl\BoxTransaction;
 use Carbon\Carbon;
 use Error;
 use Livewire\Component;
@@ -15,6 +16,7 @@ class ShowBoxs extends Component
   public string  $state         = "registering";
   public string  $tab           = "info";
   public bool    $closingBox    = false;
+  public ?int    $transactionId = null;
 
   //--------------------------------------
   // FORMULARIO DE NUEVA TRANSACCIÓN
@@ -107,6 +109,9 @@ class ShowBoxs extends Component
    */
   public function getMaxDateProperty()
   {
+    if ($this->state === 'editing') {
+      return Carbon::now()->format('Y-m-d');
+    }
     return Carbon::now()->subDay()->format('Y-m-d');
   }
 
@@ -151,7 +156,7 @@ class ShowBoxs extends Component
   //----------------------------------------------------------------
   public function render()
   {
-    // dd($this->transactions);
+    $this->emit('updateAmount', abs($this->transactionAmount));
     return view('livewire.cash-control.show-boxs')->layout('livewire.cash-control.show-box.index');
   }
 
@@ -197,7 +202,7 @@ class ShowBoxs extends Component
 
   public function resetFields()
   {
-    $this->reset('state', 'closingBox', 'transactionType', 'moment', 'description', 'transactionAmount', 'amountType', 'newBase', 'destinationBox', 'registeredCash', 'missingCash', 'leftoverCash', 'cashReplenishment');
+    $this->reset('state', 'transactionId', 'closingBox', 'transactionType', 'moment', 'description', 'transactionAmount', 'amountType', 'newBase', 'destinationBox', 'registeredCash', 'missingCash', 'leftoverCash', 'cashReplenishment');
     $this->emit('reset');
   }
 
@@ -429,7 +434,97 @@ class ShowBoxs extends Component
 
   protected function updateTransaction()
   {
-    //TODO
+    /** @var BoxTransaction */
+    $transaction  = BoxTransaction::find($this->transactionId);
+    $moment       = $this->moment;
+    $dateIsOk     = true;
+    $closingDate  = $this->box['closingDate'];
+    $date         = $this->transactionDate;
+    $setTime      = $this->setTime;
+    $time         = $this->transactionTime;
+    $description  = $this->description;
+    $type         = $this->transactionType;
+    $amount       = $this->transactionAmount;
+    $amountType   = $this->amountType;
+
+    //Se inicializan las variables de la alerta
+    $alertTitle = null;
+    $alertType = 'error';
+    $alertMessage = null;
+
+    if ($transaction) {
+      //Se actualizan los campos genericos
+      $transaction->type = $type;
+      $transaction->description = $description;
+
+      //Se define el signo del importe
+      switch ($type) {
+        case 'general':
+          $amount = $amountType === 'income' ? $amount : $amount * -1;
+          break;
+        case 'expense':
+        case 'purchase':
+        case 'credit':
+          $amount = $amount * -1;
+          break;
+      }
+
+      //Se actualiza el campo del importe
+      $transaction->amount = $amount;
+
+      //Ahora se establece la fecha
+      if ($moment !== 'now') {
+        if ($setTime) {
+          $date = "$date $time";
+          $date = Carbon::createFromFormat('Y-m-d H:i', $date);
+        } else {
+          $date = Carbon::createFromFormat('Y-m-d', $date)->endOfDay();
+        }
+
+        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate);
+        $now = Carbon::now();
+        /**
+         * Se valida que la fecha no sea anterior a la
+         * fecha de cierre o posterior al momento actual
+         */
+        if ($closingDate->lessThan($date)) {
+          if ($now->greaterThan($date)) {
+            $transaction->transaction_date = $date->format('Y-m-d H:i:s');
+          } else {
+            $dateIsOk = false;
+            $alertTitle = "¡Error con la fecha!";
+            $alertMessage = "La fecha de la transacción es mayor que la fecha actual ";
+            $alertMessage .= $date->longRelativeToNowDiffForHumans();
+          }
+        } else {
+          $dateIsOk = false;
+          $alertTitle = "!Error con la fecha!";
+          $alertMessage = "La fecha de la transacción es anterior a la fecha de cierre de la caja ";
+          $alertMessage .= $date->longRelativeDiffForHumans($closingDate);
+        }
+
+        if ($dateIsOk) {
+          $transaction->save();
+          $alertTitle = "Transacción Actualizada";
+          $alertType = 'success';
+          $this->resetFields();
+          $box = $transaction->box()->first();
+          $this->box = $this->getBoxInfo($box);
+        }
+      } else {
+        $transaction->transaction_date = Carbon::now()->format('Y-m-d H:i:s');
+        $transaction->save();
+        $alertTitle = "Transacción Actualizada";
+        $alertType = 'success';
+        $this->resetFields();
+        $box = $transaction->box()->first();
+        $this->box = $this->getBoxInfo($box);
+      }
+    } else {
+      $alertTitle = "¡Transacción eliminada";
+    }
+
+    $this->alert($alertTitle, $alertType, $alertMessage);
   }
 
   protected function storeClosingBox()
@@ -439,7 +534,25 @@ class ShowBoxs extends Component
 
   public function editTransaction($id)
   {
-    //TODO
+    $transaction = BoxTransaction::find($id);
+    if ($transaction) {
+      $date = Carbon::createFromFormat('Y-m-d H:i:s', $transaction->transaction_date);
+      $amount = round($transaction->amount);
+
+      $this->transactionId = $transaction->id;
+      $this->state = 'editing';
+      $this->transactionType = $transaction->type;
+      $this->moment = 'other';
+      $this->transactionDate = $date->format('Y-m-d');
+      $this->setTime = true;
+      $this->transactionTime = $date->format('H:i');
+      $this->description = $transaction->description;
+      $this->amountType = $amount >= 0 ? 'income' : 'expense';
+      $this->transactionAmount = abs($amount);
+      $this->emit('updateAmount', abs($amount));
+    } else {
+      $this->alert('¡Transacción no encontrada!');
+    }
   }
 
   public function destroyTransaction($id)
@@ -453,8 +566,10 @@ class ShowBoxs extends Component
     try {
       if ($this->closingBox) {
         $this->storeClosingBox();
-      } else {
+      } elseif ($this->state === 'registering') {
         $this->storeTransaction();
+      } else {
+        $this->updateTransaction();
       }
     } catch (\Throwable $th) {
       $this->emitError($th);
