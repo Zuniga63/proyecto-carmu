@@ -19,7 +19,7 @@
 @section('contentBreadcrum')
 <ol class="breadcrumb float-sm-right">
   <li class="breadcrumb-item"><a href="{{route('admin.admin')}}">Home</a></li>
-  <li class="breadcrumb-item active">Ver Cajas</li>
+  <li class="breadcrumb-item active"><a href="{{route('admin.showBox')}}">Volver a cajas</a></li>
 </ol>
 @endsection
 

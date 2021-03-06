@@ -4,8 +4,11 @@ namespace App\Http\Livewire\CashControl;
 
 use App\Models\CashControl\Box;
 use App\Models\CashControl\BoxTransaction;
+use App\Models\User;
 use Carbon\Carbon;
 use Error;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
 use function PHPUnit\Framework\throwException;
@@ -33,13 +36,14 @@ class ShowBoxs extends Component
   //--------------------------------------
   // FORMULARIO DE CIERRE DE CAJA
   //--------------------------------------
-  public ?int     $boxBalance         = 0;
-  public ?int     $newBase            = 0;
-  public ?int     $destinationBox     = 0;
-  public ?int     $registeredCash     = 0;
-  public ?int     $missingCash        = 0;
-  public ?int     $leftoverCash       = 0;
-  public ?int     $cashReplenishment  = 0;
+  public ?string     $password           = null;
+  public ?int        $boxBalance         = 0;
+  public ?int        $newBase            = 0;
+  public ?int        $destinationBox     = 0;
+  public ?int        $registeredCash     = 0;
+  public ?int        $missingCash        = 0;
+  public ?int        $leftoverCash       = 0;
+  public ?int        $cashReplenishment  = 0;
 
   //--------------------------------------
   // REGLAS DE VALIDACIÓN
@@ -48,7 +52,11 @@ class ShowBoxs extends Component
   {
     $rules = [];
     if ($this->closingBox) {
-      //TODO: reglas para el cierre de caja
+      $rules = [
+        'password'        => 'required|string',
+        'newBase'         => 'required|integer|min:0',
+        'registeredCash'  => 'required|integer|min:0',
+      ];
     } else {
       $rules = [
         'transactionType'   => 'required|string|in:general,sale,expense,purchase,service,credit,payment',
@@ -157,7 +165,7 @@ class ShowBoxs extends Component
   //----------------------------------------------------------------
   public function render()
   {
-    $this->emit('updateAmount', abs($this->transactionAmount));
+    $this->emit('updateAmount', abs($this->transactionAmount), $this->newBase);
     return view('livewire.cash-control.show-boxs')->layout('livewire.cash-control.show-box.index');
   }
 
@@ -167,6 +175,7 @@ class ShowBoxs extends Component
       $box = Box::find($id);
       if ($box) {
         $this->boxId = $id;
+        $this->newBase = intval($box->base);
         $this->box   = $this->getBoxInfo($box);
       } else {
         $this->redirect(route('admin.showBox'));
@@ -210,6 +219,7 @@ class ShowBoxs extends Component
   //-----------------------------------------------------------------
   // UTILIDADES DEL COMPONENTE
   //-----------------------------------------------------------------
+
   /**
    * Recupera la informacion de una caja
    */
@@ -222,7 +232,8 @@ class ShowBoxs extends Component
       'purchase'  => ['income' => 0, 'expense' => 0],
       'service'   => ['income' => 0, 'expense' => 0],
       'credit'    => ['income' => 0, 'expense' => 0],
-      'payment'   => ['income' => 0, 'expense' => 0]
+      'payment'   => ['income' => 0, 'expense' => 0],
+      'transfer'  => ['income' => 0, 'expense' => 0],
     ];
 
     $business     = $box->business ? $box->business->name : 'Negocio no asignado';
@@ -250,14 +261,16 @@ class ShowBoxs extends Component
     $sales = $transactionTypes['sale']['income'];
     $services = $transactionTypes['service']['income'];
     $payments = $transactionTypes['payment']['income'];
+    $transfersIncomes = $transactionTypes['transfer']['income'];
     $otherIncomes = $transactionTypes['general']['income'];
-    $incomesAmount = $sales + $services + $payments + $otherIncomes;
+    $incomesAmount = $sales + $services + $payments + $transfersIncomes + $otherIncomes;
 
     $expenses = $transactionTypes['expense']['expense'];
     $purchase = $transactionTypes['purchase']['expense'];
     $credits = $transactionTypes['credit']['expense'];
+    $transfersExpenses = $transactionTypes['transfer']['expense'];
     $otherExpenses = $transactionTypes['general']['expense'];
-    $expensesAmount = $expenses + $purchase + $credits + $otherExpenses;
+    $expensesAmount = $expenses + $purchase + $credits + $transfersExpenses + $otherExpenses;
 
     $calBalance += $incomesAmount + $expensesAmount;
     $isoClosingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate)
@@ -275,11 +288,13 @@ class ShowBoxs extends Component
       'sales'           => $sales,
       'services'        => $services,
       'payments'        => $payments,
+      'deposits'        => $transfersIncomes,
       'otherIncomes'    => $otherIncomes,
       'incomesAmount'   => $incomesAmount,
       'expenses'        => $expenses,
       'purchases'       => $purchase,
       'credits'         => $credits,
+      'transfers'        => $transfersExpenses,
       'otherExpenses'   => $otherExpenses,
       'expensesAmount'  => $expensesAmount,
       'balance'         => $calBalance,
@@ -334,6 +349,9 @@ class ShowBoxs extends Component
         break;
       case 'payment':
         $query->where('type', 'payment');
+        break;
+      case 'transfer':
+        $query->where('type', 'transfer');
         break;
       default:
         throw new Error("Tipo de transaccion no soportado");
@@ -529,9 +547,116 @@ class ShowBoxs extends Component
     $this->alert($alertTitle, $alertType, $alertMessage);
   }
 
+  public function setPassword(string $password)
+  {
+    $this->password = $password;
+  }
+
   protected function storeClosingBox()
   {
-    //TODO
+    //Variables del metodo
+    $now = Carbon::now();
+    $password     = $this->password;
+    $cash         = $this->registeredCash;
+    $newBase      = $this->newBase;
+
+    //Valirables para las alertas
+    $alertTitle = null;
+    $alertType  = 'error';
+    $alertMessage = null;
+
+    //Se recupera la caja
+    /** @var Box */
+    $box = Box::find($this->box['id']);
+    /**
+     * Se recupera al usuario
+     * @var User
+     */
+    $user = User::find(session()->get('user_id'));
+
+    /**
+     * Se recupera la caja mayor
+     * @var Box
+     */
+    $majorBox = Box::where('id', '!=', $box->id)
+      ->where('business_id', $box->business_id)
+      ->orderBy('id')
+      ->first();
+
+    //Primero se comprueba que la contraseña es correcta
+    if (Hash::check($password, $user->password)) {
+      //Ahora se comprueba que la caja es una caja que permita el cierre
+      if ($box->main && $majorBox) {
+        $boxInfo = $this->getBoxInfo($box);
+        $balance = $boxInfo['balance'];
+
+        try {
+          DB::beginTransaction();
+          $date = $now->copy()->subSecond()->format('Y-m-d H:i:s');
+
+          //Se registra el faltante o el sobrante
+          if ($cash != $balance) {
+            $amount = $cash - $balance;
+            $description  = $cash > $balance
+              ? 'Sobrante de caja'
+              : 'Faltante de caja';
+            $box->transactions()->create([
+              'transaction_date'  => $date,
+              'description'       => $description,
+              'type'              => 'general',
+              'amount'            => $amount
+            ]);
+          }//.end if
+
+          //Ahora se hace la transferencia de dinero correspondiente
+          if ($cash != $newBase) {
+            //Se actualiza la caja del local
+            $amount = $newBase - $cash;
+            $description = $cash > $newBase
+              ? "Transferencia a caja mayor"
+              : "Deposito de caja mayor";
+            $box->transactions()->create([
+              'transaction_date'  => $date,
+              'description'       => $description,
+              'type'              => 'transfer',
+              'amount'            => $amount
+            ]);
+
+            //Ahora se actualiza la caja mayor
+            $amount = $amount * -1;
+            $description = $newBase > $cash
+              ? 'Transferencia a caja del local'
+              : 'Cierre de caja del local';
+            $majorBox->transactions()->create([
+              'transaction_date'  => $date,
+              'description'       => $description,
+              'type'              => 'transfer',
+              'amount'            => $amount
+            ]);
+          }//.end if
+
+          //Se actualiza la caja
+          $box->base = $newBase;
+          $box->closing_date = $now->format('Y-m-d H:i:s');
+          $box->save();
+
+          DB::commit();
+          $alertTitle = "¡Arqueo de caja satisfatorio!";
+          $alertType  = "success";
+          $this->resetFields();
+          $this->box = $this->getBoxInfo($box);
+        } catch (\Throwable $th) {
+          $this->emitError($th);
+        }
+      } else {
+        $alertTitle = "¡Funcionalidad no habilitada!";
+        $alertMessage = "Esta caja no tiene habilitado el cierre ya que se realiza de forma manual";
+      }
+    } else {
+      $alertTitle = "¡Contraseña Incorrecta";
+    }
+
+    $this->alert($alertTitle, $alertType, $alertMessage);
   }
 
   public function editTransaction($id)

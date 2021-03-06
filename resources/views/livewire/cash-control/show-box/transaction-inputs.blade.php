@@ -92,6 +92,7 @@
     class="form-control {{$errors->has('description') ? 'is-invalid' : ''}}"
     placeholder="Describe la transacción"
     x-model="description"
+    x-on:focus="$event.target.select()"
   ></textarea>
 
   @error('description')
@@ -112,6 +113,7 @@
     placeholder="$ 0.00" 
     x-on:input="formatInput($event.target)" 
     x-on:change="$wire.transactionAmount = deleteCurrencyFormat($event.target.value)"
+    x-on:focus="$event.target.select()"
     style="font-size: 1.5em;letter-spacing: 2px;"
     autocomplete="off"
   >

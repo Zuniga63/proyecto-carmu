@@ -24,6 +24,7 @@
             class="col-2" 
             x-model="banknotes.thousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -41,6 +42,7 @@
             class="col-2" 
             x-model="banknotes.twoThousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -58,6 +60,7 @@
             class="col-2" 
             x-model="banknotes.fiveThousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -75,6 +78,7 @@
             class="col-2" 
             x-model="banknotes.tenThousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -92,6 +96,7 @@
             class="col-2" 
             x-model="banknotes.twentyThousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -109,6 +114,7 @@
             class="col-2" 
             x-model="banknotes.fiftyThousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -147,6 +153,7 @@
             class="col-2" 
             x-model="bankCoins.hundred.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -164,6 +171,7 @@
             class="col-2" 
             x-model="bankCoins.twoHundred.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -181,6 +189,7 @@
             class="col-2" 
             x-model="bankCoins.fiveHundred.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -198,6 +207,7 @@
             class="col-2" 
             x-model="bankCoins.Thousand.count"
             x-on:change="updateAmounts"
+            x-on:focus="$event.target.select()"
             min="0"
           >
           <p 
@@ -210,54 +220,6 @@
       <div class="card-footer text-right">
         Total: <span class="text-bold" x-text="formatCurrency(bankCoinsAmount, 0)"></span>
       </div><!--/.footer -->
-    </div><!--/.end card -->
-  </div><!--/.end col -->
-
-  {{-- DETALLES DEL CIERRE --}}
-  <div class="col-lg-6">
-    <div class="card card-dark">
-      {{-- header --}}
-      <div class="card-header p-1">
-        <h5 class="text-center m-1">Informacion de la caja</h5>
-      </div><!--/.end header -->
-      {{-- body --}}
-      <div class="card-body text-bold">
-        {{-- base --}}
-        <div class="row">
-          <p class="col-6 mb-0">Base</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency({{$box['base']}}, 0)"></p>
-        </div>   
-        {{-- INGRESOS --}}
-        <div class="row">
-          <p class="col-6 mb-0">Ingresos (+):</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency({{$box['incomesAmount']}}, 0)"></p>
-        </div>   
-        {{-- Egresos --}}
-        <div class="row">
-          <p class="col-6 mb-0">Egresos (-):</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency({{abs($box['expensesAmount'])}}, 0)"></p>
-        </div>  
-        {{-- SALDO --}}
-        <div class="row border-top border-bottom p-1">
-          <p class="col-6 mb-0">Saldo:</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency(boxBalance, 0)"></p>
-        </div> 
-        {{-- Arqueo de caja --}}
-        <div class="row">
-          <p class="col-6 mb-0">Arqueo:</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency(registeredCash, 0)"></p>
-        </div>
-        {{-- Sobrante --}}
-        <div class="row" x-show.transition.duration.500ms="leftoverCash > 0">
-          <p class="col-6 mb-0">Sobrante:</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency(registeredCash, 0)"></p>
-        </div>
-        {{-- Faltante --}}
-        <div class="row" x-show.transition.duration.500ms="missingCash > 0">
-          <p class="col-6 mb-0">Faltante:</p>
-          <p class="col-6 mb-0 text-right" x-text="formatCurrency(missingCash, 0)"></p>
-        </div>
-      </div><!--/.end body -->
     </div><!--/.end card -->
   </div><!--/.end col -->
 

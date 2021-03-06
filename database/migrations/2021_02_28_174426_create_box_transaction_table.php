@@ -18,7 +18,7 @@ class CreateBoxTransactionTable extends Migration
       $table->foreignId('box_id')->constrained('box');
       $table->dateTime('transaction_date')->useCurrent();
       $table->string('description');
-      $table->enum('type', ['general', 'sale', 'expense', 'purchase', 'service', 'credit', 'payment'])->default('general');
+      $table->enum('type', ['general', 'sale', 'expense', 'purchase', 'service', 'credit', 'payment', 'transfer'])->default('general');
       $table->decimal('amount', 10, 2);
       $table->timestamps();
     });

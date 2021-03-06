@@ -35,7 +35,9 @@
 
   <div class="card-body pt-0">
     <h3 class="text-center text-bold mb-0">{{$box['name']}}</h3>
-    <p class="text-center border-bottom" x-bind:class="{'mb-0': tab==='transactions'}">{{$box['business']}}</p>
+    <p class="text-center border-bottom" x-bind:class="{'mb-0': tab==='transactions'}">
+      {{$box['business']}} <a href="javascript:;" class="link" wire:click="render"><i class="fas fa-sync-alt"></i></a>
+    </p>
     {{-- Informacion de la caja --}}
     <div x-show.transition.in.duration.500ms="tab === 'info'">
       @include('livewire.cash-control.show-box.box-info')

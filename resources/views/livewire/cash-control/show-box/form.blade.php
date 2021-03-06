@@ -8,11 +8,13 @@
 >
   <!-- header -->
   <header class="card-header">
-    <h5 class="card-title">Registrar Transacción</h5>
+    <h5 class="card-title" x-show="tab === 'transactions' && state === 'registering' && !closingBox">Registrar Transacción</h5>
+    <h5 class="card-title" x-show="tab === 'transactions' && state === 'editing' && !closingBox">Actualizar Transacción</h5>
+    <h5 class="card-title" x-show="closingBox">Cierre de caja</h5>
   </header><!--/.end header -->
   <!-- body --->
   <div class="card-body">
-    <div x-show="tab === 'transactions'">
+    <div x-show="tab === 'transactions' && !closingBox">
       @include('livewire.cash-control.show-box.transaction-inputs')
     </div>
     <div x-show="closingBox">

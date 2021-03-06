@@ -1,6 +1,6 @@
 <div class="container-fluid">
   @if ($box)
-    <div class="row justify-content-center"  x-data="model()">
+    <div class="row justify-content-center"  x-data="model()" x-init="updateAmounts">
       <div class="col-lg-4 mb-4" x-show.transition.duration.500ms="tab === 'transactions' || closingBox">
         @include('livewire.cash-control.show-box.form')
       </div>
@@ -19,9 +19,9 @@
 <script>
   window.model = () => {
     return {
-      tab:                @entangle('tab').defer,
+      tab:                @entangle('tab'),
       state:              @entangle('state'),
-      closingBox:         @entangle('closingBox').defer,
+      closingBox:         @entangle('closingBox'),
       transactionType:    @entangle('transactionType'),
       moment:             @entangle('moment'),
       transactionDate:    @entangle('transactionDate'),
@@ -37,6 +37,7 @@
       missingCash:        @entangle('missingCash'),
       leftoverCash:       @entangle('leftoverCash'),
       cashReplenishment:  @entangle('cashReplenishment'),
+      cashTransfer:       0,
       banknotes: {
         thousand: {
           count: 0,
@@ -128,6 +129,19 @@
           this.missingCash = 0;
           this.leftoverCash = 0;
         }
+
+        //Se actualiza el estado del cierre
+        if(this.newBase >= this.registeredCash){
+          this.cashReplenishment = this.newBase - this.registeredCash;
+          this.cashTransfer = 0;
+        }else{
+          this.cashTransfer = this.registeredCash - this.newBase;
+          this.cashReplenishment = 0;
+        }
+      },
+      newBaseChange(value) {
+        this.newBase = deleteCurrencyFormat(value);
+        this.updateAmounts();
       }
     }
   }
@@ -172,10 +186,13 @@
 
     Livewire.on('reset', () => {
       document.getElementById('transactionAmount').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('newBase').value = '';
     })
 
-    Livewire.on('updateAmount', amount => {
+    Livewire.on('updateAmount', (amount, newBase) => {
       document.getElementById('transactionAmount').value = formatCurrency(amount, 0);
+      document.getElementById('newBase').value = formatCurrency(newBase, 0);
     })
 
     Livewire.on('viewRender', (data)=>{
