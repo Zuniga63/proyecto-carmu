@@ -52,6 +52,11 @@ class SalesComponent extends Component
     return Carbon::now()->timezone($this->timezome)->format('Y-m-d');
   }
 
+  public function getNowProperty()
+  {
+    return Carbon::now()->isoFormat('MMMM Do YYYY hh:mm:ss a');
+  }
+
   //--------------------------------------------------------
   //  REGLAS DE VALIDACION
   //--------------------------------------------------------

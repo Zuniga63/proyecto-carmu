@@ -4,6 +4,7 @@
     <option value="now">En este momento</option>
     <option value="other">En otra fecha</option>
   </select>
+  <p x-show="moment === 'now'">{{$this->now}}</p>
 </div>
 
 <div class="form-group">
