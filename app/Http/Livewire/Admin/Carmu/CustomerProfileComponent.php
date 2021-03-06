@@ -229,11 +229,10 @@ class CustomerProfileComponent extends Component
       DB::connection('carmu')->beginTransaction();
       DB::beginTransaction();
 
-      DB::connection('carmu')->statement('SET time_zone = "-05:00";');
-      DB::statement('SET time_zone = "-05:00";');
       //En primer lugar se recupera al cliente
       $customer = Customer::find($this->customerId);
       $processOk = false;
+      $now = Carbon::now()->format('Y-m-d H:i:s');
 
       //Se recuperan las cajas de carmú
       /** @var Box */
@@ -248,20 +247,24 @@ class CustomerProfileComponent extends Component
             switch ($this->transactionMoment) {
               case 'now':
                 $customer->credits()->create([
-                  'description' => $this->description,
-                  'amount' => $this->transactionAmount,
-                ]);
-                //Se guarda el registro en la caja del local
-                $localBox->transactions()->create([
-                  'description' => "Credito al cliente $customerName",
-                  'type'        => 'credit',
-                  'amount'      => $this->transactionAmount * -1,
+                  'description'   => $this->description,
+                  'amount'        => $this->transactionAmount,
+                  'credit_date'  => $now,
                 ]);
 
+                //Se guarda el registro en la caja del local
                 $localBox->transactions()->create([
                   'description' => "Venta a credito $customerName",
                   'type'        => 'sale',
                   'amount'      => $this->transactionAmount,
+                  'transaction_date' => $now,
+                ]);
+
+                $localBox->transactions()->create([
+                  'description' => "Credito al cliente $customerName",
+                  'type'        => 'credit',
+                  'amount'      => $this->transactionAmount * -1,
+                  'transaction_date' => $now,
                 ]);
 
                 $processOk = true;
@@ -302,21 +305,24 @@ class CustomerProfileComponent extends Component
             switch ($this->transactionMoment) {
               case 'now':
                 $customer->payments()->create([
-                  'cash' => $this->paymentType === 'cash' ? 1 : 0,
-                  'amount' => $this->transactionAmount
+                  'cash'          => $this->paymentType === 'cash' ? 1 : 0,
+                  'amount'        => $this->transactionAmount,
+                  'payment_date'  => $now,
                 ]);
 
                 if ($this->paymentType === 'cash') {
                   $localBox->transactions()->create([
-                    'description' => "Abono del cliente $customerName",
-                    'type'        => 'payment',
-                    'amount'      => $this->transactionAmount,
+                    'description'       => "Abono del cliente $customerName",
+                    'type'              => 'payment',
+                    'amount'            => $this->transactionAmount,
+                    'transaction_date'  => $now,
                   ]);
                 } else {
                   $majorBox->transactions()->create([
-                    'description' => "Abono del cliente $customerName",
-                    'type'        => 'payment',
-                    'amount'      => $this->transactionAmount,
+                    'description'       => "Abono del cliente $customerName",
+                    'type'              => 'payment',
+                    'amount'            => $this->transactionAmount,
+                    'transaction_date'  => $now,
                   ]);
                 }
                 $processOk = true;
