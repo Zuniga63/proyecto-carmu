@@ -228,6 +228,9 @@ class CustomerProfileComponent extends Component
     try {
       DB::connection('carmu')->beginTransaction();
       DB::beginTransaction();
+
+      DB::connection('carmu')->statement('SET time_zone = "-05:00";');
+      DB::statement('SET time_zone = "-05:00";');
       //En primer lugar se recupera al cliente
       $customer = Customer::find($this->customerId);
       $processOk = false;

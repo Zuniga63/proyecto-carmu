@@ -491,6 +491,10 @@ class SalesComponent extends Component
 
     DB::connection('carmu')->beginTransaction();
     DB::beginTransaction();
+
+    //Se establece la zona horaria 
+    DB::connection('carmu')->statement('SET time_zone = "-05:00";');
+    DB::statement('SET time_zone = "-05:00";');
     try {
       /** @var Box */
       $localBox = Box::where('business_id', 1)->where('main', 1)->first();
@@ -612,6 +616,7 @@ class SalesComponent extends Component
     $saleData = $this->buildData();
 
     DB::beginTransaction();
+    DB::statement('SET time_zone = "-05:00";');
     try {
       if (DB::connection('carmu')->table('sale')->where('sale_id', $this->saleId)->exists()) {
         //En primer lugar lo que hago es modificar los datos de la venta
