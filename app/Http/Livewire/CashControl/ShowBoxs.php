@@ -433,6 +433,8 @@ class ShowBoxs extends Component
           $alertMessage = "La fecha de la transacción es ";
           $alertMessage .= $date->longRelativeDiffForHumans($closingDate);
         }
+      }else{
+        $inputs['transaction_date'] = Carbon::now()->format('Y-m-d H:i:s');
       }
 
       if ($dateIsOk) {
