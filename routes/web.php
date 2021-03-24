@@ -12,6 +12,8 @@ use App\Http\Livewire\Admin\Shop\ColorComponent;
 use App\Http\Livewire\Admin\Shop\ProductComponent;
 use App\Http\Livewire\Admin\Shop\SizeComponent;
 use App\Http\Livewire\CashControl\ShowBoxs;
+use App\Http\Livewire\SonDeCuatro\Dashboard;
+use App\Http\Livewire\SonDeCuatro\ProductsComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -40,7 +42,7 @@ Route::redirect('/register', '/login', 301);
 //---------------------------------------------------------
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
   Route::view('/dashboard', 'dashboard')->name('dashboard');
-
+  Route::get('/son-de-cuatro', Dashboard::class);
   // ---------------------------------------------------
   // Rutas para la adminstracion
   // ---------------------------------------------------
@@ -104,8 +106,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('carmu/clientes/perfiles/{id?}', CustomerProfileComponent::class)->name('carmu_profile');
     Route::get('carmu/ventas', SalesComponent::class)->name('carmu_sales');
     //-----------------------------------------------------------
-      //  ADMINISTRACIÓN DE CAJAS
-      //-----------------------------------------------------------
-      Route::get('cajas-actuales/{id?}', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
+    //  ADMINISTRACIÓN DE CAJAS
+    //-----------------------------------------------------------
+    Route::get('cajas-actuales/{id?}', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
+
+    //----------------------------------------------------
+    // ADMINISTRACION DE PRODUCTOS SONDE CUATRO
+    //----------------------------------------------------
+    Route::get('son-de-cuatro/productos', ProductsComponent::class)->name('sondecuatro');
   });
 });
