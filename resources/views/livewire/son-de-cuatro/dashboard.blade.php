@@ -6,7 +6,7 @@
 
 <main class="pt-5">
   @foreach ($products as $item)
-  <div class="border-2 border-gray-600 rounded-md | mx-2 mb-4 | p-2 | divide-y divide-gray-400 | bg-white" x-data>
+  <div class="border-2 border-gray-600 rounded-md | mx-2 mb-4 | p-2 | divide-y divide-gray-400 | bg-white | scrollReveal" x-data>
     <h3 class="text-center text-lg font-bold text-gray-700">{{$item['name']}}</h3>
     <div class="grid grid-cols-3 py-2">
       <div class="flex flex-col">
@@ -32,8 +32,14 @@
 
 </main>
 
+@push('styles')
+    {{-- Librería de scroll reveal --}}
+  <script src="https://unpkg.com/scrollreveal"></script>
+@endpush
+
 @push('scripts')
 <script>
+  ScrollReveal().reveal('.scrollReveal');
 
   window.formatCurrency = (number, fractionDigits) => {
     var formatted = new Intl.NumberFormat('es-CO', {
