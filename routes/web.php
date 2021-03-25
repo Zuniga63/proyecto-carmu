@@ -8,6 +8,12 @@ use App\Http\Livewire\Admin\Carmu\CustomerProfileComponent;
 use App\Http\Livewire\Admin\Carmu\CustomersComponent;
 use App\Http\Livewire\Admin\Carmu\SalesComponent;
 use App\Http\Livewire\Admin\DashboardComponent;
+use App\Http\Livewire\Admin\Shop\ColorComponent;
+use App\Http\Livewire\Admin\Shop\ProductComponent;
+use App\Http\Livewire\Admin\Shop\SizeComponent;
+use App\Http\Livewire\CashControl\ShowBoxs;
+use App\Http\Livewire\SonDeCuatro\Dashboard;
+use App\Http\Livewire\SonDeCuatro\ProductsComponent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -36,15 +42,15 @@ Route::redirect('/register', '/login', 301);
 //---------------------------------------------------------
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
   Route::view('/dashboard', 'dashboard')->name('dashboard');
-
+  Route::get('/son-de-cuatro', Dashboard::class);
   // ---------------------------------------------------
   // Rutas para la adminstracion
   // ---------------------------------------------------
-  
+
   Route::name('admin.')->prefix('admin')->group(function () {
     Route::redirect('/', 'admin/dashboard', 301)->name('admin');
     Route::get('dashboard', DashboardComponent::class)->name('dashboard');
-    Route::middleware(['superadmin'])->group(function(){
+    Route::middleware(['superadmin'])->group(function () {
       // ---------------------------------------------------
       // Rutas para la gestion de los menus
       // ---------------------------------------------------
@@ -86,7 +92,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::view('tienda/categorias', 'admin.shop.category.index')->name('shop_categories');
     Route::view('tienda/etiquetas', 'admin.shop.tag.index')->name('shop_tags');
     Route::view('tienda/marcas', 'admin.shop.brand.index')->name('shop_brands');
-    Route::view('tienda/productos', 'admin.shop.product.index')->name('shop_products');
+    // Route::view('tienda/tallas', 'admin.shop.size.index')->name('shop_size');
+    Route::get('tienda/tallas', SizeComponent::class)->name('shop_size');
+    // Route::view('tienda/colores', 'admin.shop.colors.index')->name('shop_colors');
+    Route::get('tienda/colores', ColorComponent::class)->name('shop_colors');
+    // Route::view('tienda/productos', 'admin.shop.product.index')->name('shop_products');
+    Route::get('tienda/productos', ProductComponent::class)->name('shop_products');
     //-----------------------------------------------------------
     // RUTAS PARA EL MANEJO DE LOS DATOS DE CARMÚ
     //-----------------------------------------------------------
@@ -94,5 +105,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('carmu/clientes/{id?}', CustomersComponent::class)->name('carmu_customers')->where('id', '[0-9]+');
     Route::get('carmu/clientes/perfiles/{id?}', CustomerProfileComponent::class)->name('carmu_profile');
     Route::get('carmu/ventas', SalesComponent::class)->name('carmu_sales');
+    //-----------------------------------------------------------
+    //  ADMINISTRACIÓN DE CAJAS
+    //-----------------------------------------------------------
+    Route::get('cajas-actuales/{id?}', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
+
+    //----------------------------------------------------
+    // ADMINISTRACION DE PRODUCTOS SONDE CUATRO
+    //----------------------------------------------------
+    Route::get('son-de-cuatro/productos', ProductsComponent::class)->name('sondecuatro');
   });
 });

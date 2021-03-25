@@ -1,22 +1,10 @@
 <div>
-  <div class="container-fluid" x-data="{
-    name: @entangle('name'),
-    slug: @entangle('slug').defer,
-    description: @entangle('description'),
-    stock: @entangle('stock'),
-    price: @entangle('price'),
-    brandId: @entangle('brandId'),
-    categoryId: @entangle('categoryId'),
-    outstanding: @entangle('outstanding'),
-    isNew: @entangle('isNew'),
-    published: @entangle('published'),
-    isUploading: false,
-    progress:0,
-    }"
+  <div class="container-fluid" x-data="formData()"
     x-on:livewire-upload-start="isUploading = true"
     x-on:livewire-upload-finish="isUploading = false"
     x-on:livewire-upload-error="isUploading = false"
     x-on:livewire-upload-progress="progress = $event.detail.progress"
+    @category-route-ids.window="loadCategoryRoute(event.detail.categoryRoute)"
   >
     <div class="row">
       <div class="col-lg-5">
@@ -28,89 +16,273 @@
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    /**
-    * Esta funcion generica funciona para dar formato de moneda a los numeros pasados como parametros
-    * @param {string} locales Es el leguaje Eje: es-CO
-    * @param {string} currency Eltipo de moneda a utilizar ej: COP
-    * @param {number} fractionDigits El numero de digitos decimales que se van a mostrar
-    * @param {number} number Es la cantidad de dinero que se va a dar formato
-    */
-    function formatCurrency(locales, currency, fractionDigits, number) {
-      var formatted = new Intl.NumberFormat(locales, {
-        style: "currency",
-        currency: currency,
-        minimumFractionDigits: fractionDigits,
-      }).format(number);
-      return formatted;
+@push('scripts')
+<script>
+
+  window.formData = () =>{
+    return {
+      allCategories: @this.allCategories,
+      allTags: @this.allTags,
+      allBrands: @this.allBrands,
+      allSize: @this.allSize,
+      allColors: @this.allColors,
+      name: @entangle('name'),
+      slug: @entangle('slug').defer,
+      description: @entangle('description').defer,
+      ref: @entangle('ref').defer,
+      barcode: @entangle('barcode').defer,
+      stock: 0,
+      price: @entangle('price'),
+      maxDiscount:@entangle('maxDiscount'),
+      brandId: @entangle('brandId'),
+      sizeId: @entangle('sizeId'),
+      colorId: @entangle('colorId'),
+      colorHex: @entangle('colorHex'),
+      updateRelations: @entangle('updateRelations'),
+      editingProduct: @entangle('editingProduct'),
+      actualCategory: @entangle('actualCategory'),
+      categoryRoute: @entangle('categoryRoute'),
+      mainCategoryId: @entangle('mainCategoryId'),
+      subcategoryId: @entangle('subcategoryId'),
+      outstanding: @entangle('outstanding'),
+      isNew: @entangle('isNew'),
+      published: @entangle('published'),
+      isUploading: false,
+      progress:0,
+      formatInput(target, type){
+        let value = target.value;
+        value = deleteCurrencyFormat(value);
+        switch(type){
+          case 'price': 
+            this.price = value > 0 ? value : null;
+            break;
+          case 'maxDiscount':
+            this.maxDiscount = value;
+            break;
+        }
+
+        target.value = value > 0 ? formatCurrency(value, 0) : '';
+      },
+      changeMainCategory(){
+        if(this.mainCategoryId > 0){
+          let coincidence = this.allCategories.filter(c => c.id === this.mainCategoryId);
+          if(coincidence.length > 0){
+            let data = coincidence[0];
+            let category = {
+              id: data.id,
+              fatherId: data.father_id,
+              name: data.name,
+              subcategories: data.subcategories,
+              first: true,
+              last: true
+            }
+
+            this.actualCategory = category;
+            this.categoryRoute = [category];
+          }
+        }
+      },
+      subcategorySelected(){
+        if(this.subcategoryId > 0){
+          let coincidence = this.actualCategory.subcategories.filter(c => c.id === this.subcategoryId);
+          if(coincidence.length > 0){
+            let routeLength = this.categoryRoute.length;
+            let data = coincidence[0];
+            let category = {
+              id: data.id,
+              fatherId: data.father_id,
+              name: data.name,
+              subcategories: data.subcategories,
+              first: routeLength === 0,
+              last: true
+            }
+
+            this.actualCategory = category;
+            if(routeLength > 0){
+              this.categoryRoute[routeLength -1].last = false;              
+            }
+            this.subcategoryId = 0;
+            this.categoryRoute.push(category);
+          }
+        }
+      },
+      removeSubcategory(){
+        if(this.mainCategoryId && this.mainCategoryId > 0 && this.categoryRoute.length > 1){
+          let lastCategory = this.categoryRoute.pop();
+          let length = this.categoryRoute.length;
+          this.actualCategory = this.categoryRoute[length -1];
+          this.categoryRoute[length -1].last = true;
+          this.subcategoryId = 0;
+        }
+      },
+      getColorHex(){
+        // colorHex = $event.target.options[$event.target.selectedIndex].getAttribute('color-hex')
+        if(this.colorId){
+          let id = parseInt(this.colorId);
+          let color = this.allColors.filter(c => c.id === id);
+          color = color.length > 0 ? color[0].hex : '';
+          this.colorHex = color;
+        }else{
+          this.colorHex = '';
+        }
+      },
+      loadCategoryRoute(data){
+        console.log(data);
+        let first = true;
+        data.forEach(item => {
+          if(first){
+            this.mainCategoryId = item;
+            this.changeMainCategory();
+            first = false;
+          }else{
+            this.subcategoryId = item;
+            this.subcategorySelected();
+          }
+        });
+      }
     }
+  }
 
-    /**
-    * Esta es una version simplificada de formatCurreny para moneda colombiana
-    * @param {number} number Numero para establecer formato
-    * @param {number} fractionDigits Fracciones a mostrar
-    */
-    function formatCurrencyLite(number, fractionDigits) {
-      return formatCurrency("es-CO", "COP", fractionDigits, number);
-    }
+  window.formatCurrency = (number, fractionDigits) => {
+    var formatted = new Intl.NumberFormat('es-CO', {
+      style: "currency",
+      currency: 'COP',
+      minimumFractionDigits: fractionDigits,
+    }).format(number);
+    return formatted;
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
-        console.log("funcionando")
-      })
-  
-      Livewire.on('stored', ()=> {
-        let title = `Los datos fueron guardados correctamente`;
-        let body = '';
-        let type = 'success';
-        functions.notifications(body, title, type);
-          });
-  
-      Livewire.on('updated', ()=>{
-        functions.notifications('', '¡Datos actualizado!', 'success');
-      })
-      
-      Livewire.on('notFound', ()=>{
-        let title = "¡Oops, algo salio mal!";
-        let message = "Estes registro no existe";
-        let type = "error";
-        functions.notifications(message, title, type);
-        location.reload();
-      })
-      
-      Livewire.on('deleted', () => {
-        let message = `Los datos del producto fueron eliminados del sistema`;
-        functions.notifications('', message, 'success');
-      })
+  /**
+   * Este metodo se encarga de eliminar el formateado 
+   * que le proporciona el metodo formatcurrency
+   * y retorna un numero float
+   */
+  window.deleteCurrencyFormat = text => {
+    let value = text.replace("$", "");
+    value = value.split(".");
+    value = value.join("");
 
-      Livewire.on('stateUpdated', ()=>{
-        let message = `El estado ha sido actualizado`;
-        functions.notifications('', message, 'success');
-      })
-    });
+    value = parseFloat(value);
 
-    window.showDeleteAlert = (id, name) => {
-      console.log(id, name);
+    return isNaN(value) ? 0 : value;
+  }
+
+  window.formatInput = (target) => {
+    let value = target.value;
+    value = deleteCurrencyFormat(value);
+
+    target.value = formatCurrency(value, 0);
+  }
+
+  document.addEventListener("livewire:load", () => {
+    $('.select2').select2()
+
+    Livewire.on('edit', ()=>{
+      $('.select2').select2()
+      document.getElementById('productPrice').value = formatCurrency(@this.price, 0);
+      document.getElementById('maxDiscount').value = formatCurrency(@this.maxDiscount, 0);
+    })
+
+    // Se actualiza los indices de las etiquetas a relacionar
+    $('#productTags').on('change', e =>{
+      let options = [...e.target.options];
+      let result = options.filter(opt => opt.selected).map(x => x.value);
+      @this.tags = result;
+    })
+
+    Livewire.on('reset', ()=>{
+      $('.select2').select2()
+      $('#productTags').val('').trigger('change');
+      document.getElementById('productPrice').value = "";
+      document.getElementById('maxDiscount').value = "";
+    })
+
+    Livewire.on('stored', ()=> {
+      let title = `Los datos fueron guardados correctamente`;
+      let body = '';
+      let type = 'success';
+      functions.notifications(body, title, type);
+        });
+
+    Livewire.on('updated', ()=>{
+      functions.notifications('', '¡Datos actualizado!', 'success');
+      $('.select2').select2()
+    })
+    
+    Livewire.on('notFound', ()=>{
+      let title = "¡Oops, algo salio mal!";
+      let message = "Estes registro no existe";
+      let type = "error";
+      functions.notifications(message, title, type);
+      location.reload();
+    })
+    
+    Livewire.on('deleted', () => {
+      let message = `Los datos del producto fueron eliminados del sistema`;
+      functions.notifications('', message, 'success');
+    })
+
+    Livewire.on('stateUpdated', ()=>{
+      let message = `El estado ha sido actualizado`;
+      functions.notifications('', message, 'success');
+    })
+
+    Livewire.on('barcodeDoesNotExist', (barcode)=>{
       Swal.fire({
-        title:`¿Desea eliminar este producto?`,
-        text: 'Está accion elimina todas las relaciones y no puede revertirse',
-        icon: 'warning', 
+        title: "¡Producto no encontrado!",
+        html: 'El código de barras que se busca no se encuentra asignado a ningún producto almacenado en la base de datos. <b>¿Desea asignar este código de barras al formulario actual?</b>',
+        icon: 'info',
         showCancelButton: true,
         confirmButtonColor: 'var(--success)',
         cancelButtonColor: 'var(--primary)',
-        confirmButtonText: '¡Eliminar!',
+        confirmButtonText: '¡Asignar!',
+        cancelButtonText: 'Cancelar'
       }).then(result => {
         if(result.value){
-          @this.destroy(id);
+          console.log(barcode);
+          @this.barcode=barcode;
         }//end if
       })//
-    }
+    })
 
-    window.initTooltips = ()=>{
-      $('[data-toggle="tooltip"]').tooltip()
-        console.log("funcionando")
-    }
-  </script>
-</div>
+    Livewire.on('barcodeExist', (id, name, barcode)=>{
+      Swal.fire({
+        title: "¡Producto encontrado!",
+        html: `El código de barras <span class="text-bold">${barcode}</span> se encuentra asignado al producto <span class="text-bold">"${name}"</span><br> ¿Desea editar este producto?`,
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--success)',
+        cancelButtonColor: 'var(--primary)',
+        confirmButtonText: '¡Editar!',
+        cancelButtonText: 'Cancelar'
+      }).then(result => {
+        if(result.value){
+          @this.edit(id);
+          document.getElementById('productName').focus();
+        }//end if
+      })//
+    })
+
+  });
+
+  window.showDeleteAlert = (id, name) => {
+    console.log(id, name);
+    Swal.fire({
+      title:`¿Desea eliminar este producto?`,
+      text: 'Está accion elimina todas las relaciones y no puede revertirse',
+      icon: 'warning', 
+      showCancelButton: true,
+      confirmButtonColor: 'var(--success)',
+      cancelButtonColor: 'var(--primary)',
+      confirmButtonText: '¡Eliminar!',
+    }).then(result => {
+      if(result.value){
+        @this.destroy(id);
+      }//end if
+    })//
+  }
+
+</script>
+@endpush

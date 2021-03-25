@@ -13,10 +13,10 @@
         <a href="javascript:;" class="nav-link px-1 px-sm-4" x-bind:class="{'active' : tab === 'graph'}"
           x-on:click="tab = 'graph'">Gráficas</a>
       </li>
-      <li class="nav-item">
+      {{-- <li class="nav-item">
         <a href="javascript:;" class="nav-link px-1 px-sm-4" x-bind:class="{'active' : tab === 'invoicing'}"
           x-on:click="tab = 'invoicing'">Facturación</a>
-      </li>
+      </li> --}}
     </div>
     {{-- /. nav --}}
   </div>
@@ -30,7 +30,7 @@
       @include('admin.carmu.sales.graphs')
     </div>
 
-    <div x-show.transition.in="tab === 'invoicing'">
+    {{-- <div x-show.transition.in="tab === 'invoicing'">
       @include('admin.carmu.sales.invoice')
-    </div>
+    </div> --}}
   </div>

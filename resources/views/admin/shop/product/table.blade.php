@@ -1,15 +1,34 @@
 <div class="card {{$view === 'create' ? 'card-primary' : 'card-info'}}">
   <div class="card-header">
     <h3 class="card-title">Listado de productos</h3>
+    <div class="card-tools" 
+      x-data="{
+        barcode:'', 
+        async sendData(){
+          if(this.barcode){
+            await $wire.searchBarcode(this.barcode);
+            this.barcode='';
+          }
+        }
+      }" 
+      wire:ignore
+    >
+      <div class="input-group input-group-sm" style="width: 150px;">
+        <input type="text" name="table_search" class="form-control float-right" placeholder="Codigo" x-model.trim="barcode" x-on:keydown.enter="sendData">
+
+        <div class="input-group-append">
+          <button x-on:click="sendData" class="btn btn-default"><i class="fas fa-search"></i></button>
+        </div>
+      </div>
+    </div>
   </div>
   <!-- /.card-header -->
-  <div class="card-body table-responsive p-0" style="height: 60vh;">
+  <div class="card-body table-responsive p-0" style="height: 80vh;">
     <table class="table table-head-fixed table-hover table-striped text-nowrap">
       <thead>
         <tr>
           <th class="auto"><i class="far fa-image"></i></th>
-          <th>Nombre</th>
-          <th class="text-center"><i class="fas fa-dollar-sign"></i></th>
+          <th>Información</th>
           <th>Estado</th>
           <th></th>
         </tr>
@@ -19,10 +38,13 @@
         <tr x-data="{id:{{$item->id}}, name:'{{$item->name}}'}">
           <td>
             <img src="{{$item->img ? url('storage/' . $item->img) : url('storage/img/products/no-image-available.png')}}"
-              width="100px" lazy>
+              width="80px" loading="lazy" class="border rounded p-1 bg-secondary">
           </td>
-          <td>{{$item->name}}</td>
-          <td x-text="formatCurrencyLite({{$item->price}}, 0)" class="text-right"></td>
+          <td>
+            <p class="mb-0">{{$item->name}}</p>
+            <p class="mb-0">Precio: <span class="text-bold" x-text="formatCurrency({{$item->price}}, 0)"></span></p>
+            <p class="mb-0">Codigo: <span class="text-bold">{{$item->barcode ? $item->barcode : 'N/A'}}</span></p>
+          </td>
           <td>
             <div class="form-group">
               <div class="custom-control custom-switch">
@@ -49,12 +71,16 @@
           </td>
           <td>
             <div class="btn-group-vertical">
-              <a href="#" class="btn btn-info block" data-toggle="tooltip" data-placement="top" title="Editar este registro"
-                wire:ignore wire:click="edit({{$item->id}})">
+              <a href="javascript:;" class="btn btn-info block" data-toggle="tooltip" data-placement="top" wire:click="edit({{$item->id}})">
                 <i class="fas fa-pencil-alt"></i>
               </a>
-              <a href="#" class="btn btn-danger" title="Eliminar producto" data-toggle="tooltip" data-placement="top"
-                x-on:click="showDeleteAlert(id, name)" wire:ignore>
+              <a 
+                href="javascript:;" 
+                class="btn btn-danger" 
+                title="Eliminar producto" 
+                data-toggle="tooltip" data-placement="top"
+                x-on:click="showDeleteAlert(id, name)"
+              >
                 <i class="fas fa-trash"></i>
               </a>
             </div>

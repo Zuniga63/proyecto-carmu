@@ -1,4 +1,4 @@
-<section class="content" x-data>
+<section class="content" x-data="{name:@entangle('name').defer, slug:@entangle('slug')}">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-4">

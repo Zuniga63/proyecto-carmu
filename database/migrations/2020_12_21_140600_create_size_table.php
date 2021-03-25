@@ -15,7 +15,7 @@ class CreateSizeTable extends Migration
   {
     Schema::create('size', function (Blueprint $table) {
       $table->id();
-      $table->string('value', 5);
+      $table->string('value', 5)->unique();
       $table->timestamps();
       $table->charset = 'utf8mb4';
       $table->collation = 'utf8mb4_spanish_ci';
