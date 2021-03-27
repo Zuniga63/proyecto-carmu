@@ -57,7 +57,7 @@ class BoxConsultComponent extends Component
 
       if(!empty($this->until)){
         $date = Carbon::createFromFormat('Y-m-d', $this->until)->endOfDay();
-        $query->where('transaction_date', '<', $date);
+        $query->where('transaction_date', '<=', $date);
       }
 
       if(!empty($this->type) && $this->type !== 'all'){
