@@ -739,4 +739,45 @@ class DashboardComponent extends Component
 
     return $result;
   }
+
+  protected function getCashFlow()
+  {
+    //TODO
+  }
+
+  /**
+   * Construye un reporte anual con todos los ingresos y egresos incurridos
+   * @param int $businessId Identificador del negocio a construir reporte
+   * @param null|int $year Año del reporte que se desea calcular
+   * @return array
+   */
+  protected function getCashFLowAnnualReport(int $businessId, ?int $year = null)
+  {
+    //TODO
+  }
+
+  /**
+   * Construye un reporte mensual con todos los ingresos y egresos incurridos
+   * @param int $businessId Identificador del negocio a crear reporte
+   * @param Carbon $startMonth Año de la consulta
+   * @param Carbon $endMonth Mes de la consulta
+   * @return array
+   */
+  protected function getCashFlowMonthlyReport(int $businessId, Carbon $startMonth, Carbon $endMonth)
+  {
+    //TODO
+  }
+
+
+  /**
+   * Construye un reporte diario de ingresos y egresos
+   * @param int $businessId Identificador del negocio
+   * @param Carbon $date Fecha del día a consultar
+   * @return array
+   */
+  protected function getCashFlowDailyReport(int $businessId, Carbon $date)
+  {
+    //TODO
+  }
+
 }

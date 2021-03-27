@@ -16,4 +16,9 @@ class Business extends Model
   {
     return $this->hasMany(Box::class, 'business_id');
   }
+
+  public function boxes()
+  {
+    return $this->hasMany(Box::class, 'business_id');
+  }
 }
