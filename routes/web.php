@@ -11,6 +11,7 @@ use App\Http\Livewire\Admin\DashboardComponent;
 use App\Http\Livewire\Admin\Shop\ColorComponent;
 use App\Http\Livewire\Admin\Shop\ProductComponent;
 use App\Http\Livewire\Admin\Shop\SizeComponent;
+use App\Http\Livewire\CashControl\BoxConsultComponent;
 use App\Http\Livewire\CashControl\ShowBoxs;
 use App\Http\Livewire\SonDeCuatro\Dashboard;
 use App\Http\Livewire\SonDeCuatro\ProductsComponent;
@@ -109,6 +110,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     //  ADMINISTRACIÓN DE CAJAS
     //-----------------------------------------------------------
     Route::get('cajas-actuales/{id?}', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
+    Route::get('cajas/consultas', BoxConsultComponent::class)->name('boxConsult');
 
     //----------------------------------------------------
     // ADMINISTRACION DE PRODUCTOS SONDE CUATRO
