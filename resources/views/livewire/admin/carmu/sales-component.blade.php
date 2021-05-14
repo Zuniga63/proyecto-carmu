@@ -18,13 +18,13 @@
   <script>
     window.formModel = () => {
       return {
-        moment:@entangle('moment'),
-        type: @entangle('saleType'),
-        date: @entangle('date'),
-        setTime: @entangle('setTime'),
-        time: @entangle('time'),
-        categoryId: @entangle('categoryId'),
-        description: @entangle('description'),
+        moment:@entangle('moment').defer,
+        type: @entangle('saleType').defer,
+        date: @entangle('date').defer,
+        setTime: @entangle('setTime').defer,
+        time: @entangle('time').defer,
+        categoryId: @entangle('categoryId').defer,
+        description: @entangle('description').defer,
         amount: ''
       }
     }
