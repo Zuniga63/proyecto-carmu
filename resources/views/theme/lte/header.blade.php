@@ -23,5 +23,6 @@
   {{-- ESTILOS PROPIOS O PERSONALIZADOS --}}
   {{-- -------------------------------- --}}
   @yield('styles')
+  @stack('styles')
   <link rel="stylesheet" href="{{asset("assets/css/customs.css")}}?v=1.3">
 </head>

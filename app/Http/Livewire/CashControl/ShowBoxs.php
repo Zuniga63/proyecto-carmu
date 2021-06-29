@@ -4,14 +4,15 @@ namespace App\Http\Livewire\CashControl;
 
 use App\Models\CashControl\Box;
 use App\Models\CashControl\BoxTransaction;
+use App\Models\CashControl\Business;
 use App\Models\User;
 use Carbon\Carbon;
 use Error;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
-
-use function PHPUnit\Framework\throwException;
 
 class ShowBoxs extends Component
 {
@@ -81,6 +82,79 @@ class ShowBoxs extends Component
     return $rules;
   }
 
+  /**
+   * Construye las reglas de validación en función de los datos suministrados 
+   * por el frontend
+   */
+  protected function transactionRules($data)
+  {
+    $rules = [
+      'boxId' => 'required|numeric|exists:box,id',
+      'moment' => 'required|string|in:now,other',
+      'setTime' => 'required|bool',
+      'type' => 'required|string|in:general,sale,expense,purchase,service,credit,payment',
+      'description' => 'required|string|min:3,max:255',
+      'amount' => 'required|integer|min:100|max:100000000',
+    ];
+
+    if ($data['type'] === 'general') {
+      $rules['amountType'] = 'required|string|in:income,expense';
+    }
+
+    if ($data['moment'] !== 'now') {
+      //Se recupera la fecha de corte de la caja
+      $box = Box::find($data['boxId'], ['closing_date']);
+      if ($box) {
+        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $box->closing_date)->format('Y-m-d');
+        $now = Carbon::now()->format('Y-m-d');
+
+        $rules['date'] = "required|string|date|after_or_equal:$closingDate|before_or_equal:$now";
+
+        if ($data['setTime']) {
+          $rules['time'] = 'required|string|date_format:H:i';
+        }
+      }
+    }
+
+    if (array_key_exists('transactionId', $data)) {
+      $rules['transactionId'] = 'required|integer|exists:box_transaction,id';
+    }
+
+    return $rules;
+  }
+
+  /**
+   * Nombres personalizados de los atributos de la validación
+   */
+  protected $transactionAttributes = [
+    'boxId' => 'Identificador de la caja',
+    'moment' => 'Momento de la transacción',
+    'type' => 'Tipo de transacción',
+    'description' => 'Descripción',
+    'amount' => 'Importe de la transacción',
+    'date' => 'Fecha',
+    'time' => 'Hora',
+    'amountType' => 'Tipo de importe',
+    'transactionId' => 'Identificador de la transacción',
+  ];
+
+  protected function closingBoxRules()
+  {
+    $rules = [
+      'boxId' => 'required|integer|exists:box,id',
+      'cashRegister' => 'required|integer|min:100|max:100000000',
+      'newBase' => 'required|integer|min:100|max:100000000'
+    ];
+
+    return $rules;
+  }
+
+  protected $closingBxAttributes = [
+    'boxId' => 'Identificador de la caja',
+    'cashRegister' => 'arqueo',
+    'newBase' => 'nueva base'
+  ];
+
   //--------------------------------------
   // PROPIEDADES COMPUTADAS
   //--------------------------------------
@@ -98,6 +172,34 @@ class ShowBoxs extends Component
       foreach ($boxData as $data) {
         $boxs[] = $this->getBoxInfo($data);
       }
+    }
+
+    return $boxs;
+  }
+
+  public function getTransactionTypesProperty()
+  {
+    return [
+      'general'   => 'Generales',
+      'sale'      => 'Ventas',
+      'expense'   => 'Gastos',
+      'purchase'  => 'Compras',
+      'service'   => 'Servicios',
+      'credit'    => 'Creditos',
+      'payment'   => 'Abonos',
+      'transfer'  => 'Transferencias',
+    ];
+  }
+
+  public function getBoxs()
+  {
+    $boxs = [];
+    $data = Box::orderBy('id')->with(['business', 'cashier', 'transactions' => function ($query) {
+      $query->orderBy('transaction_date')->orderBy('amount', 'DESC');
+    }])->get();
+
+    foreach ($data as $record) {
+      $boxs[] = $this->buildBox($record);
     }
 
     return $boxs;
@@ -181,6 +283,29 @@ class ShowBoxs extends Component
         $this->redirect(route('admin.showBox'));
       }
     }
+  }
+
+  public function init()
+  {
+    return [
+      'business' => $this->getBusiness(),
+      'boxs' => $this->getBoxs(),
+      'transactionTypes' => $this->getTransactionTypesProperty()
+    ];
+  }
+
+  public function getBusiness()
+  {
+    $businnes = [];
+    $data = Business::orderBy('id')->get(['id', 'name']);
+    foreach ($data as $shop) {
+      $businnes[] = [
+        'id' => intval($shop->id),
+        'uuid' => uniqid('business-'),
+        'name' => $shop->name,
+      ];
+    }
+    return $businnes;
   }
 
   //-----------------------------------------------------------------
@@ -301,6 +426,36 @@ class ShowBoxs extends Component
     ];
   }
 
+  protected function buildBox(Box $box)
+  {
+    $business     = $box->business ? $box->business->name : 'Negocio no asignado';
+    $cashier      = $box->cashier ? $box->cashier->name : 'Cajero no asignado';
+    $transactions = [];
+
+    foreach ($box->transactions as $transaction) {
+      $transactions[] = [
+        'id' => $transaction->id,
+        'date' => $transaction->transaction_date,
+        'type' => $transaction->type,
+        'description' => $transaction->description,
+        'amount' => intval($transaction->amount),
+        'createdAt' => $transaction->created_at,
+        'updatedAt' => $transaction->updated_at,
+      ];
+    }
+
+    return [
+      'id' => intval($box->id),
+      'name' => $box->name,
+      'main' => $box->main ? true : false,
+      'closingDate' => $box->closing_date,
+      'base' => intval($box->base),
+      'business' => $business,
+      'cashier' => $cashier,
+      'transactions' => $transactions
+    ];
+  }
+
   /**
    * Se encarga de recupear el importe de las transacciones que cumple con el tipo
    * @param string $transactionType Tipo de transacción de las siete posible
@@ -370,39 +525,63 @@ class ShowBoxs extends Component
   //-------------------------------------------
   // MANIPULACIÓN DE DATOS
   //-------------------------------------------
-  protected function storeTransaction()
+  public function storeTransaction($data)
   {
-    //Se inicializan las variables a utilizar
-    $moment       = $this->moment;
-    $dateIsOk     = true;                     //Una ultima validación de la fecha
-    $closingDate  = $this->box['closingDate'];
-    $date         = $this->transactionDate;
-    $setTime      = $this->setTime;
-    $time         = $this->transactionTime;
-    $description  = $this->description;
-    $type         = $this->transactionType;
-    $amount       = $this->transactionAmount;
-    $amountType   = $this->amountType;
-    $inputs       = [];                       //Para guardar los datos a ingresar
+    $ok = false;            //Determina si el proceso fue correctamente
+    $errors = null;         //Guarda los errores de la validación
+    $log = [];
+    $transaction = null;    //Guarda la isntancia de la transacción que fue creada
+    $dateIsOk = true;
 
-    //Se inicializan las variables de la alerta
-    $alertTitle = null;
-    $alertType = 'error';
-    $alertMessage = null;
+    $rules = $this->transactionRules($data);
+    $attributes = $this->transactionAttributes;
 
-    //Se recupera la instancia de la caja
-    /** @var Box */
-    $box = Box::find($this->box['id']);
+    try {
+      $inputs = Validator::make($data, $rules, [], $attributes)->validate();
 
-    if ($box) {
-      //Se guardan los campos obligatorios
-      $inputs['type'] = $type;
-      $inputs['description'] = $description;
+      //Se recupera la caja 
+      /** @var Box */
+      $box = Box::find($inputs['boxId'], ['id', 'name', 'closing_date as closingDate']);
+
+      //Se construyen los campos a guardar
+      $type = $inputs['type'];
+      $description = $inputs['description'];
+      $amount = intval($inputs['amount']);
+      $date = Carbon::now();
+
+      //Se establece la fecha si fue ingresada manualmente
+      if ($inputs['moment'] === 'other') {
+        $log['moment'] = 'La fecha se ingresa de forma manual';
+        //Se crean las varibales temporales
+        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $box->closingDate);
+        $now = Carbon::now();
+
+        //Se verifica si la hora tambien fue manual
+        if ($inputs['setTime']) {
+          $log['time'] = 'La hora se ingresa de forma manual';
+          $fullDate = $inputs['date'] . ' ' . $inputs['time'];
+          //Se modifica la instancia de fecha
+          $date = Carbon::createFromFormat('Y-m-d H:i', $fullDate);
+        } else {
+          //Se crea el objeto con solo date
+          $date = Carbon::createFromFormat('Y-m-d', $inputs['date'])->startOfDay();
+          $log['onlyDate'] = $date->format('Y-m-d H:i:s');
+          //Se verifica que fuera el mismo día del cierre, en cuyo caso sería la misma un segundo mastarde
+          if ($date->day === $closingDate->day && $date->month === $closingDate->month && $date->year === $closingDate->year) {
+
+            $date = $closingDate->copy()->addSecond();
+          }
+        }
+
+        if (!$date->greaterThanOrEqualTo($closingDate) && !$date->lessThanOrEqualTo($now)) {
+          $dateIsOk = false;
+        }
+      }
 
       //Se define el signo del importe
       switch ($type) {
         case 'general':
-          $amount = $amountType === 'income' ? $amount : $amount * -1;
+          $amount = $inputs['amountType'] === 'income' ? $amount : $amount * -1;
           break;
         case 'expense':
         case 'purchase':
@@ -410,79 +589,103 @@ class ShowBoxs extends Component
           $amount = $amount * -1;
           break;
       }
-      //Se guarda el campo
-      $inputs['amount'] = $amount;
 
-      //Se establece la fecha
-      if ($moment !== 'now') {
-        if ($setTime) {
-          $date = "$date $time";
-          $date = Carbon::createFromFormat('Y-m-d H:i', $date);
-        } else {
-          $date = Carbon::createFromFormat('Y-m-d', $date)->endOfDay();
-        }
-
-        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate);
-        //Se valida que la fecha no sea menor que la fecha de cierre de caja
-        if ($closingDate->lessThan($date)) {
-          //Se agrega el campo
-          $inputs['transaction_date'] = $date->format('Y-m-d H:i:s');
-        } else {
-          $dateIsOk = false;
-          $alertTitle = "¡Fecha anterior al corte!";
-          $alertMessage = "La fecha de la transacción es ";
-          $alertMessage .= $date->longRelativeDiffForHumans($closingDate);
-        }
-      }else{
-        $inputs['transaction_date'] = Carbon::now()->format('Y-m-d H:i:s');
-      }
-
+      //Se procede a guardar la transacción
       if ($dateIsOk) {
-        //Se procede a registrar la transacción
-        $box->transactions()->create($inputs);
-        $alertTitle = "Transacción Registrada";
-        $alertType = 'success';
-        $this->resetFields();
-        $this->box = $this->getBoxInfo($box);
+        $transaction = $box->transactions()->create([
+          'transaction_date' => $date->format('Y-m-d H:i:s'),
+          'description' => $description,
+          'type' => $type,
+          'amount' => $amount
+        ]);
+
+        $ok = true;
+        $transaction = [
+          'boxId' => intval($box->id),
+          'id' => intval($transaction->id),
+          'type' => $transaction->type,
+          'date' => $transaction->transaction_date,
+          'description' => $transaction->description,
+          'amount' => $transaction->amount,
+          'createdAt' => $transaction->created_at,
+          'updatedAt' => $transaction->updated_at,
+        ];
+        $this->alert('Transacción Guardada', 'success');
+      } else {
+        $this->alert('Fecha Incorrecta', 'error');
       }
-    } else {
-      $alertTitle = "¡Caja no encontrada!";
-      $alertMessage = "Es probable que esta caja no esté en la base de datos";
-      $alertType = 'warning';
+    } catch (ValidationException $valExc) {
+      $errors = $valExc->errors();
+    } catch (\Throwable $th) {
+      $this->emitError($th);
     }
 
-    $this->alert($alertTitle, $alertType, $alertMessage);
+    return [
+      'ok' => $ok,
+      'errors' => $errors,
+      'log' => $log,
+      'transaction' => $transaction,
+    ];
   }
 
-  protected function updateTransaction()
+  public function updateTransaction($data)
   {
-    /** @var BoxTransaction */
-    $transaction  = BoxTransaction::find($this->transactionId);
-    $moment       = $this->moment;
-    $dateIsOk     = true;
-    $closingDate  = $this->box['closingDate'];
-    $date         = $this->transactionDate;
-    $setTime      = $this->setTime;
-    $time         = $this->transactionTime;
-    $description  = $this->description;
-    $type         = $this->transactionType;
-    $amount       = $this->transactionAmount;
-    $amountType   = $this->amountType;
+    $ok = false;            //Determina si el proceso fue correctamente
+    $errors = null;         //Guarda los errores de la validación
+    $log = [];
+    $transaction = null;    //Guarda la isntancia de la transacción que fue creada
+    $dateIsOk = true;
 
-    //Se inicializan las variables de la alerta
-    $alertTitle = null;
-    $alertType = 'error';
-    $alertMessage = null;
+    $rules = $this->transactionRules($data);
 
-    if ($transaction) {
-      //Se actualizan los campos genericos
-      $transaction->type = $type;
-      $transaction->description = $description;
+    $attributes = $this->transactionAttributes;
+
+    try {
+      $inputs = Validator::make($data, $rules, [], $attributes)->validate();
+
+      //Se recupera la caja 
+      /** @var Box */
+      $box = Box::find($inputs['boxId'], ['id', 'name', 'closing_date as closingDate']);
+
+      //Se construyen los campos a guardar
+      $type = $inputs['type'];
+      $description = $inputs['description'];
+      $amount = intval($inputs['amount']);
+      $date = Carbon::now();
+
+      //Se establece la fecha si fue ingresada manualmente
+      if ($inputs['moment'] === 'other') {
+        $log['moment'] = 'La fecha se ingresa de forma manual';
+        //Se crean las varibales temporales
+        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $box->closingDate);
+        $now = Carbon::now();
+
+        //Se verifica si la hora tambien fue manual
+        if ($inputs['setTime']) {
+          $log['time'] = 'La hora se ingresa de forma manual';
+          $fullDate = $inputs['date'] . ' ' . $inputs['time'];
+          //Se modifica la instancia de fecha
+          $date = Carbon::createFromFormat('Y-m-d H:i', $fullDate);
+        } else {
+          //Se crea el objeto con solo date
+          $date = Carbon::createFromFormat('Y-m-d', $inputs['date'])->startOfDay();
+          $log['onlyDate'] = $date->format('Y-m-d H:i:s');
+          //Se verifica que fuera el mismo día del cierre, en cuyo caso sería la misma un segundo mastarde
+          if ($date->day === $closingDate->day && $date->month === $closingDate->month && $date->year === $closingDate->year) {
+
+            $date = $closingDate->copy()->addSecond();
+          }
+        }
+
+        if (!$date->greaterThanOrEqualTo($closingDate) && !$date->lessThanOrEqualTo($now)) {
+          $dateIsOk = false;
+        }
+      }
 
       //Se define el signo del importe
       switch ($type) {
         case 'general':
-          $amount = $amountType === 'income' ? $amount : $amount * -1;
+          $amount = $inputs['amountType'] === 'income' ? $amount : $amount * -1;
           break;
         case 'expense':
         case 'purchase':
@@ -491,62 +694,47 @@ class ShowBoxs extends Component
           break;
       }
 
-      //Se actualiza el campo del importe
-      $transaction->amount = $amount;
-
-      //Ahora se establece la fecha
-      if ($moment !== 'now') {
-        if ($setTime) {
-          $date = "$date $time";
-          $date = Carbon::createFromFormat('Y-m-d H:i', $date);
-        } else {
-          $date = Carbon::createFromFormat('Y-m-d', $date)->endOfDay();
-        }
-
-        $closingDate = Carbon::createFromFormat('Y-m-d H:i:s', $closingDate);
-        $now = Carbon::now();
-        /**
-         * Se valida que la fecha no sea anterior a la
-         * fecha de cierre o posterior al momento actual
-         */
-        if ($closingDate->lessThan($date)) {
-          if ($now->greaterThan($date)) {
-            $transaction->transaction_date = $date->format('Y-m-d H:i:s');
-          } else {
-            $dateIsOk = false;
-            $alertTitle = "¡Error con la fecha!";
-            $alertMessage = "La fecha de la transacción es mayor que la fecha actual ";
-            $alertMessage .= $date->longRelativeToNowDiffForHumans();
-          }
-        } else {
-          $dateIsOk = false;
-          $alertTitle = "!Error con la fecha!";
-          $alertMessage = "La fecha de la transacción es anterior a la fecha de cierre de la caja ";
-          $alertMessage .= $date->longRelativeDiffForHumans($closingDate);
-        }
-
-        if ($dateIsOk) {
+      //Se procede a guardar la transacción
+      if ($dateIsOk) {
+        //Se recupera la tranacción
+        $transaction = BoxTransaction::find($inputs['transactionId']);
+        if ($transaction) {
+          $transaction->transaction_date = $date->format('Y-m-d H:i:s');
+          $transaction->description = $description;
+          $transaction->type = $type;
+          $transaction->amount = $amount;
           $transaction->save();
-          $alertTitle = "Transacción Actualizada";
-          $alertType = 'success';
-          $this->resetFields();
-          $box = $transaction->box()->first();
-          $this->box = $this->getBoxInfo($box);
+
+          $ok = true;
+          $transaction = [
+            'boxId' => intval($box->id),
+            'id' => intval($transaction->id),
+            'type' => $transaction->type,
+            'date' => $transaction->transaction_date,
+            'description' => $transaction->description,
+            'amount' => $transaction->amount,
+            'createdAt' => $transaction->created_at,
+            'updatedAt' => $transaction->updated_at,
+          ];
+          $this->alert('Transacción Actualizada', 'info');
+        } else {
+          $this->alert('Transacción no encontrada', 'error');
         }
       } else {
-        $transaction->transaction_date = Carbon::now()->format('Y-m-d H:i:s');
-        $transaction->save();
-        $alertTitle = "Transacción Actualizada";
-        $alertType = 'success';
-        $this->resetFields();
-        $box = $transaction->box()->first();
-        $this->box = $this->getBoxInfo($box);
+        $this->alert('Fecha Incorrecta', 'error');
       }
-    } else {
-      $alertTitle = "¡Transacción eliminada";
+    } catch (ValidationException $valExc) {
+      $errors = $valExc->errors();
+    } catch (\Throwable $th) {
+      $this->emitError($th);
     }
 
-    $this->alert($alertTitle, $alertType, $alertMessage);
+    return [
+      'ok' => $ok,
+      'errors' => $errors,
+      'log' => $log,
+      'transaction' => $transaction,
+    ];
   }
 
   public function setPassword(string $password)
@@ -554,111 +742,106 @@ class ShowBoxs extends Component
     $this->password = $password;
   }
 
-  protected function storeClosingBox()
+  public function storeClosingBox($data)
   {
-    //Variables del metodo
-    $now = Carbon::now();
-    $password     = $this->password;
-    $cash         = $this->registeredCash;
-    $newBase      = $this->newBase;
+    $ok = false;            //Determina si el proceso fue correctamente
+    $errors = null;         //Guarda los errores de la validación
+    $log = [];
 
-    //Valirables para las alertas
-    $alertTitle = null;
-    $alertType  = 'error';
-    $alertMessage = null;
+    $rules = $this->closingBoxRules();
+    $attributes = $this->closingBxAttributes;
 
-    //Se recupera la caja
-    /** @var Box */
-    $box = Box::find($this->box['id']);
-    /**
-     * Se recupera al usuario
-     * @var User
-     */
-    $user = User::find(session()->get('user_id'));
+    try {
+      $inputs = Validator::make($data, $rules, [], $attributes)->validate();
 
-    /**
-     * Se recupera la caja mayor
-     * @var Box
-     */
-    $majorBox = Box::where('id', '!=', $box->id)
-      ->where('business_id', $box->business_id)
-      ->orderBy('id')
-      ->first();
+      //Se crean las variables del cierre
+      $now = Carbon::now();
+      $cash = $inputs['cashRegister'];
+      $newBase = $inputs['newBase'];
 
-    //Primero se comprueba que la contraseña es correcta
-    if (Hash::check($password, $user->password)) {
-      //Ahora se comprueba que la caja es una caja que permita el cierre
+      //Se recupera la caja y el saldo
+      /** @var Box */
+      $box = Box::find($inputs['boxId']);
+      $boxBalance = intval($box->transactions()->sum('amount'));
+
+      /**
+       * Caja principal o secundaria
+       * @var Box
+       */
+      $majorBox = Box::where('id', '!=', $box->id)
+        ->where('business_id', $box->business_id)
+        ->orderBy('id')
+        ->first();
+
+      //Se incia transacción segura 
+      DB::beginTransaction();
+
+      //Se comprueba que la caja permita el cierre
       if ($box->main && $majorBox) {
-        $boxInfo = $this->getBoxInfo($box);
-        $balance = $boxInfo['balance'];
+        /** Fecha para transacciones adicionales */
+        $date = $now->copy()->subSecond()->format('Y-m-d H:i:s');
 
-        try {
-          DB::beginTransaction();
-          $date = $now->copy()->subSecond()->format('Y-m-d H:i:s');
+        //Se registra el faltante o el sobrante un segundo antes del cierre
+        if ($cash != $boxBalance) {
+          $diff = $cash - $boxBalance;
+          $description = $diff > 0 ? 'Sobrante de caja.' : 'Faltante de caja.';
 
-          //Se registra el faltante o el sobrante
-          if ($cash != $balance) {
-            $amount = $cash - $balance;
-            $description  = $cash > $balance
-              ? 'Sobrante de caja'
-              : 'Faltante de caja';
-            $box->transactions()->create([
-              'transaction_date'  => $date,
-              'description'       => $description,
-              'type'              => 'general',
-              'amount'            => $amount
-            ]);
-          }//.end if
-
-          //Ahora se hace la transferencia de dinero correspondiente
-          if ($cash != $newBase) {
-            //Se actualiza la caja del local
-            $amount = $newBase - $cash;
-            $description = $cash > $newBase
-              ? "Transferencia a caja mayor"
-              : "Deposito de caja mayor";
-            $box->transactions()->create([
-              'transaction_date'  => $date,
-              'description'       => $description,
-              'type'              => 'transfer',
-              'amount'            => $amount
-            ]);
-
-            //Ahora se actualiza la caja mayor
-            $amount = $amount * -1;
-            $description = $newBase > $cash
-              ? 'Transferencia a caja del local'
-              : 'Cierre de caja del local';
-            $majorBox->transactions()->create([
-              'transaction_date'  => $date,
-              'description'       => $description,
-              'type'              => 'transfer',
-              'amount'            => $amount
-            ]);
-          }//.end if
-
-          //Se actualiza la caja
-          $box->base = $newBase;
-          $box->closing_date = $now->format('Y-m-d H:i:s');
-          $box->save();
-
-          DB::commit();
-          $alertTitle = "¡Arqueo de caja satisfatorio!";
-          $alertType  = "success";
-          $this->resetFields();
-          $this->box = $this->getBoxInfo($box);
-        } catch (\Throwable $th) {
-          $this->emitError($th);
+          //Se registra la transacción
+          $box->transactions()->create([
+            'transaction_date' => $date,
+            'type' => 'general',
+            'description' => $description,
+            'amount' => $diff
+          ]);
         }
+
+        //Se hace la transferencia de dinero si es requerido
+        if ($newBase != $cash) {
+          $diff = $newBase - $cash;
+
+          $description = $diff > 0 ? 'Deposito de caja mayor.' : 'Transferencia a caja mayor.';
+
+          //Caja menor
+          $box->transactions()->create([
+            'transaction_date' => $date,
+            'type' => 'transfer',
+            'description' => $description,
+            'amount' => $diff
+          ]);
+
+          //Caja principal
+          $description = $diff > 0 ? 'Transferencia a caja mejor.' : 'Cierre de caja menor.';
+          $majorBox->transactions()->create([
+            'transaction_date' => $date,
+            'type' => 'transfer',
+            'description' => $description,
+            'amount' => $diff * -1
+          ]);
+        }
+
+        //Ahora se actualiza la caja correspondiente
+        $box->base = $newBase;
+        $box->closing_date = $now->format('Y-m-d H:i:s');
+        $box->save();
+
+        //Se finaliza la transacción
+        DB::commit();
+        $ok = true;
+        $this->alert('La caja ha sido cerrada', 'success');
       } else {
-        $alertTitle = "¡Funcionalidad no habilitada!";
-        $alertMessage = "Esta caja no tiene habilitado el cierre ya que se realiza de forma manual";
+        $this->alert('¡Funcionalidad no habilitada!', 'Esta caja no tiene habilitado el cierre...');
       }
-    } else {
-      $alertTitle = "¡Contraseña Incorrecta";
+    } catch (ValidationException $valExc) {
+      $errors = $valExc->errors();
+    } catch (\Throwable $th) {
+      $this->emitError($th);
     }
 
-    $this->alert($alertTitle, $alertType, $alertMessage);
+    return [
+      'ok' => $ok,
+      'errors' => $errors,
+      'log' => $log
+    ];
   }
 
   public function editTransaction($id)
@@ -689,19 +872,19 @@ class ShowBoxs extends Component
     //TODO
   }
 
-  public function submit()
-  {
-    $this->validate($this->rules(), []);
-    try {
-      if ($this->closingBox) {
-        $this->storeClosingBox();
-      } elseif ($this->state === 'registering') {
-        $this->storeTransaction();
-      } else {
-        $this->updateTransaction();
-      }
-    } catch (\Throwable $th) {
-      $this->emitError($th);
-    }
-  }
+  // public function submit()
+  // {
+  //   $this->validate($this->rules(), []);
+  //   try {
+  //     if ($this->closingBox) {
+  //       $this->storeClosingBox();
+  //     } elseif ($this->state === 'registering') {
+  //       $this->storeTransaction();
+  //     } else {
+  //       $this->updateTransaction();
+  //     }
+  //   } catch (\Throwable $th) {
+  //     $this->emitError($th);
+  //   }
+  // }
 }

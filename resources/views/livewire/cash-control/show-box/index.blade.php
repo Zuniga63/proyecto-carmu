@@ -2,7 +2,7 @@
 
 @section('title', 'Ver Cajas')
 
-@section('contentTitle', "Administra Cajas")
+@section('contentTitle', "")
 
 @section('styles')
 @livewireStyles
@@ -17,10 +17,10 @@
 
 
 @section('contentBreadcrum')
-<ol class="breadcrumb float-sm-right">
+{{-- <ol class="breadcrumb float-sm-right">
   <li class="breadcrumb-item"><a href="{{route('admin.admin')}}">Home</a></li>
   <li class="breadcrumb-item active"><a href="{{route('admin.showBox')}}">Volver a cajas</a></li>
-</ol>
+</ol> --}}
 @endsection
 
 @section('content')
