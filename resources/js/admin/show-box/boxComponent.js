@@ -124,7 +124,7 @@ window.boxComponent = () => {
     },
     addNewTransaction(transaction){
       let count = this.transactions.length;
-      let balance = this.transactions[count -1].balance;
+      let balance = count > 0 ? this.transactions[count -1].balance : 0;
       transaction.balance = balance + transaction.amount;
       this.transactions.push(transaction);
     },
