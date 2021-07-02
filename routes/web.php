@@ -109,7 +109,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     //-----------------------------------------------------------
     //  ADMINISTRACIÓN DE CAJAS
     //-----------------------------------------------------------
-    Route::get('cajas-actuales/{id?}', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
+    Route::get('cajas-actuales', ShowBoxs::class)->name('showBox')->where('id', '[0-9]+');
     Route::get('cajas/consultas', BoxConsultComponent::class)->name('boxConsult');
 
     //----------------------------------------------------
