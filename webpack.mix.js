@@ -17,3 +17,7 @@ mix.js('resources/js/app.js', 'public/js')
     require('tailwindcss'),
   ])
   .js('resources/js/admin/show-box/app.js', 'public/js/admin/show-box').sourceMaps();
+
+  if (mix.inProduction()) {
+    mix.version();
+  }

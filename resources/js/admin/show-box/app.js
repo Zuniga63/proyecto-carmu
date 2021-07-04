@@ -1,5 +1,14 @@
 require('../utilities');
 import Chart from 'chart.js/auto';
+const CHART_COLORS = {
+  green: 'rgb(75, 192, 192)',
+  orange: 'rgb(255, 159, 64)',
+  yellow: 'rgb(255, 205, 86)',
+  blue: 'rgb(54, 162, 235)',
+  purple: 'rgb(153, 102, 255)',
+  red: 'rgb(255, 99, 132)',
+  grey: 'rgb(201, 203, 207)',
+}
 
 
 //*=============================================================================*
@@ -37,12 +46,14 @@ window.app = () => {
     boxActive: false,
     /** Arreglo de instancias de negocio */
     business: [],
-    businessSelected: 0,
+    businessSelected: -1,
     graphs: {
       general: null,
       incomes: null,
       expenses: null,
     },
+    hasIncomes: false,
+    hasExpenses: false,
     graphPeriod: 'this-month',
     /** Objeto con los tipos de transacciones */
     transactionTypes: null,
@@ -60,8 +71,16 @@ window.app = () => {
     init(wire, dispatch) {
       this.wire = wire;
       this.dispatch = dispatch;
-      this.mountData();
-      this.buildGeneralGraph();
+      // this.mountData();
+      if (window.data) {
+        this.buildBoxs(window.data.boxs);
+        //Se crean las instancias de los negocios
+        this.buildBusiness(window.data.business);
+        //Se crean los diversos tipos de transacciones
+        this.transactionTypes = window.data.transactionTypes;
+        this.buildGraphs();
+        this.updateStatistics();
+      }
     },
     /**
      * Se encarga de montar en el componente los datos
@@ -77,8 +96,6 @@ window.app = () => {
           this.buildBusiness(res.business);
           //Se crean los diversos tipos de transacciones
           this.transactionTypes = res.transactionTypes;
-          // this.buildGraphs();
-          this.updateStatistics();
           this.waiting = false;
         })
         .catch(error => console.log(error));
@@ -93,6 +110,10 @@ window.app = () => {
       this.boxSelected = null;
       this.boxActive = false;
       this.transactionTypes = null;
+      this.businessSelected = -1;
+      this.updateStatistics();
+      this.hasExpenses = false;
+      this.hasIncomes = false;
       this.business = [];
       this.waiting = false;
       this.formActive = false;
@@ -130,7 +151,7 @@ window.app = () => {
       let shop = this.business.find(b => b.name === this.boxSelected.business);
       if (shop) {
         this.updateBusiness(shop);
-        if(shop.id === this.businessSelected){
+        if (shop.id === this.businessSelected) {
           this.updateStatistics();
         }
       }
@@ -226,7 +247,9 @@ window.app = () => {
      * y crea los datasets de los mismo
      */
     buildGraphs() {
-      this.buildGraphElements();
+      this.buildGeneralGraph();
+      this.buildIncomesGraph();
+      this.buildExpensesGraph();
     },
     buildGeneralGraph() {
       let canvas = document.getElementById('generalGraph');
@@ -329,31 +352,145 @@ window.app = () => {
         }
       })
     },
+    buildIncomesGraph() {
+      let ctx = document.getElementById('incomesGraph');
+      let type = 'pie';
+      let options = {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          },//.end legends
+          title: {
+            display: true,
+            text: 'Ingresos',
+            position: 'top',
+            font: {
+              size: 21,
+            }
+          },//.end title
+          tooltip: {
+            callbacks: {
+              label: context => {
+                // let label = context.dataset.label || '';
+                let label = context.label || '';
+
+                if (label) {
+                  label += ': ';
+                }
+
+                if (context.dataset.data[0] !== null) {
+                  // label += formatCurrency(context.parsed.y, 0);
+                  label += formatCurrency(context.dataset.data[context.dataIndex], 0);
+                }
+
+                return label;
+              },
+            },
+          }
+        },//.end plugins
+      }
+
+      let config = {
+        type,
+        data: {
+          labels: [],
+          datasets: []
+        },
+        options
+      };
+
+      this.graphs.incomes = new Chart(ctx, config);
+    },
+    buildExpensesGraph() {
+      let ctx = document.getElementById('expensesGraph');
+      let type = 'pie';
+      let options = {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          },//.end legends
+          title: {
+            display: true,
+            text: 'Egresos',
+            position: 'top',
+            font: {
+              size: 21,
+            }
+          },//.end title
+          tooltip: {
+            callbacks: {
+              label: context => {
+                // let label = context.dataset.label || '';
+                let label = context.label || '';
+
+                if (label) {
+                  label += ': ';
+                }
+
+                if (context.dataset.data[0] !== null) {
+                  // label += formatCurrency(context.parsed.y, 0);
+                  label += formatCurrency(context.dataset.data[context.dataIndex], 0);
+                }
+
+                return label;
+              },
+            },
+          }
+        },//.end plugins
+      }
+
+      let config = {
+        type,
+        data: {
+          labels: [],
+          datasets: []
+        },
+        options
+      };
+
+      this.graphs.expenses = new Chart(ctx, config);
+    },
     updateStatistics() {
       let period = this.graphPeriod;
       let statistics = {};
 
-      if (this.businessSelected) {
+      if (this.businessSelected && this.businessSelected > 0) {
         let deal = this.business.find(b => b.id === this.businessSelected);
         let startDate = dayjs(), endDate = dayjs();
         let monthlyReport = false;
+        let incomesLabel = '';
 
         if (period === 'this-month') {
           startDate = startDate.startOf('month');
+          incomesLabel = startDate.format('MMMM YYYY');
         } else if (period === 'last-month') {
           startDate = startDate.subtract(1, 'month').startOf('month');
           endDate = dayjs(startDate).endOf('month');
-        }else if(period === 'all-months'){
+          incomesLabel = startDate.format('MMMM YYYY');
+        } else if (period === 'all-months') {
           startDate = startDate.startOf('year');
           monthlyReport = true;
+          incomesLabel = startDate.format('YYYY');
         }
 
         statistics = this.getStatistics(deal.transactions, startDate, endDate, monthlyReport);
         this.updateGeneralGraph(statistics.labels, statistics.incomes, statistics.expenses, statistics.balances);
+        this.updateIncomesGraph(statistics.incomesByType, incomesLabel);
+        this.updateExpensesGraph(statistics.expesesByType, incomesLabel);
+
+        // let keys = Object.keys(statistics.incomesByType);
+        // let value = statistics.incomesByType[keys[0]];
+        // console.log(keys, value);
+      } else {
+        this.updateGeneralGraph();
+        this.updateIncomesGraph();
+        this.updateExpensesGraph();
       }
 
     },
-    updateGeneralGraph(labels, incomes, expenses, balances) {
+    updateGeneralGraph(labels = [], incomes = [], expenses = [], balances = []) {
       //Recupero el negocio
       let generalGraph = this.graphs.general;
       generalGraph.data.labels = labels;
@@ -362,6 +499,104 @@ window.app = () => {
       generalGraph.data.datasets[2].data = balances;
       generalGraph.update();
 
+    },
+    updateIncomesGraph(data = {}, label = 'Nombre por defecto') {
+      let incomesGraph = this.graphs.incomes;
+      let labels = Object.keys(data);
+      let dataset = {
+        label: label,
+        data: [],
+        backgroundColor: []
+      };
+
+      let colorsKeys = Object.keys(CHART_COLORS);
+      let maxColors = colorsKeys.length;
+
+
+      let colorIndex = 0;
+      let forward = true;
+
+      if (labels.length > 0) {
+        //Se recorre el objeto
+        labels.forEach(label => {
+          dataset.data.push(data[label]);
+          dataset.backgroundColor.push(CHART_COLORS[colorsKeys[colorIndex]]);
+
+          if (forward) {
+            colorIndex++;
+            if (colorIndex === maxColors) {
+              colorIndex = maxColors - 2;
+              forward = false;
+            }
+          } else {
+            colorIndex--;
+            if (colorIndex < 0) {
+              colorIndex = 1;
+              forward = true;
+            }
+          }
+        })
+
+        //Se actualiza la grafica
+        incomesGraph.data.labels = labels;
+        incomesGraph.data.datasets = [dataset];
+        this.hasIncomes = true;
+      } else {
+        incomesGraph.data.labels = [];
+        incomesGraph.data.datasets = [];
+        this.hasIncomes = false;
+      }
+
+      incomesGraph.update();
+    },
+    updateExpensesGraph(data = {}, label = 'Nombre por defecto') {
+      let chart = this.graphs.expenses;
+      let labels = Object.keys(data);
+      let dataset = {
+        label: label,
+        data: [],
+        backgroundColor: []
+      };
+
+      let colorsKeys = Object.keys(CHART_COLORS);
+      let maxColors = colorsKeys.length;
+
+
+      let colorIndex = maxColors - 1;
+      let forward = false;
+
+      if (labels.length > 0) {
+        //Se recorre el objeto
+        labels.forEach(label => {
+          dataset.data.push(data[label]);
+          dataset.backgroundColor.push(CHART_COLORS[colorsKeys[colorIndex]]);
+
+          if (forward) {
+            colorIndex++;
+            if (colorIndex === maxColors) {
+              colorIndex = maxColors - 2;
+              forward = false;
+            }
+          } else {
+            colorIndex--;
+            if (colorIndex < 0) {
+              colorIndex = 1;
+              forward = true;
+            }
+          }
+        })
+
+        //Se actualiza la grafica
+        chart.data.labels = labels;
+        chart.data.datasets = [dataset];
+        this.hasExpenses = true;
+      } else {
+        chart.data.labels = [];
+        chart.data.datasets = [];
+        this.hasExpenses = false;
+      }
+
+      chart.update();
     },
     // *==========================================*
     // *=============== UTILIDADES ===============*
@@ -537,24 +772,47 @@ window.app = () => {
       let income = 0, expense = 0, balance = 0;
       let incomes = [], expenses = [], balances = [];
       let labels = [];
+      let incomesByType = {};
+      let expesesByType = {};
 
       let start = dayjs(startDate).startOf('day');
       let end = monthly ? dayjs(start).endOf('month') : dayjs(start).endOf('day');
+
 
       while (start.isSameOrBefore(endDate)) {
         //Recpero las transacciones que están dentro del arreglo
         let transactionGroup = transactions.filter(t => t.date.isSameOrAfter(start) && t.date.isSameOrBefore(end));
         //Actualizo los saldos
         transactionGroup.forEach(transaction => {
-          balance += transaction.amount;
-          income += transaction.amount > 0 ? transaction.amount : 0;
-          expense += transaction.amount < 0 ? transaction.amount * -1 : 0;
+          let amount = transaction.amount;
+          let type = this.transactionTypes[transaction.type];
+          balance += amount;
+          if (amount > 0) {
+            income += amount;
+
+            //Se agrupan por tipos
+            if (Object.hasOwnProperty.call(incomesByType, type)) {
+              incomesByType[type] += amount;
+            } else {
+              incomesByType[type] = amount;
+            }
+          } else {
+            amount = amount * -1;
+
+            expense += amount;
+
+            if (Object.hasOwnProperty.call(expesesByType, type)) {
+              expesesByType[type] += amount;
+            } else {
+              expesesByType[type] = amount;
+            }
+          }
         });
 
         //Se agrega la etiqueta
-        if(monthly){
+        if (monthly) {
           labels.push(start.format('MMMM'));
-        }else{
+        } else {
           labels.push(start.format('ddd DD'));
         }
 
@@ -572,7 +830,9 @@ window.app = () => {
         labels,
         incomes,
         expenses,
-        balances
+        balances,
+        incomesByType,
+        expesesByType,
       }
     },
   }

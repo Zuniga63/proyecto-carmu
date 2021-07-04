@@ -38,7 +38,7 @@
                 <div class="form-group row">
                   <label for="business" class="col-4">Negocio</label>
                   <select name="business" id="business" class="form-control col-8" x-model.number="businessSelected" x-on:change="updateStatistics">
-                    <option x-bind:value="0" selected disabled>Selecciona un negocio</option>
+                    <option value="-1" selected disabled>Selecciona un negocio</option>
                     <template x-for="item in business" x-bin:key="item.id">
                       <option x-bind:value="item.id" x-text="item.name"></option>
                     </template>
@@ -64,12 +64,12 @@
                 <canvas id="generalGraph"></canvas>
               </div>
               <!-- Ingresos por categorías -->
-              <div class="col-6" id="incomesGraphContainer">
+              <div class="col-6" id="incomesGraphContainer" x-show="hasIncomes">
                 <canvas id="incomesGraph"></canvas>
               </div>
 
               <!-- Egresos por categorías -->
-              <div class="col-6" id="expensesGraphContainer">
+              <div class="col-6" id="expensesGraphContainer" x-show="hasExpenses">
                 <canvas id="expensesGraph"></canvas>
               </div>
             </div>
@@ -91,6 +91,7 @@
 @push('scripts')
 <script src="{{mix('js/admin/show-box/app.js')}}" defer></script>
 <script>
+  window.data = @json($data);
   document.addEventListener("DOMContentLoaded", function () {
     OverlayScrollbars(document.querySelectorAll('.scroll-light'), {
       className: "os-theme-dark",

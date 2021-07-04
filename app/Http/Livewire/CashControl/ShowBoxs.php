@@ -113,7 +113,8 @@ class ShowBoxs extends Component
   //----------------------------------------------------------------
   public function render()
   {
-    return view('livewire.cash-control.show-boxs')->layout('livewire.cash-control.show-box.index');
+    $data = $this->init();
+    return view('livewire.cash-control.show-boxs', compact('data'))->layout('livewire.cash-control.show-box.index');
   }
 
   /**
