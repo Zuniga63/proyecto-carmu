@@ -37,6 +37,13 @@ window.app = () => {
     boxActive: false,
     /** Arreglo de instancias de negocio */
     business: [],
+    businessSelected: 0,
+    graphs: {
+      general: null,
+      incomes: null,
+      expenses: null,
+    },
+    graphPeriod: 'this-month',
     /** Objeto con los tipos de transacciones */
     transactionTypes: null,
     /** Encargado de realizar las peticiones al servidor */
@@ -54,6 +61,7 @@ window.app = () => {
       this.wire = wire;
       this.dispatch = dispatch;
       this.mountData();
+      this.buildGeneralGraph();
     },
     /**
      * Se encarga de montar en el componente los datos
@@ -69,7 +77,8 @@ window.app = () => {
           this.buildBusiness(res.business);
           //Se crean los diversos tipos de transacciones
           this.transactionTypes = res.transactionTypes;
-          this.buildGraphs();
+          // this.buildGraphs();
+          this.updateStatistics();
           this.waiting = false;
         })
         .catch(error => console.log(error));
@@ -79,7 +88,7 @@ window.app = () => {
      * provenientes desde el servidor.
      */
     resetComponent() {
-      this.destroyGraphElements();
+      // this.destroyGraphElements();
       this.boxs = [];
       this.boxSelected = null;
       this.boxActive = false;
@@ -116,14 +125,14 @@ window.app = () => {
       this.boxSelected.selected = false;
       this.boxSelected = null;
       this.boxActive = false;
-      //Espacio para actualizar graficas
     },
     hiddenBoxView() {
       let shop = this.business.find(b => b.name === this.boxSelected.business);
-      if(shop){
+      if (shop) {
         this.updateBusiness(shop);
-        console.log(shop);
-        this.updateGraph(shop);
+        if(shop.id === this.businessSelected){
+          this.updateStatistics();
+        }
       }
       this.deselectBox();
     },
@@ -170,6 +179,10 @@ window.app = () => {
       box.totalIncomes = parameters.totalIncomes;
       box.totalExpenses = parameters.totalExpenses;
 
+      //Se agrega la transaccion en el negocio
+      let deal = this.business.find(b => b.name === box.business);
+      deal.transactions.push(transaction);
+
       this.dispatch('new-transaction-added', { transaction });
     },
     /**
@@ -180,13 +193,16 @@ window.app = () => {
     updateTransaction(data) {
       //Se recupera la caja
       let box = this.boxs.find(b => b.id === data.box.id);
+      let deal = this.business.find(b => b.name === box.business);
       //Se recupera la transacción
       let transaction = box?.transactions.find(t => t.id === data.transaction.id);
+      let businessTransaction = deal.transactions.find(t => t.id === data.transaction.id);
       //Se actualizan los campos
       if (transaction) {
         for (const key in transaction) {
           if (Object.hasOwnProperty.call(data.transaction, key)) {
             transaction[key] = data.transaction[key];
+            businessTransaction[key] = data.transaction[key];
           }
         }
       }
@@ -211,126 +227,15 @@ window.app = () => {
      */
     buildGraphs() {
       this.buildGraphElements();
-
-      this.business.forEach(b => {
-        //Se crea el archivo de configuracion
-        let config = {
-          type: 'line',
-          data: this.getDatasets(b),
-          options: this.getGraphOptions(),
-        }
-        //Se agrega el titulo de la grafica
-        config.options.plugins.title.text = b.name;
-        //Se crea la grafica
-        let chart = new Chart(
-          document.getElementById(b.uuid),
-          config,
-        );
-
-        b.chart = chart;
-      })
     },
-    /**
-     * Elimina la grafica del DOM para poder resetearla.
-     * @param {*} business Instancia de negocio
-     */
-    updateGraph(business) {
-      if(false){
-        //Se crea el archivo de configuracion
-        let config = {
-          type: 'line',
-          data: this.getDatasets(business),
-          options: this.getGraphOptions()
-        };
-  
-        //Se agrega el titulo a la grafica
-        config.options.plugins.title.text = business.name;
-  
-        
-        //Se elimina el canvas anterior
-        document.getElementById(business.uuid).remove();
-  
-        //Se crea el canvas
-        const canvas = document.createElement('canvas');
-        canvas.id = business.uuid;
-  
-        //Se recupera el contenedor de la grafica
-        const container = document.querySelector(`[data-id="${business.uuid}"]`);
-  
-        //Se inserta el canvas en el contenedor
-        container.appendChild(canvas);
-        
-        // Se crea la grafica
-        let chart = new Chart(canvas, config);
-  
-        business.chart = chart;
-      }
-
-      // console.log(business.chart.data.datasets);
-      let datasets = business.chart.data.datasets;
-      let maxItems = business.dailyReports.balances.length;
-      for(let item = 0; item < maxItems; item++){
-        datasets[0].data = [];
-        datasets[0].data = business.dailyReports.incomes;
-        
-        datasets[1].data = [];
-        datasets[1].data = business.dailyReports.expenses;
-        
-        datasets[2].data = [];
-        datasets[2].data = business.dailyReports.balances;
-        
-        business.chart.update();
-      }
-
-    },
-    /**
-     * Se encarga de construir los elementos
-     * donde son contenidos los graficos.
-     */
-    buildGraphElements() {
-      const graphContainer = document.getElementById('graphContainer');
-
-      this.business.forEach(b => {
-        //Se construyen los elementos
-        const container = document.createElement('div');
-        const canvas = document.createElement('canvas');
-        const card = document.createElement('div');
-        const cardBody = document.createElement('div');
-
-        //Se agregan las clases
-        container.classList.add('col-12');
-        card.classList.add('card');
-        cardBody.classList.add('card-body');
-
-        //Se agregan los atributos
-        container.id = `container-${b.uuid}`;
-        cardBody.setAttribute('data-id', b.uuid);
-        canvas.id = b.uuid;
-
-        //Se construye el arbol de dependencias
-        graphContainer.appendChild(container);
-        container.appendChild(card);
-        card.appendChild(cardBody);
-        cardBody.appendChild(canvas);
-      })
-    },
-    /**
-     * Se encarga de destruir todos los contenedores de las 
-     * graficas para que puedan ser reseteadas.
-     */
-    destroyGraphElements() {
-      this.business.forEach(b => {
-        let id = `container-${b.uuid}`;
-        // let attribute = `[data-id="${b.uuid}"]`
-        document.getElementById(id).remove();
-      })
-    },
-    getGraphOptions() {
-      return {
+    buildGeneralGraph() {
+      let canvas = document.getElementById('generalGraph');
+      let type = 'line';
+      let options = {
         plugins: {
           title: {
             display: true,
-            text: '',
+            text: 'Estadisticas Generales',
             position: 'top',
             font: {
               size: 21,
@@ -351,11 +256,11 @@ window.app = () => {
 
                 return label;
               }, //end label
-              title: context => {
-                let dayOfMonth = context[0].parsed.x;
-                let date = dayjs().startOf('month').add(dayOfMonth, 'day');
-                return date.format('dddd DD [de] MMMM');
-              }
+              // title: context => {
+              //   let dayOfMonth = context[0].parsed.x;
+              //   let date = dayjs().startOf('month').add(dayOfMonth, 'day');
+              //   return date.format('dddd DD [de] MMMM');
+              // }
             },
           }
         },
@@ -368,7 +273,7 @@ window.app = () => {
               }//end callback
             },
             title: {
-              display: true,
+              display: false,
               text: 'Importe Acumulado',
               font: {
                 size: 16
@@ -377,135 +282,86 @@ window.app = () => {
           },//.end yAxis
           xAxis: {
             title: {
-              display: true,
+              display: false,
               text: 'Días del mes',
               font: {
                 size: 16
               }
             }
-          },//.end xAxis
-          // y1: {
-          //   beginAtZero: true,
-          //   position: 'right',
-          //   title: {
-          //     display: true,
-          //     text: 'Saldo',
-          //     font: {
-          //       size: 16
-          //     }
-          //   },
-          //   ticks: {
-          //     callback: function (value, index, values) {
-          //       return formatCurrency(value, 0);
-          //     }//end callback
-          //   },
+          },
           // }
         }
       }
+
+      let datasets = [{
+        label: 'Ingresos',
+        backgroundColor: 'rgb(75, 192, 192)',
+        borderColor: 'rgb(75, 192, 192)',
+        data: [],
+        fill: false,
+        tension: 0.3,
+      },
+      {
+        label: 'Egresos',
+        backgroundColor: 'rgb(255, 99, 132)',
+        borderColor: 'rgb(255, 99, 132)',
+        data: [],
+        fill: false,
+        tension: 0.3,
+      },
+      {
+        label: 'Saldo',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 0.5)',
+        data: [],
+        fill: true,
+        tension: 0.4,
+        // yAxisID: 'y1'
+      }];
+
+
+      this.graphs.general = new Chart(canvas, {
+        type,
+        options,
+        data: {
+          labels: [],
+          datasets
+        }
+      })
     },
-    /** 
-     * Constuye los datasets del negocio pasado como parametro
-     */
-    getDatasets(business) {
-      const labels = [];
-      for (let day = 1; day <= dayjs().daysInMonth(); day++) {
-        labels.push(day);
-      }
+    updateStatistics() {
+      let period = this.graphPeriod;
+      let statistics = {};
 
-      return {
-        labels: labels,
-        datasets: [{
-          label: 'Ingresos',
-          backgroundColor: 'rgb(75, 192, 192)',
-          borderColor: 'rgb(75, 192, 192)',
-          data: business.dailyReports.incomes,
-          fill: false,
-          tension: 0.3,
-        },
-        {
-          label: 'Egresos',
-          backgroundColor: 'rgb(255, 99, 132)',
-          borderColor: 'rgb(255, 99, 132)',
-          data: business.dailyReports.expenses,
-          fill: false,
-          tension: 0.3,
-        },
-        {
-          label: 'Saldo Global',
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgba(54, 162, 235, 0.5)',
-          data: business.dailyReports.balances,
-          fill: true,
-          tension: 0.4,
-          // yAxisID: 'y1'
-        }]
-      };
-    },
-    /**
-     * Metodo aparentemente innecesario
-     */
-    getBusinessData() {
-      this.business.forEach(shop => {
-        let balanceList = [];
-        let incomesList = [];
-        let expensesList = [];
-        let balance = 0, incomes = 0, expense = 0;
+      if (this.businessSelected) {
+        let deal = this.business.find(b => b.id === this.businessSelected);
+        let startDate = dayjs(), endDate = dayjs();
+        let monthlyReport = false;
 
-        //Recupero las cajas del negocio
-        let boxs = this.boxs.filter(box => box.business === shop.name);
-        let transactions = [];
-        //Combino las transacciones de todas las cajas, sin incluir las transfrencias
-        boxs.forEach(box => {
-          let filter = box.transactions.filter(t => t.type !== 'transfer');
-          transactions = transactions.concat(filter);
-        })
-
-        //Recupero el saldo de las transacciones hasta el inicio del mes
-        let start = dayjs().startOf('month');
-        let now = dayjs();
-
-        let lastTransacctions = transactions.filter(t => t.date.isBefore(start));
-        let actualTransactions = transactions.filter(t => t.date.isSameOrAfter(start));
-
-        balance = lastTransacctions.reduce((accumulator = 0, currentValue) => accumulator + currentValue.amount, 0);
-        console.log(balance);
-
-        //Se construyen las listas
-        let secureCount = 0;
-        while (start.isSameOrBefore(now)) {
-          let end = dayjs(start).endOf('day');
-          let dayTransactions = actualTransactions.filter(t => t.date.isSameOrAfter(start) && t.date.isSameOrBefore(end));
-          dayTransactions.forEach(transaction => {
-            balance += transaction.amount;
-            if (transaction.amount > 0) {
-              incomes += transaction.amount;
-            } else {
-              expense += transaction.amount * -1;
-            }
-          })
-
-          balanceList.push(balance);
-          incomesList.push(incomes);
-          expensesList.push(expense);
-
-          //Se aumenta la fecha en un día
-          let format = 'YYYY-MM-DD HH:mm:ss';
-          console.log(start.format(format), end.format(format), now.format(format));
-          start = start.add(1, 'day');
-          secureCount++;
-
-          if (secureCount > 31) {
-            console.log('Bucle infinito');
-            break;
-          }
-          console.log(start.format(format), end.format(format), now.format(format));
-          // break;
+        if (period === 'this-month') {
+          startDate = startDate.startOf('month');
+        } else if (period === 'last-month') {
+          startDate = startDate.subtract(1, 'month').startOf('month');
+          endDate = dayjs(startDate).endOf('month');
+        }else if(period === 'all-months'){
+          startDate = startDate.startOf('year');
+          monthlyReport = true;
         }
 
-        shop.incomes = incomesList;
-        shop.expenses = expensesList;
-        shop.balanceList = balanceList;
-      })
+        statistics = this.getStatistics(deal.transactions, startDate, endDate, monthlyReport);
+        this.updateGeneralGraph(statistics.labels, statistics.incomes, statistics.expenses, statistics.balances);
+      }
+
+    },
+    updateGeneralGraph(labels, incomes, expenses, balances) {
+      //Recupero el negocio
+      let generalGraph = this.graphs.general;
+      generalGraph.data.labels = labels;
+      generalGraph.data.datasets[0].data = incomes;
+      generalGraph.data.datasets[1].data = expenses;
+      generalGraph.data.datasets[2].data = balances;
+      generalGraph.update();
+
     },
     // *==========================================*
     // *=============== UTILIDADES ===============*
@@ -651,7 +507,7 @@ window.app = () => {
           uuid,
           boxs,
           transactions,
-          dailyReports: this.getDailyReports(transactions)
+          // dailyReports: this.getDailyReports(transactions)
         })
 
       })
@@ -668,70 +524,57 @@ window.app = () => {
         transactions = transactions.concat(boxTransactions);
       });
 
-      business.dailyReports = this.getDailyReports(transactions);
+      // business.dailyReports = this.getDailyReports(transactions);
     },
     /**
-     * Se encarga de construir los reportes diarios de ingresos, egresos y saldo
-     * hasta el día actual
-     * @param {*} balance El saldo del negocio antes del mes actual
-     * @param {*} transactions Arreglo con las transacciones del mes actual
+     * Construye los datos que son consumidos por las graficas
+     * @param {*} transactions Arreglo con las transacciones de un negocio sin incluir transferencias
+     * @param {*} startDate Instacia de dayjs con la fecha en la que inica la busqueda
+     * @param {*} endDate Instacia de dayjs en la que debe terminar la busqueda
+     * @param {*} monthly Si los reportes son diarios o mensuales
      */
-    getDailyReports(transactions) {
-      let incomes = 0;                        //Ingresos acumulados del mes
-      let expenses = 0;                       //Egresos acumulados del mes
-      let balance = 0;
-      let now = dayjs();                      //Limite del ciclo
-      let start = dayjs().startOf('month');   //Inicio de cada ciclo
-      let end = dayjs(start).endOf('day');    //Fin de cada ciclo
-      const maxMonthCicle = 31;               //Numero maximo de repeticiones del ciclo
-      let cicleCount = 1;                     //Conteo de repeticiones
+    getStatistics(transactions, startDate, endDate, monthly = false) {
+      let income = 0, expense = 0, balance = 0;
+      let incomes = [], expenses = [], balances = [];
+      let labels = [];
 
-      // let balance = transactions.filter(transaction => transaction.date.isBefore(start))
-      //   .reduce((accumulator, transaction) => accumulator + transaction.amount, 0);
-      let actualTransactions = transactions.filter(t => t.date.isSameOrAfter(start));
+      let start = dayjs(startDate).startOf('day');
+      let end = monthly ? dayjs(start).endOf('month') : dayjs(start).endOf('day');
 
-      /**
-       * Guarda los reportes diarios de los ingresos, egresos y saldos
-       */
-      let dailyReports = {
-        balances: [],
-        incomes: [],
-        expenses: []
-      }
+      while (start.isSameOrBefore(endDate)) {
+        //Recpero las transacciones que están dentro del arreglo
+        let transactionGroup = transactions.filter(t => t.date.isSameOrAfter(start) && t.date.isSameOrBefore(end));
+        //Actualizo los saldos
+        transactionGroup.forEach(transaction => {
+          balance += transaction.amount;
+          income += transaction.amount > 0 ? transaction.amount : 0;
+          expense += transaction.amount < 0 ? transaction.amount * -1 : 0;
+        });
 
-      while (start.isSameOrBefore(now)) {
-        // incomes = 0;
-        // expenses = 0;
-        //Recupero las transacciones del día
-        let dailyTransactions = actualTransactions.filter(t => t.date.isSameOrAfter(start) && t.date.isSameOrBefore(end))
-        //Actualizo las variables acumulativas
-        dailyTransactions.forEach(t => {
-          balance += t.amount;
-          if (t.amount > 0) {
-            incomes += t.amount;
-          } else {
-            expenses += t.amount * -1;
-          }
-        })
-
-        //Ahora se actualiza el reporte diario
-        dailyReports.balances.push(balance);
-        dailyReports.incomes.push(incomes);
-        dailyReports.expenses.push(expenses);
-
-        //Se actualizan las variables del bulce
-        start = start.add(1, 'day');
-        end = end.add(1, 'day');
-        cicleCount++;
-
-        if (cicleCount > maxMonthCicle) {
-          break;
+        //Se agrega la etiqueta
+        if(monthly){
+          labels.push(start.format('MMMM'));
+        }else{
+          labels.push(start.format('ddd DD'));
         }
+
+        //Se agrega el dato
+        incomes.push(income);
+        expenses.push(expense);
+        balances.push(balance);
+
+        //Se actualizan las fechas
+        start = monthly ? start.add(1, 'month').startOf('month') : start.add(1, 'day');
+        end = monthly ? dayjs(start).endOf('month') : dayjs(start).endOf('day');
       }
 
-      return dailyReports;
-
-    }
+      return {
+        labels,
+        incomes,
+        expenses,
+        balances
+      }
+    },
   }
 }
 

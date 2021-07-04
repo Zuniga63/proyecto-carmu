@@ -26,7 +26,54 @@
         class="col-12 col-lg-8"
         x-show.transition.in.duration.300ms="!boxActive"
       >
-        <div id="graphContainer" class="row">
+        <div class="card card-light">
+          <header class="card-header">
+            <h5 class="text-center mb-0">Estadisticas</h5>
+          </header>
+          <div class="card-body">
+            <!-- SELECTORES -->
+            <div class="row">
+              <!-- Selección del negocio -->
+              <div class="col-6">
+                <div class="form-group row">
+                  <label for="business" class="col-4">Negocio</label>
+                  <select name="business" id="business" class="form-control col-8" x-model.number="businessSelected" x-on:change="updateStatistics">
+                    <option x-bind:value="0" selected disabled>Selecciona un negocio</option>
+                    <template x-for="item in business" x-bin:key="item.id">
+                      <option x-bind:value="item.id" x-text="item.name"></option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+              <!-- Selección del periodo -->
+              <div class="col-6">
+                <div class="form-group row">
+                  <label for="business" class="col-4">Periodo</label>
+                  <select name="business" id="business" class="form-control col-8" x-model="graphPeriod" x-on:change="updateStatistics">
+                    <option value="this-month">Este mes</option>
+                    <option value="last-month">Mes Anterior</option>
+                    <option value="all-months">Todos los meses</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <!-- Ingresos, Egresos y Saldo -->
+              <div class="col-12" id="generalGraphContainer">
+                <canvas id="generalGraph"></canvas>
+              </div>
+              <!-- Ingresos por categorías -->
+              <div class="col-6" id="incomesGraphContainer">
+                <canvas id="incomesGraph"></canvas>
+              </div>
+
+              <!-- Egresos por categorías -->
+              <div class="col-6" id="expensesGraphContainer">
+                <canvas id="expensesGraph"></canvas>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
